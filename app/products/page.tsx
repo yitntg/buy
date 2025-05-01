@@ -3,8 +3,22 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import ProductCard from '../components/ProductCard'
 
+// 定义商品类型接口
+interface Product {
+  id: number
+  name: string
+  description: string
+  price: number
+  image: string
+  category: number
+  inventory: number
+  rating: number
+  reviews: number
+  specifications?: Record<string, string | number>
+}
+
 // 模拟获取商品数据的函数
-async function getProducts() {
+async function getProducts(): Promise<Product[]> {
   // 在实际应用中，这里应该调用API获取数据，并且可以包含查询参数
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/products`, { cache: 'no-store' })
   
@@ -142,7 +156,7 @@ export default async function ProductsPage() {
               
               {/* 商品网格 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map(product => (
+                {products.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
