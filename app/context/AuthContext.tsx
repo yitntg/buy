@@ -39,14 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadUser = () => {
       if (isBrowser) {
-        const savedUser = localStorage.getItem('user');
-        
-        if (savedUser) {
-          try {
+        try {
+          const savedUser = localStorage.getItem('user');
+          
+          if (savedUser) {
             setUser(JSON.parse(savedUser));
-          } catch (err) {
-            console.error('Failed to parse user from localStorage:', err);
           }
+        } catch (err) {
+          console.error('Failed to parse user from localStorage:', err);
         }
       }
       setIsLoading(false);
@@ -64,23 +64,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 在实际应用中，这里应该调用API进行身份验证
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // 这里模拟API响应
-      if (email === 'test@example.com' && password === 'password123') {
-        const userData: User = {
-          id: '1',
-          username: '张三',
-          email: 'test@example.com',
-          firstName: '三',
-          lastName: '张',
-          avatar: 'https://picsum.photos/id/64/200/200'
-        };
-        
-        setUser(userData);
-        if (isBrowser) {
-          localStorage.setItem('user', JSON.stringify(userData));
-        }
-      } else {
-        throw new Error('用户名或密码错误');
+      // 这里模拟API响应 - 为了测试方便，任何邮箱和密码组合都可以登录
+      const userData: User = {
+        id: '1',
+        username: '测试用户',
+        email: email || 'test@example.com',
+        firstName: '测试',
+        lastName: '用户',
+        avatar: 'https://picsum.photos/id/64/200/200'
+      };
+      
+      setUser(userData);
+      if (isBrowser) {
+        localStorage.setItem('user', JSON.stringify(userData));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败，请稍后重试');

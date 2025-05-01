@@ -30,24 +30,26 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`/api/products/${params.id}`)
+        // 直接从API获取数据
+        const res = await fetch(`/api/products/${params.id}`);
         
         if (!res.ok) {
-          throw new Error('获取商品信息失败')
+          const errorData = await res.json();
+          throw new Error(errorData.message || '获取商品信息失败');
         }
         
-        const data = await res.json()
-        setProduct(data)
+        const data = await res.json();
+        setProduct(data);
       } catch (err) {
-        setError('获取商品信息失败，请稍后重试')
-        console.error(err)
+        console.error('获取商品详情出错:', err);
+        setError('获取商品信息失败，请稍后重试');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
     
-    fetchProduct()
-  }, [params.id])
+    fetchProduct();
+  }, [params.id]);
   
   // 处理加入购物车
   const handleAddToCart = () => {

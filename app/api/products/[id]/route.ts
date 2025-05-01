@@ -84,14 +84,26 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const product = products.find(p => p.id === params.id);
-  
-  if (!product) {
-    return NextResponse.json({ message: '商品不存在' }, { status: 404 });
+  try {
+    // 确保参数id存在，并尝试查找对应的产品
+    const id = params.id;
+    if (!id) {
+      return NextResponse.json({ message: '商品ID不能为空' }, { status: 400 });
+    }
+    
+    // 查找产品，同时支持数字和字符串格式的id
+    const product = products.find(p => p.id === id || p.id === String(id));
+    
+    if (!product) {
+      return NextResponse.json({ message: '商品不存在' }, { status: 404 });
+    }
+    
+    // 模拟API延迟
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return NextResponse.json(product);
+  } catch (error) {
+    console.error('获取商品详情出错:', error);
+    return NextResponse.json({ message: '服务器内部错误' }, { status: 500 });
   }
-  
-  // 模拟API延迟
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return NextResponse.json(product);
 } 
