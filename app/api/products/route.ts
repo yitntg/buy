@@ -150,8 +150,106 @@ const products = [
   }
 ]
 
-export async function GET() {
-  return NextResponse.json(products)
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    
+    // 获取查询参数
+    const keyword = searchParams.get('keyword')?.toLowerCase();
+    const categoryId = searchParams.get('category');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const minRating = searchParams.get('minRating');
+    const sortBy = searchParams.get('sortBy');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '12');
+    
+    // 筛选产品
+    let filteredProducts = [...products];
+    
+    // 关键字搜索
+    if (keyword) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.name.toLowerCase().includes(keyword) || 
+        product.description.toLowerCase().includes(keyword)
+      );
+    }
+    
+    // 分类过滤
+    if (categoryId) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.category === parseInt(categoryId)
+      );
+    }
+    
+    // 价格区间过滤
+    if (minPrice) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.price >= parseInt(minPrice)
+      );
+    }
+    
+    if (maxPrice) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.price <= parseInt(maxPrice)
+      );
+    }
+    
+    // 评分过滤
+    if (minRating) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.rating >= parseFloat(minRating)
+      );
+    }
+    
+    // 排序
+    if (sortBy) {
+      switch (sortBy) {
+        case 'price-asc':
+          filteredProducts.sort((a, b) => a.price - b.price);
+          break;
+        case 'price-desc':
+          filteredProducts.sort((a, b) => b.price - a.price);
+          break;
+        case 'rating':
+          filteredProducts.sort((a, b) => b.rating - a.rating);
+          break;
+        case 'newest':
+          // 假设id越大的产品越新
+          filteredProducts.sort((a, b) => Number(b.id) - Number(a.id));
+          break;
+        default:
+          // 默认排序，不做任何改变
+          break;
+      }
+    }
+    
+    // 计算总页数
+    const totalProducts = filteredProducts.length;
+    const totalPages = Math.ceil(totalProducts / limit);
+    
+    // 分页
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginatedProducts = filteredProducts.slice(start, end);
+    
+    // 返回结果
+    return NextResponse.json({
+      products: paginatedProducts,
+      pagination: {
+        total: totalProducts,
+        totalPages,
+        currentPage: page,
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('获取产品列表出错:', error);
+    return NextResponse.json(
+      { error: '获取产品列表失败' }, 
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {

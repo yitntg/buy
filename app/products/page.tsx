@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -17,20 +20,32 @@ interface Product {
   specifications?: Record<string, string | number>
 }
 
-// 模拟获取商品数据的函数
-async function getProducts(): Promise<Product[]> {
-  // 在实际应用中，这里应该调用API获取数据，并且可以包含查询参数
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/products`, { cache: 'no-store' })
-  
-  if (!res.ok) {
-    throw new Error('获取商品列表失败')
-  }
-  
-  return res.json()
+// 定义分页类型
+interface Pagination {
+  total: number
+  totalPages: number
+  currentPage: number
+  limit: number
 }
 
-export default async function ProductsPage() {
-  const products = await getProducts()
+export default function ProductsPage() {
+  // 状态管理
+  const [products, setProducts] = useState<Product[]>([])
+  const [pagination, setPagination] = useState<Pagination>({
+    total: 0,
+    totalPages: 0,
+    currentPage: 1,
+    limit: 12
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  
+  // 筛选和搜索状态
+  const [keyword, setKeyword] = useState('')
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([])
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([])
+  const [minRating, setMinRating] = useState<number | null>(null)
+  const [sortBy, setSortBy] = useState('recommend')
   
   // 分类数据
   const categories = [
@@ -44,12 +59,135 @@ export default async function ProductsPage() {
   
   // 价格区间
   const priceRanges = [
-    { id: 1, name: '¥0 - ¥100' },
-    { id: 2, name: '¥100 - ¥300' },
-    { id: 3, name: '¥300 - ¥500' },
-    { id: 4, name: '¥500 - ¥1000' },
-    { id: 5, name: '¥1000以上' }
+    { id: '0-100', name: '¥0 - ¥100' },
+    { id: '100-300', name: '¥100 - ¥300' },
+    { id: '300-500', name: '¥300 - ¥500' },
+    { id: '500-1000', name: '¥500 - ¥1000' },
+    { id: '1000-999999', name: '¥1000以上' }
   ]
+  
+  // 获取产品数据
+  const fetchProducts = async () => {
+    setLoading(true)
+    setError('')
+    
+    try {
+      // 构建查询参数
+      const params = new URLSearchParams()
+      
+      if (keyword) {
+        params.append('keyword', keyword)
+      }
+      
+      if (selectedCategories.length > 0) {
+        selectedCategories.forEach(category => {
+          params.append('category', category.toString())
+        })
+      }
+      
+      if (selectedPriceRanges.length > 0) {
+        // 获取最低和最高价格
+        const minPrice = Math.min(...selectedPriceRanges.map(range => parseInt(range.split('-')[0])))
+        const maxPrice = Math.max(...selectedPriceRanges.map(range => parseInt(range.split('-')[1])))
+        
+        params.append('minPrice', minPrice.toString())
+        params.append('maxPrice', maxPrice.toString())
+      }
+      
+      if (minRating) {
+        params.append('minRating', minRating.toString())
+      }
+      
+      if (sortBy && sortBy !== 'recommend') {
+        params.append('sortBy', sortBy)
+      }
+      
+      params.append('page', pagination.currentPage.toString())
+      params.append('limit', pagination.limit.toString())
+      
+      // 获取数据
+      const res = await fetch(`/api/products?${params.toString()}`)
+      
+      if (!res.ok) {
+        throw new Error('获取商品列表失败')
+      }
+      
+      const data = await res.json()
+      setProducts(data.products)
+      setPagination(data.pagination)
+    } catch (err) {
+      console.error('获取商品列表出错:', err)
+      setError('获取商品列表失败，请稍后重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  // 首次加载和筛选条件变化时获取数据
+  useEffect(() => {
+    fetchProducts()
+  }, [
+    keyword, 
+    selectedCategories, 
+    selectedPriceRanges, 
+    minRating, 
+    sortBy, 
+    pagination.currentPage
+  ])
+  
+  // 处理分类选择
+  const handleCategoryChange = (categoryId: number) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId)
+      } else {
+        return [...prev, categoryId]
+      }
+    })
+    // 重置到第一页
+    setPagination(prev => ({ ...prev, currentPage: 1 }))
+  }
+  
+  // 处理价格区间选择
+  const handlePriceRangeChange = (rangeId: string) => {
+    setSelectedPriceRanges(prev => {
+      if (prev.includes(rangeId)) {
+        return prev.filter(id => id !== rangeId)
+      } else {
+        return [...prev, rangeId]
+      }
+    })
+    // 重置到第一页
+    setPagination(prev => ({ ...prev, currentPage: 1 }))
+  }
+  
+  // 处理评分选择
+  const handleRatingChange = (rating: number) => {
+    setMinRating(prev => prev === rating ? null : rating)
+    // 重置到第一页
+    setPagination(prev => ({ ...prev, currentPage: 1 }))
+  }
+  
+  // 处理排序方式变化
+  const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(event.target.value)
+    // 重置到第一页
+    setPagination(prev => ({ ...prev, currentPage: 1 }))
+  }
+  
+  // 处理页码变化
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, currentPage: page }))
+    window.scrollTo(0, 0)
+  }
+  
+  // 处理搜索
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault()
+    // 重置到第一页
+    setPagination(prev => ({ ...prev, currentPage: 1 }))
+    fetchProducts()
+  }
   
   return (
     <>
@@ -57,6 +195,25 @@ export default async function ProductsPage() {
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl font-bold mb-6">全部商品</h1>
+          
+          {/* 搜索栏 */}
+          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+            <form onSubmit={handleSearch} className="flex">
+              <input
+                type="text"
+                placeholder="搜索商品..."
+                className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+              />
+              <button 
+                type="submit"
+                className="bg-primary text-white px-6 py-2 rounded-r-md hover:bg-blue-600"
+              >
+                搜索
+              </button>
+            </form>
+          </div>
           
           <div className="flex flex-col md:flex-row gap-8">
             {/* 筛选侧边栏 */}
@@ -72,6 +229,8 @@ export default async function ProductsPage() {
                       <input 
                         type="checkbox" 
                         id={`category-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onChange={() => handleCategoryChange(category.id)}
                         className="w-4 h-4 text-primary rounded"
                       />
                       <label 
@@ -94,6 +253,8 @@ export default async function ProductsPage() {
                       <input 
                         type="checkbox" 
                         id={`price-${range.id}`}
+                        checked={selectedPriceRanges.includes(range.id)}
+                        onChange={() => handlePriceRangeChange(range.id)}
                         className="w-4 h-4 text-primary rounded"
                       />
                       <label 
@@ -116,6 +277,8 @@ export default async function ProductsPage() {
                       <input 
                         type="checkbox" 
                         id={`rating-${rating}`}
+                        checked={minRating === rating}
+                        onChange={() => handleRatingChange(rating)}
                         className="w-4 h-4 text-primary rounded"
                       />
                       <label 
@@ -130,8 +293,18 @@ export default async function ProductsPage() {
                 </div>
               </div>
               
-              <button className="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600">
-                应用筛选
+              <button 
+                className="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600"
+                onClick={() => {
+                  setKeyword('')
+                  setSelectedCategories([])
+                  setSelectedPriceRanges([])
+                  setMinRating(null)
+                  setSortBy('recommend')
+                  setPagination(prev => ({ ...prev, currentPage: 1 }))
+                }}
+              >
+                重置筛选
               </button>
             </div>
             
@@ -140,51 +313,141 @@ export default async function ProductsPage() {
               {/* 排序选项 */}
               <div className="bg-white rounded-lg shadow-md p-4 mb-6 flex justify-between items-center">
                 <div className="text-sm text-gray-500">
-                  共找到 <span className="text-primary font-medium">{products.length}</span> 件商品
+                  共找到 <span className="text-primary font-medium">{pagination.total}</span> 件商品
                 </div>
                 <div className="flex items-center">
                   <span className="text-sm text-gray-500 mr-2">排序：</span>
-                  <select className="border border-gray-300 rounded px-3 py-1 text-sm">
+                  <select 
+                    className="border border-gray-300 rounded px-3 py-1 text-sm"
+                    value={sortBy}
+                    onChange={handleSortChange}
+                  >
                     <option value="recommend">推荐</option>
                     <option value="newest">最新</option>
                     <option value="price-asc">价格由低到高</option>
                     <option value="price-desc">价格由高到低</option>
-                    <option value="sales">销量</option>
+                    <option value="rating">评分</option>
                   </select>
                 </div>
               </div>
               
-              {/* 商品网格 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product: Product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-              
-              {/* 分页 */}
-              <div className="mt-8 flex justify-center">
-                <nav className="flex items-center space-x-2">
-                  <a href="#" className="px-3 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-50">
-                    上一页
-                  </a>
-                  <a href="#" className="px-3 py-1 rounded bg-primary text-white">
-                    1
-                  </a>
-                  <a href="#" className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">
-                    2
-                  </a>
-                  <a href="#" className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">
-                    3
-                  </a>
-                  <span className="px-3 py-1 text-gray-500">...</span>
-                  <a href="#" className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">
-                    10
-                  </a>
-                  <a href="#" className="px-3 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-50">
-                    下一页
-                  </a>
-                </nav>
-              </div>
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="flex flex-col items-center">
+                    <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p className="mt-4 text-gray-600">加载商品中...</p>
+                  </div>
+                </div>
+              ) : error ? (
+                <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                  <div className="text-4xl text-red-500 mb-4">⚠️</div>
+                  <h2 className="text-xl font-medium mb-4">{error}</h2>
+                  <button 
+                    onClick={fetchProducts}
+                    className="bg-primary text-white px-6 py-3 rounded-md hover:bg-blue-600 inline-block"
+                  >
+                    重试
+                  </button>
+                </div>
+              ) : products.length === 0 ? (
+                <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                  <div className="text-4xl text-gray-400 mb-4">🔍</div>
+                  <h2 className="text-xl font-medium mb-4">未找到符合条件的商品</h2>
+                  <p className="text-gray-500 mb-8">尝试调整筛选条件或搜索关键词</p>
+                  <button 
+                    onClick={() => {
+                      setKeyword('')
+                      setSelectedCategories([])
+                      setSelectedPriceRanges([])
+                      setMinRating(null)
+                      setSortBy('recommend')
+                      setPagination(prev => ({ ...prev, currentPage: 1 }))
+                    }}
+                    className="bg-primary text-white px-6 py-3 rounded-md hover:bg-blue-600 inline-block"
+                  >
+                    清除筛选
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* 商品网格 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {products.map((product: Product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                  
+                  {/* 分页 */}
+                  {pagination.totalPages > 1 && (
+                    <div className="mt-8 flex justify-center">
+                      <nav className="flex items-center space-x-2">
+                        <button 
+                          onClick={() => handlePageChange(pagination.currentPage - 1)}
+                          disabled={pagination.currentPage <= 1}
+                          className="px-3 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          上一页
+                        </button>
+                        
+                        {/* 显示页码 */}
+                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                          let pageNumber;
+                          // 显示当前页及其周围的页
+                          if (pagination.totalPages <= 5) {
+                            pageNumber = i + 1;
+                          } else if (pagination.currentPage <= 3) {
+                            pageNumber = i + 1;
+                          } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                            pageNumber = pagination.totalPages - 4 + i;
+                          } else {
+                            pageNumber = pagination.currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <button 
+                              key={pageNumber}
+                              onClick={() => handlePageChange(pageNumber)}
+                              className={`px-3 py-1 rounded ${
+                                pagination.currentPage === pageNumber
+                                  ? 'bg-primary text-white'
+                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNumber}
+                            </button>
+                          );
+                        })}
+                        
+                        {/* 显示省略号 */}
+                        {pagination.totalPages > 5 && pagination.currentPage < pagination.totalPages - 2 && (
+                          <span className="px-3 py-1 text-gray-500">...</span>
+                        )}
+                        
+                        {/* 显示最后一页 */}
+                        {pagination.totalPages > 5 && pagination.currentPage < pagination.totalPages - 2 && (
+                          <button 
+                            onClick={() => handlePageChange(pagination.totalPages)}
+                            className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          >
+                            {pagination.totalPages}
+                          </button>
+                        )}
+                        
+                        <button 
+                          onClick={() => handlePageChange(pagination.currentPage + 1)}
+                          disabled={pagination.currentPage >= pagination.totalPages}
+                          className="px-3 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          下一页
+                        </button>
+                      </nav>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
