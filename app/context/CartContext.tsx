@@ -25,26 +25,35 @@ interface CartContextType {
 // 创建上下文
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// 检查是否在浏览器环境
+const isBrowser = typeof window !== 'undefined';
+
 // 购物车提供者组件
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // 从本地存储加载购物车
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Failed to parse cart from localStorage:', error);
+    if (isBrowser) {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        try {
+          setItems(JSON.parse(savedCart));
+        } catch (error) {
+          console.error('Failed to parse cart from localStorage:', error);
+        }
       }
+      setIsInitialized(true);
     }
   }, []);
   
   // 保存购物车到本地存储
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
-  }, [items]);
+    if (isBrowser && isInitialized) {
+      localStorage.setItem('cart', JSON.stringify(items));
+    }
+  }, [items, isInitialized]);
   
   // 添加商品到购物车
   const addItem = (product: any, quantity = 1) => {

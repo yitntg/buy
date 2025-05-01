@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Header from '../../components/Header'
@@ -8,13 +8,20 @@ import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
 
 export default function LoginPage() {
-  const { login, error, isLoading } = useAuth()
+  const { login, error, isLoading, isAuthenticated } = useAuth()
   const router = useRouter()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     remember: false
   })
+  
+  // 如果用户已登录，重定向到首页
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/')
+    }
+  }, [isAuthenticated, router])
   
   // 处理表单变化
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +38,7 @@ export default function LoginPage() {
     
     try {
       await login(formData.email, formData.password)
-      router.push('/')
+      // 登录成功将在useEffect中处理重定向
     } catch (err) {
       // 错误已在useAuth hook中处理
       console.error(err)

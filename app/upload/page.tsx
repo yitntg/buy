@@ -1,12 +1,19 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Image from 'next/image'
+import { useAuth } from '../context/AuthContext'
+import { useRouter } from 'next/navigation'
+
+// 检查是否在浏览器环境
+const isBrowser = typeof window !== 'undefined';
 
 export default function UploadProduct() {
+  const { isAuthenticated } = useAuth()
+  const router = useRouter()
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -26,6 +33,13 @@ export default function UploadProduct() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // 检查认证状态，如未登录，则重定向到登录页面
+  useEffect(() => {
+    if (isBrowser && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, router])
   
   // 处理表单变化
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -47,6 +61,8 @@ export default function UploadProduct() {
   
   // 处理图片上传
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isBrowser) return;
+    
     const fileList = e.target.files
     
     if (!fileList) return
@@ -81,6 +97,8 @@ export default function UploadProduct() {
   
   // 移除图片
   const removeImage = (index: number) => {
+    if (!isBrowser) return;
+    
     // 从数组中移除图片
     const newImages = [...images]
     const newImageUrls = [...imagePreviewUrls]
@@ -153,6 +171,24 @@ export default function UploadProduct() {
     }
   }
   
+  // 在尚未加载完成时显示加载指示器
+  if (isBrowser && !isAuthenticated) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50 py-12">
+          <div className="container mx-auto px-4 text-center">
+            <div className="flex flex-col items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+              <p>正在检查登录状态...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
   return (
     <>
       <Header />

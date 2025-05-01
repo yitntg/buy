@@ -53,7 +53,11 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const handleAddToCart = () => {
     if (product) {
       addItem(product, quantity)
-      alert('已成功加入购物车！')
+      
+      // 确保alert只在浏览器环境中执行
+      if (typeof window !== 'undefined') {
+        alert('已成功加入购物车！')
+      }
     }
   }
   

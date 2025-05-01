@@ -26,6 +26,9 @@ interface AuthContextType {
 // 创建上下文
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// 检查是否在浏览器环境
+const isBrowser = typeof window !== 'undefined';
+
 // 认证提供者组件
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -35,16 +38,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 从本地存储加载用户数据
   useEffect(() => {
     const loadUser = () => {
-      const savedUser = localStorage.getItem('user');
-      
-      if (savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-        } catch (err) {
-          console.error('Failed to parse user from localStorage:', err);
+      if (isBrowser) {
+        const savedUser = localStorage.getItem('user');
+        
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser));
+          } catch (err) {
+            console.error('Failed to parse user from localStorage:', err);
+          }
         }
       }
-      
       setIsLoading(false);
     };
     
@@ -72,7 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         
         setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
+        if (isBrowser) {
+          localStorage.setItem('user', JSON.stringify(userData));
+        }
       } else {
         throw new Error('用户名或密码错误');
       }
@@ -103,7 +109,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       
       setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
+      if (isBrowser) {
+        localStorage.setItem('user', JSON.stringify(newUser));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败，请稍后重试');
       console.error('Register error:', err);
@@ -115,7 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 退出登录方法
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    if (isBrowser) {
+      localStorage.removeItem('user');
+    }
   };
   
   // 提供上下文值
