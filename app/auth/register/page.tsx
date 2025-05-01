@@ -131,6 +131,7 @@ export default function RegisterPage() {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
+                    autoComplete="given-name"
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -145,6 +146,7 @@ export default function RegisterPage() {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
+                    autoComplete="family-name"
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -161,6 +163,7 @@ export default function RegisterPage() {
                   value={formData.username}
                   onChange={handleChange}
                   required
+                  autoComplete="username"
                   className={`w-full px-4 py-2 border ${validationErrors.username ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-primary`}
                 />
                 {validationErrors.username && (
@@ -179,6 +182,7 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  autoComplete="email"
                   className={`w-full px-4 py-2 border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-primary`}
                 />
                 {validationErrors.email && (
@@ -197,6 +201,7 @@ export default function RegisterPage() {
                   value={formData.phone}
                   onChange={handleChange}
                   required
+                  autoComplete="tel"
                   className={`w-full px-4 py-2 border ${validationErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-primary`}
                 />
                 {validationErrors.phone && (
