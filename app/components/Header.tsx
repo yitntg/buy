@@ -1,21 +1,47 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
+import { useRouter } from 'next/navigation'
 
 export default function Header() {
-  // 模拟用户登录状态
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  
-  // 模拟用户数据
-  const user = {
-    name: '张三',
-    avatar: 'https://picsum.photos/id/64/200/200'
-  }
+  const { user, isAuthenticated, logout } = useAuth()
+  const { items, itemsCount } = useCart()
+  const router = useRouter()
   
   // 模拟用户菜单状态
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  
+  // 关闭用户菜单的处理函数
+  const handleClickOutside = () => {
+    if (isUserMenuOpen) {
+      setIsUserMenuOpen(false)
+    }
+  }
+  
+  // 添加全局点击事件监听器
+  useEffect(() => {
+    document.addEventListener('click', handleClickOutside)
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [isUserMenuOpen])
+  
+  // 用户菜单点击处理函数
+  const handleUserMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // 阻止事件冒泡
+    setIsUserMenuOpen(!isUserMenuOpen)
+  }
+  
+  // 退出登录处理函数
+  const handleLogout = () => {
+    logout()
+    setIsUserMenuOpen(false)
+    router.push('/')
+  }
   
   return (
     <header className="bg-white shadow-md">
@@ -45,26 +71,28 @@ export default function Header() {
           </Link>
           <Link href="/cart" className="text-gray-700 hover:text-primary relative">
             购物车
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              2
-            </span>
+            {itemsCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {itemsCount}
+              </span>
+            )}
           </Link>
           
-          {isLoggedIn ? (
+          {isAuthenticated ? (
             <div className="relative">
               <button
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                onClick={handleUserMenuClick}
                 className="flex items-center space-x-1 focus:outline-none"
               >
                 <div className="relative w-8 h-8 rounded-full overflow-hidden">
                   <Image
-                    src={user.avatar}
-                    alt={user.name}
+                    src={user?.avatar || 'https://picsum.photos/id/64/200/200'}
+                    alt={user?.username || '用户'}
                     fill
                     className="object-cover"
                   />
                 </div>
-                <span className="text-gray-700">{user.name}</span>
+                <span className="text-gray-700">{user?.username}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
@@ -86,7 +114,7 @@ export default function Header() {
                   </Link>
                   <div className="border-t border-gray-100 my-1"></div>
                   <button
-                    onClick={() => setIsLoggedIn(false)}
+                    onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
                     退出登录

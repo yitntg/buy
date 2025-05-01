@@ -1,29 +1,24 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import { useCart } from '../context/CartContext'
+import { useState } from 'react'
 
 export default function CartPage() {
-  // 购物车商品数据（实际应用中应该从状态管理或API获取）
-  const cartItems = [
-    {
-      id: 1,
-      name: '高品质蓝牙耳机',
-      price: 299,
-      image: 'https://picsum.photos/id/1/400/300',
-      quantity: 1
-    },
-    {
-      id: 3,
-      name: '轻薄笔记本电脑',
-      price: 4999,
-      image: 'https://picsum.photos/id/3/400/300',
-      quantity: 1
-    }
-  ]
+  const { items, removeItem, updateQuantity, totalPrice } = useCart()
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
   
-  // 计算总价
-  const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
+  const handleCheckout = () => {
+    setIsCheckingOut(true)
+    // 这里可以添加跳转到结算页面的逻辑
+    setTimeout(() => {
+      setIsCheckingOut(false)
+      alert('此功能尚未实现，敬请期待！')
+    }, 1500)
+  }
   
   return (
     <>
@@ -32,7 +27,7 @@ export default function CartPage() {
         <div className="container mx-auto px-4">
           <h1 className="text-2xl font-bold mb-6">购物车</h1>
           
-          {cartItems.length > 0 ? (
+          {items.length > 0 ? (
             <div className="flex flex-col lg:flex-row gap-6">
               {/* 购物车商品列表 */}
               <div className="lg:w-2/3">
@@ -46,7 +41,7 @@ export default function CartPage() {
                   </div>
                   
                   {/* 购物车商品 */}
-                  {cartItems.map(item => (
+                  {items.map(item => (
                     <div key={item.id} className="border-t first:border-t-0 p-4">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         {/* 商品信息 */}
@@ -76,7 +71,11 @@ export default function CartPage() {
                         <div className="md:col-span-2 text-center">
                           <span className="md:hidden inline-block w-20 text-gray-500">数量：</span>
                           <div className="inline-flex items-center border border-gray-300 rounded">
-                            <button className="w-8 h-8 flex items-center justify-center text-gray-600">
+                            <button 
+                              className="w-8 h-8 flex items-center justify-center text-gray-600"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                            >
                               -
                             </button>
                             <input
@@ -86,7 +85,10 @@ export default function CartPage() {
                               readOnly
                               className="w-12 h-8 text-center border-x border-gray-300"
                             />
-                            <button className="w-8 h-8 flex items-center justify-center text-gray-600">
+                            <button 
+                              className="w-8 h-8 flex items-center justify-center text-gray-600"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            >
                               +
                             </button>
                           </div>
@@ -101,7 +103,10 @@ export default function CartPage() {
                       
                       {/* 移除按钮 */}
                       <div className="mt-4 md:text-right">
-                        <button className="text-gray-500 hover:text-red-500 text-sm">
+                        <button 
+                          className="text-gray-500 hover:text-red-500 text-sm"
+                          onClick={() => removeItem(item.id)}
+                        >
                           移除
                         </button>
                       </div>
@@ -137,8 +142,22 @@ export default function CartPage() {
                     </div>
                   </div>
                   
-                  <button className="w-full bg-primary hover:bg-blue-600 text-white py-3 rounded-md mt-6">
-                    去结算 ({cartItems.length}件商品)
+                  <button 
+                    className="w-full bg-primary hover:bg-blue-600 text-white py-3 rounded-md mt-6 flex items-center justify-center"
+                    onClick={handleCheckout}
+                    disabled={isCheckingOut}
+                  >
+                    {isCheckingOut ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        处理中...
+                      </>
+                    ) : (
+                      `去结算 (${items.length}件商品)`
+                    )}
                   </button>
                 </div>
                 

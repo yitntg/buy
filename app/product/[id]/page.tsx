@@ -1,7 +1,11 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
+import { useCart } from '../../context/CartContext'
 
 // 模拟获取商品数据的函数
 async function getProduct(id: string) {
@@ -15,8 +19,87 @@ async function getProduct(id: string) {
   return res.json()
 }
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id)
+export default function ProductPage({ params }: { params: { id: string } }) {
+  const { addItem } = useCart()
+  const [quantity, setQuantity] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [product, setProduct] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+  
+  // 获取商品数据
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${params.id}`)
+        
+        if (!res.ok) {
+          throw new Error('获取商品信息失败')
+        }
+        
+        const data = await res.json()
+        setProduct(data)
+      } catch (err) {
+        setError('获取商品信息失败，请稍后重试')
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchProduct()
+  }, [params.id])
+  
+  // 处理加入购物车
+  const handleAddToCart = () => {
+    if (product) {
+      addItem(product, quantity)
+      alert('已成功加入购物车！')
+    }
+  }
+  
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen py-12">
+          <div className="container mx-auto px-4 flex justify-center items-center">
+            <div className="flex flex-col items-center">
+              <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="mt-4 text-gray-600">加载商品信息...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+  
+  if (error || !product) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen py-12">
+          <div className="container mx-auto px-4">
+            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+              <div className="text-4xl text-red-500 mb-4">⚠️</div>
+              <h2 className="text-xl font-medium mb-4">{error || '商品不存在'}</h2>
+              <p className="text-gray-500 mb-8">请返回首页查看其他商品</p>
+              <Link 
+                href="/" 
+                className="bg-primary text-white px-6 py-3 rounded-md hover:bg-blue-600 inline-block"
+              >
+                返回首页
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
   
   return (
     <>
@@ -74,6 +157,8 @@ export default async function ProductPage({ params }: { params: { id: string } }
                     <select
                       id="quantity"
                       className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
                     >
                       {[...Array(10)].map((_, i) => (
                         <option key={i} value={i + 1}>
@@ -85,7 +170,10 @@ export default async function ProductPage({ params }: { params: { id: string } }
                 </div>
                 
                 <div className="flex space-x-4">
-                  <button className="flex-1 bg-primary hover:bg-blue-600 text-white py-3 rounded-md">
+                  <button 
+                    className="flex-1 bg-primary hover:bg-blue-600 text-white py-3 rounded-md"
+                    onClick={handleAddToCart}
+                  >
                     加入购物车
                   </button>
                   <button className="flex-1 border border-primary text-primary hover:bg-blue-50 py-3 rounded-md">
