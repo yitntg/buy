@@ -14,6 +14,8 @@ export default function Header() {
   
   // 模拟用户菜单状态
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  // 搜索关键词
+  const [searchQuery, setSearchQuery] = useState('')
   
   // 关闭用户菜单的处理函数
   const handleClickOutside = () => {
@@ -43,6 +45,29 @@ export default function Header() {
     router.push('/')
   }
   
+  // 处理搜索输入变化
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+  
+  // 处理搜索提交
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    }
+  }
+  
+  // 处理搜索框键盘事件
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (searchQuery.trim()) {
+        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      }
+    }
+  }
+  
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -53,16 +78,24 @@ export default function Header() {
         </div>
         
         <div className="flex-1 max-w-xl px-6">
-          <div className="relative">
+          <form onSubmit={handleSearchSubmit} className="relative">
             <input
               type="text"
               placeholder="搜索商品..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
               className="w-full py-2 px-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary text-white p-1 rounded-full">
-              🔍
+            <button 
+              type="submit" 
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary text-white p-1 rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </button>
-          </div>
+          </form>
         </div>
         
         <nav className="flex items-center space-x-6">

@@ -54,6 +54,14 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null)
   const [addingToCart, setAddingToCart] = useState(false)
   
+  // 新增状态：用户评论相关
+  const [userReview, setUserReview] = useState({
+    rating: 5,
+    content: ''
+  })
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  
   // 获取商品数据
   useEffect(() => {
     const fetchProduct = async () => {
@@ -169,6 +177,58 @@ export default function ProductPage({ params }: { params: { id: string } }) {
       } finally {
         setAddingToCart(false);
       }
+    }
+  };
+  
+  // 处理评分变化
+  const handleRatingChange = (rating: number) => {
+    setUserReview(prev => ({ ...prev, rating }));
+  };
+  
+  // 处理评论内容变化
+  const handleReviewContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setUserReview(prev => ({ ...prev, content: e.target.value }));
+  };
+  
+  // 提交评论
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!userReview.content.trim()) {
+      alert('请输入评论内容');
+      return;
+    }
+    
+    setSubmittingReview(true);
+    
+    try {
+      // 模拟API提交
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // 创建新评论对象
+      const newReview: Review = {
+        id: `review-${Date.now()}`,
+        userName: '当前用户', // 实际应用中应该使用真实用户名
+        userAvatar: '',
+        rating: userReview.rating,
+        date: new Date().toISOString().split('T')[0],
+        content: userReview.content
+      };
+      
+      // 更新评论列表
+      setReviews(prev => [newReview, ...prev]);
+      
+      // 清空表单并隐藏
+      setUserReview({ rating: 5, content: '' });
+      setShowReviewForm(false);
+      
+      // 显示成功消息
+      alert('评论提交成功！');
+    } catch (err) {
+      console.error('提交评论失败:', err);
+      alert('评论提交失败，请重试');
+    } finally {
+      setSubmittingReview(false);
     }
   };
   
@@ -395,126 +455,147 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             {/* 商品评价 */}
             <div className="p-6 border-t">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">用户评价 ({product.reviews})</h2>
-                <Link href={`/product/${product.id}/reviews`} className="text-primary hover:underline">
-                  查看全部 →
-                </Link>
+                <h2 className="text-xl font-bold">用户评价 ({reviews.length})</h2>
+                <button 
+                  onClick={() => setShowReviewForm(!showReviewForm)}
+                  className="text-primary hover:underline"
+                >
+                  {showReviewForm ? '取消评价' : '我要评价'}
+                </button>
               </div>
               
+              {/* 评价表单 */}
+              {showReviewForm && (
+                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                  <h3 className="text-lg font-medium mb-3">发表评价</h3>
+                  <form onSubmit={handleSubmitReview}>
+                    <div className="mb-4">
+                      <label className="block text-gray-600 mb-2">评分</label>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => handleRatingChange(star)}
+                            className="text-2xl focus:outline-none mr-1"
+                          >
+                            <span className={star <= userReview.rating ? 'text-yellow-400' : 'text-gray-300'}>
+                              ★
+                            </span>
+                          </button>
+                        ))}
+                        <span className="ml-2 text-gray-600">
+                          {userReview.rating} 星
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label htmlFor="reviewContent" className="block text-gray-600 mb-2">
+                        评价内容
+                      </label>
+                      <textarea
+                        id="reviewContent"
+                        rows={4}
+                        value={userReview.content}
+                        onChange={handleReviewContentChange}
+                        placeholder="请分享您对这款商品的体验和建议..."
+                        className="w-full border rounded-lg p-3 focus:ring-primary focus:border-primary"
+                        required
+                      ></textarea>
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={submittingReview}
+                        className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-70"
+                      >
+                        {submittingReview ? '提交中...' : '提交评价'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+              
+              {/* 评价列表 */}
               {reviews.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {reviews.map(review => (
-                    <div key={review.id} className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex items-start">
-                        <div className="bg-gray-200 h-10 w-10 rounded-full flex items-center justify-center text-gray-500 mr-3">
+                    <div key={review.id} className="border-b pb-6">
+                      <div className="flex items-center mb-2">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
                           {review.userAvatar ? (
-                            <Image
-                              src={review.userAvatar}
-                              alt={review.userName}
-                              width={40}
-                              height={40}
-                              className="rounded-full"
+                            <img 
+                              src={review.userAvatar} 
+                              alt={review.userName} 
+                              className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            review.userName.charAt(0)
+                            <span className="text-gray-500">{review.userName.slice(0, 1)}</span>
                           )}
                         </div>
                         <div>
-                          <div className="flex items-center mb-1">
-                            <div className="font-medium mr-2">{review.userName}</div>
-                            <div className="flex text-yellow-400 text-sm">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <svg
-                                  key={star}
-                                  className={`w-4 h-4 ${
-                                    star <= review.rating
-                                      ? 'fill-current'
-                                      : 'text-gray-300'
-                                  }`}
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                </svg>
-                              ))}
-                            </div>
-                            <div className="text-sm text-gray-500 ml-2">{review.date}</div>
-                          </div>
-                          <p className="text-gray-700">{review.content}</p>
+                          <div className="font-medium">{review.userName}</div>
+                          <div className="text-gray-500 text-sm">{review.date}</div>
                         </div>
                       </div>
+                      
+                      <div className="flex text-yellow-400 mb-2">
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <span key={star} className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}>
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <p className="text-gray-700">{review.content}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">暂无评价</p>
+                <div className="text-center py-8 text-gray-500">
+                  暂无评价，快来发表第一条评价吧！
+                </div>
+              )}
+              
+              {reviews.length > 0 && (
+                <div className="mt-6 text-center">
+                  <Link href={`/product/${product.id}/reviews`} className="text-primary hover:underline">
+                    查看全部评价 →
+                  </Link>
+                </div>
               )}
             </div>
             
-            {/* 商品详情 */}
-            <div className="p-6 border-t">
-              <h2 className="text-xl font-bold mb-4">商品详情</h2>
-              <div className="prose max-w-none">
-                <p>{product.description}</p>
-                {/* 这里可以添加更多详细的产品描述、图片等 */}
-                <div className="mt-4 space-y-4">
-                  <div className="border rounded-lg overflow-hidden">
-                    <Image
-                      src={`https://picsum.photos/id/${Number(product.id) + 10}/800/400`}
-                      alt="商品详情图片"
-                      width={800}
-                      height={400}
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="border rounded-lg overflow-hidden">
-                    <Image
-                      src={`https://picsum.photos/id/${Number(product.id) + 20}/800/400`}
-                      alt="商品详情图片"
-                      width={800}
-                      height={400}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* 推荐商品 */}
-            <div className="p-6 border-t">
-              <h2 className="text-xl font-bold mb-4">相关推荐</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {relatedProducts.length > 0 ? (
-                  relatedProducts.map(related => (
-                    <Link href={`/product/${related.id}`} key={related.id} className="group">
-                      <div className="bg-white border rounded-lg overflow-hidden transition-shadow hover:shadow-md">
-                        <div className="relative h-40 overflow-hidden">
+            {/* 相关商品 */}
+            {relatedProducts.length > 0 && (
+              <div className="p-6 border-t">
+                <h2 className="text-xl font-bold mb-4">相关商品</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {relatedProducts.map(relatedProduct => (
+                    <Link key={relatedProduct.id} href={`/product/${relatedProduct.id}`}>
+                      <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="relative h-48">
                           <Image
-                            src={related.image}
-                            alt={related.name}
+                            src={relatedProduct.image}
+                            alt={relatedProduct.name}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform"
+                            className="object-cover"
                           />
                         </div>
-                        <div className="p-3">
-                          <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary">{related.name}</h3>
-                          <div className="mt-2 text-primary font-medium">¥{related.price}</div>
+                        <div className="p-4">
+                          <h3 className="font-medium text-lg mb-2 hover:text-primary transition-colors">
+                            {relatedProduct.name}
+                          </h3>
+                          <div className="text-primary font-bold">¥{relatedProduct.price}</div>
                         </div>
                       </div>
                     </Link>
-                  ))
-                ) : (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="bg-gray-100 h-60 rounded-lg animate-pulse">
-                      <div className="h-40 bg-gray-200"></div>
-                      <div className="p-3">
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      </div>
-                    </div>
-                  ))
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>

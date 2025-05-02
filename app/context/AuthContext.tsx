@@ -10,6 +10,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   avatar?: string;
+  role?: 'user' | 'admin';
 }
 
 // 认证上下文类型
@@ -71,7 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: email || 'test@example.com',
         firstName: '测试',
         lastName: '用户',
-        avatar: 'https://picsum.photos/id/64/200/200'
+        avatar: 'https://picsum.photos/id/64/200/200',
+        role: 'admin' // 为测试方便，默认所有用户都是管理员
       };
       
       setUser(userData);
@@ -101,7 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: userData.username,
         email: userData.email,
         firstName: userData.firstName,
-        lastName: userData.lastName
+        lastName: userData.lastName,
+        role: 'user' // 新注册用户默认为普通用户角色
       };
       
       setUser(newUser);
