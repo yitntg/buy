@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 
 // 使用与根路由相同的模拟商品数据
 // 这在真实应用中应该使用数据库
@@ -87,27 +88,22 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const id = parseInt(params.id)
-    
-    // 查找商品
-    const product = productsData.find(p => p.id === id)
-    
-    if (!product) {
-      return NextResponse.json(
-        { error: '商品不存在' },
-        { status: 404 }
-      )
-    }
-    
-    return NextResponse.json(product)
-  } catch (error) {
-    console.error('获取商品详情失败:', error)
+  const id = params.id
+  
+  const { data: product, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .single()
+  
+  if (error) {
     return NextResponse.json(
-      { error: '获取商品详情失败' },
-      { status: 500 }
+      { error: '商品不存在或获取失败' },
+      { status: error.code === '22P02' ? 400 : 404 }
     )
   }
+  
+  return NextResponse.json(product)
 }
 
 // 更新商品
@@ -116,42 +112,33 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id)
-    
-    // 查找商品索引
-    const productIndex = productsData.findIndex(p => p.id === id)
-    
-    if (productIndex === -1) {
-      return NextResponse.json(
-        { error: '商品不存在' },
-        { status: 404 }
-      )
-    }
-    
-    // 获取更新数据
+    const id = params.id
     const data = await request.json()
     
-    // 更新商品
-    const updatedProduct = {
-      ...productsData[productIndex],
-      name: data.name || productsData[productIndex].name,
-      description: data.description || productsData[productIndex].description,
-      price: parseFloat(data.price) || productsData[productIndex].price,
-      image: data.image || productsData[productIndex].image,
-      category: parseInt(data.category) || productsData[productIndex].category,
-      inventory: parseInt(data.inventory) || productsData[productIndex].inventory
+    // 验证数据
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: '无有效更新数据' }, { status: 400 })
     }
     
-    // 替换原商品
-    productsData[productIndex] = updatedProduct
+    // 更新商品
+    const { data: updatedProduct, error } = await supabase
+      .from('products')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) {
+      return NextResponse.json(
+        { error: '更新失败或商品不存在' }, 
+        { status: error.code === '22P02' ? 400 : 404 }
+      )
+    }
     
     return NextResponse.json(updatedProduct)
   } catch (error) {
     console.error('更新商品失败:', error)
-    return NextResponse.json(
-      { error: '更新商品失败' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: '更新商品失败' }, { status: 500 })
   }
 }
 
@@ -160,31 +147,19 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const id = parseInt(params.id)
-    
-    // 查找商品索引
-    const productIndex = productsData.findIndex(p => p.id === id)
-    
-    if (productIndex === -1) {
-      return NextResponse.json(
-        { error: '商品不存在' },
-        { status: 404 }
-      )
-    }
-    
-    // 删除商品
-    const removedProduct = productsData.splice(productIndex, 1)[0]
-    
-    return NextResponse.json({ 
-      message: '商品删除成功',
-      deletedProduct: removedProduct
-    })
-  } catch (error) {
-    console.error('删除商品失败:', error)
+  const id = params.id
+  
+  const { error } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', id)
+  
+  if (error) {
     return NextResponse.json(
-      { error: '删除商品失败' },
-      { status: 500 }
+      { error: '删除失败或商品不存在' },
+      { status: error.code === '22P02' ? 400 : 404 }
     )
   }
+  
+  return NextResponse.json({ success: true, message: '商品已删除' })
 } 
