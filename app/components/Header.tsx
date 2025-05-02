@@ -145,6 +145,9 @@ export default function Header() {
                   <Link href="/upload" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     上传商品
                   </Link>
+                  <Link href="/admin/setup" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    数据库设置
+                  </Link>
                   <div className="border-t border-gray-100 my-1"></div>
                   <button
                     onClick={handleLogout}

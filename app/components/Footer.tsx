@@ -51,6 +51,11 @@ export default function Footer() {
         </div>
         <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-500">
           <p>© {new Date().getFullYear()} 乐购商城. 保留所有权利.</p>
+          <p className="mt-2">
+            <Link href="/admin/setup" className="text-gray-500 hover:text-white text-sm">
+              管理员设置
+            </Link>
+          </p>
         </div>
       </div>
     </footer>
