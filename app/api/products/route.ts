@@ -1,277 +1,183 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-// 模拟的商品数据
-const products = [
+// 模拟商品数据 - 导出以便其他文件可以访问
+export let products = [
   {
     id: 1,
-    name: '高品质蓝牙耳机',
-    description: '无线降噪耳机，长续航，高音质',
-    price: 299,
-    image: 'https://picsum.photos/id/1/400/300',
+    name: '智能手表',
+    description: '高级智能手表，支持多种运动模式和健康监测功能',
+    price: 1299,
+    image: 'https://picsum.photos/id/1/500/500',
     category: 1,
-    inventory: 100,
+    inventory: 50,
     rating: 4.8,
-    reviews: 120,
-    specifications: {
-      brand: 'AudioTech',
-      model: 'AT-200',
-      color: '黑色',
-      battery: '20小时续航',
-      connectivity: '蓝牙5.0'
-    }
+    reviews: 120
   },
   {
     id: 2,
-    name: '智能手表',
-    description: '全面健康监测，多功能运动模式',
-    price: 599,
-    image: 'https://picsum.photos/id/2/400/300',
+    name: '蓝牙耳机',
+    description: '无线蓝牙耳机，支持降噪功能，续航时间长',
+    price: 399,
+    image: 'https://picsum.photos/id/3/500/500',
     category: 1,
-    inventory: 50,
+    inventory: 200,
     rating: 4.5,
-    reviews: 85,
-    specifications: {
-      brand: 'SmartLife',
-      model: 'SL-Watch Pro',
-      color: '银色',
-      battery: '7天续航',
-      waterproof: 'IP68级防水'
-    }
+    reviews: 85
   },
   {
     id: 3,
-    name: '轻薄笔记本电脑',
-    description: '高性能处理器，长达12小时续航',
+    name: '真皮沙发',
+    description: '进口真皮沙发，舒适耐用，适合家庭使用',
     price: 4999,
-    image: 'https://picsum.photos/id/3/400/300',
-    category: 1,
-    inventory: 30,
-    rating: 4.7,
-    reviews: 64,
-    specifications: {
-      brand: 'TechBook',
-      model: 'Air 14',
-      processor: 'Intel i7 12代',
-      memory: '16GB',
-      storage: '512GB SSD',
-      display: '14英寸 2K屏幕'
-    }
+    image: 'https://picsum.photos/id/20/500/500',
+    category: 2,
+    inventory: 10,
+    rating: 4.9,
+    reviews: 32
   },
   {
     id: 4,
-    name: '专业摄影相机',
-    description: '2400万像素，4K视频录制',
-    price: 3299,
-    image: 'https://picsum.photos/id/4/400/300',
-    category: 1,
-    inventory: 15,
-    rating: 4.9,
-    reviews: 42,
-    specifications: {
-      brand: 'PhotoMaster',
-      model: 'PM-D800',
-      sensorType: 'CMOS',
-      resolution: '2400万像素',
-      videoResolution: '4K/60fps',
-      weight: '680g'
-    }
+    name: '纯棉T恤',
+    description: '100%纯棉材质，透气舒适，多色可选',
+    price: 99,
+    image: 'https://picsum.photos/id/25/500/500',
+    category: 3,
+    inventory: 500,
+    rating: 4.3,
+    reviews: 210
   },
   {
     id: 5,
-    name: '时尚双肩包',
-    description: '大容量，防水材质，适合旅行和日常使用',
-    price: 199,
-    image: 'https://picsum.photos/id/5/400/300',
-    category: 3,
-    inventory: 200,
-    rating: 4.3,
-    reviews: 156,
-    specifications: {
-      brand: 'TravelGo',
-      material: '防水尼龙',
-      capacity: '30L',
-      color: '灰色',
-      dimensions: '45 x 30 x 15 cm'
-    }
+    name: '保湿面霜',
+    description: '深层保湿面霜，适合干性肌肤，改善肌肤干燥问题',
+    price: 159,
+    image: 'https://picsum.photos/id/30/500/500',
+    category: 4,
+    inventory: 80,
+    rating: 4.6,
+    reviews: 65
   },
   {
     id: 6,
-    name: '多功能厨房料理机',
-    description: '一机多用，轻松处理各类食材',
-    price: 599,
-    image: 'https://picsum.photos/id/6/400/300',
-    category: 2,
-    inventory: 75,
-    rating: 4.6,
-    reviews: 89,
-    specifications: {
-      brand: 'KitchenPro',
-      power: '800W',
-      capacity: '2L',
-      functions: '切碎、搅拌、榨汁、研磨',
-      color: '白色'
-    }
+    name: '有机坚果礼盒',
+    description: '精选有机坚果礼盒，包含多种坚果，营养丰富',
+    price: 169,
+    image: 'https://picsum.photos/id/40/500/500',
+    category: 5,
+    inventory: 100,
+    rating: 4.7,
+    reviews: 48
   },
   {
     id: 7,
-    name: '天然有机护肤套装',
-    description: '不含化学添加剂，适合敏感肌肤',
-    price: 329,
-    image: 'https://picsum.photos/id/7/400/300',
-    category: 4,
-    inventory: 120,
-    rating: 4.7,
-    reviews: 113,
-    specifications: {
-      brand: 'NatureSkin',
-      skinType: '所有肤质',
-      ingredients: '有机植物提取物',
-      contents: '洁面乳、爽肤水、精华液、面霜',
-      volume: '多种规格'
-    }
-  },
-  {
-    id: 8,
-    name: '专业瑜伽垫',
-    description: '环保材质，防滑设计，舒适缓冲',
-    price: 159,
-    image: 'https://picsum.photos/id/8/400/300',
+    name: '瑜伽垫',
+    description: '专业瑜伽垫，防滑耐磨，厚度适中，适合各种瑜伽动作',
+    price: 128,
+    image: 'https://picsum.photos/id/50/500/500',
     category: 6,
-    inventory: 180,
-    rating: 4.8,
-    reviews: 95,
-    specifications: {
-      brand: 'YogaLife',
-      material: 'TPE环保材质',
-      thickness: '6mm',
-      size: '183 x 61 cm',
-      color: '紫色'
-    }
+    inventory: 60,
+    rating: 4.4,
+    reviews: 72
   }
 ]
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    
-    // 获取查询参数
-    const keyword = searchParams.get('keyword')?.toLowerCase();
-    const categoryId = searchParams.get('category');
-    const minPrice = searchParams.get('minPrice');
-    const maxPrice = searchParams.get('maxPrice');
-    const minRating = searchParams.get('minRating');
-    const sortBy = searchParams.get('sortBy');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '12');
-    
-    // 筛选产品
-    let filteredProducts = [...products];
-    
-    // 关键字搜索
-    if (keyword) {
-      filteredProducts = filteredProducts.filter(product => 
-        product.name.toLowerCase().includes(keyword) || 
-        product.description.toLowerCase().includes(keyword)
-      );
-    }
-    
-    // 分类过滤
-    if (categoryId) {
-      filteredProducts = filteredProducts.filter(product => 
-        product.category === parseInt(categoryId)
-      );
-    }
-    
-    // 价格区间过滤
-    if (minPrice) {
-      filteredProducts = filteredProducts.filter(product => 
-        product.price >= parseInt(minPrice)
-      );
-    }
-    
-    if (maxPrice) {
-      filteredProducts = filteredProducts.filter(product => 
-        product.price <= parseInt(maxPrice)
-      );
-    }
-    
-    // 评分过滤
-    if (minRating) {
-      filteredProducts = filteredProducts.filter(product => 
-        product.rating >= parseFloat(minRating)
-      );
-    }
-    
-    // 排序
-    if (sortBy) {
-      switch (sortBy) {
-        case 'price-asc':
-          filteredProducts.sort((a, b) => a.price - b.price);
-          break;
-        case 'price-desc':
-          filteredProducts.sort((a, b) => b.price - a.price);
-          break;
-        case 'rating':
-          filteredProducts.sort((a, b) => b.rating - a.rating);
-          break;
-        case 'newest':
-          // 假设id越大的产品越新
-          filteredProducts.sort((a, b) => Number(b.id) - Number(a.id));
-          break;
-        default:
-          // 默认排序，不做任何改变
-          break;
-      }
-    }
-    
-    // 计算总页数
-    const totalProducts = filteredProducts.length;
-    const totalPages = Math.ceil(totalProducts / limit);
-    
-    // 分页
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginatedProducts = filteredProducts.slice(start, end);
-    
-    // 返回结果
-    return NextResponse.json({
-      products: paginatedProducts,
-      pagination: {
-        total: totalProducts,
-        totalPages,
-        currentPage: page,
-        limit
-      }
-    });
-  } catch (error) {
-    console.error('获取产品列表出错:', error);
-    return NextResponse.json(
-      { error: '获取产品列表失败' }, 
-      { status: 500 }
-    );
+// 获取商品列表
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url)
+  const page = parseInt(url.searchParams.get('page') || '1')
+  const limit = parseInt(url.searchParams.get('limit') || '10')
+  const keyword = url.searchParams.get('keyword') || ''
+  const category = url.searchParams.get('category')
+  const sortBy = url.searchParams.get('sortBy') || 'relevance'
+  
+  // 筛选
+  let filteredProducts = [...products]
+  
+  // 关键词搜索
+  if (keyword) {
+    const lowerKeyword = keyword.toLowerCase()
+    filteredProducts = filteredProducts.filter(
+      p => p.name.toLowerCase().includes(lowerKeyword) || 
+           p.description.toLowerCase().includes(lowerKeyword)
+    )
   }
+  
+  // 分类筛选
+  if (category) {
+    filteredProducts = filteredProducts.filter(p => p.category === parseInt(category))
+  }
+  
+  // 排序
+  switch (sortBy) {
+    case 'priceAsc':
+      filteredProducts.sort((a, b) => a.price - b.price)
+      break
+    case 'priceDesc':
+      filteredProducts.sort((a, b) => b.price - a.price)
+      break
+    case 'latest':
+      // 在真实场景中，这里应该按照创建时间排序
+      // 这里简单地按id倒序排列，模拟最新添加的在前面
+      filteredProducts.sort((a, b) => b.id - a.id)
+      break
+    case 'relevance':
+    default:
+      // 默认排序，保持原有顺序
+      break
+  }
+  
+  // 计算总数
+  const total = filteredProducts.length
+  
+  // 分页
+  const startIndex = (page - 1) * limit
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + limit)
+  
+  // 返回结果
+  return NextResponse.json({
+    products: paginatedProducts,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit)
+  })
 }
 
-export async function POST(request: Request) {
+// 新增商品
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    // 解析请求体
+    const data = await request.json()
     
-    // 在实际应用中，这里应该有数据验证和处理逻辑
-    // 然后将商品保存到数据库
+    // 验证必填字段
+    if (!data.name || !data.description || !data.price || !data.image || !data.category) {
+      return NextResponse.json({ error: '缺少必填字段' }, { status: 400 })
+    }
     
-    // 模拟新增商品
+    // 生成新ID（在真实场景中，这应该由数据库自动生成）
+    const maxId = Math.max(...products.map(p => p.id), 0)
+    const newId = maxId + 1
+    
+    // 创建新商品
     const newProduct = {
-      id: products.length + 1,
-      ...body,
+      id: newId,
+      name: data.name,
+      description: data.description,
+      price: parseFloat(data.price),
+      image: data.image,
+      category: parseInt(data.category),
+      inventory: parseInt(data.inventory) || 0,
       rating: 0,
       reviews: 0
     }
     
+    // 添加到商品列表
+    products.push(newProduct)
+    
+    // 返回新创建的商品
     return NextResponse.json(newProduct, { status: 201 })
   } catch (error) {
-    return NextResponse.json(
-      { error: '提交失败，请检查输入内容' }, 
-      { status: 400 }
-    )
+    console.error('创建商品失败:', error)
+    return NextResponse.json({ error: '创建商品失败' }, { status: 500 })
   }
 } 
