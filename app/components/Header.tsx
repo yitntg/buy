@@ -68,6 +68,9 @@ export default function Header() {
     }
   }
   
+  // 检查用户是否是管理员
+  const isAdmin = user?.role === 'admin'
+  
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -142,15 +145,19 @@ export default function Header() {
                   <Link href="/account/favorites" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     收藏夹
                   </Link>
-                  <Link href="/upload" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    上传商品
-                  </Link>
-                  <Link href="/admin/setup" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    数据库设置
-                  </Link>
-                  <Link href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    管理员仪表盘
-                  </Link>
+                  {isAdmin && (
+                    <>
+                      <Link href="/admin/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        商品管理
+                      </Link>
+                      <Link href="/admin/setup" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        数据库设置
+                      </Link>
+                      <Link href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        管理员仪表盘
+                      </Link>
+                    </>
+                  )}
                   <div className="border-t border-gray-100 my-1"></div>
                   <button
                     onClick={handleLogout}
@@ -171,10 +178,6 @@ export default function Header() {
               </Link>
             </div>
           )}
-          
-          <Link href="/upload" className="bg-primary text-white px-4 py-2 rounded-full hover:bg-blue-600">
-            上传商品
-          </Link>
         </nav>
       </div>
     </header>
