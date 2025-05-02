@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 模拟商品数据 - 导出以便其他文件可以访问
-export let products = [
+// 模拟商品数据 - 使用全局变量存储，不再导出
+// 在真实应用中，应该使用数据库存储
+const productsData = [
   {
     id: 1,
     name: '智能手表',
@@ -81,6 +82,11 @@ export let products = [
   }
 ]
 
+// 导出一个函数用于其他文件获取商品数据
+export function getProducts() {
+  return productsData
+}
+
 // 获取商品列表
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -91,7 +97,7 @@ export async function GET(request: NextRequest) {
   const sortBy = url.searchParams.get('sortBy') || 'relevance'
   
   // 筛选
-  let filteredProducts = [...products]
+  let filteredProducts = [...productsData]
   
   // 关键词搜索
   if (keyword) {
@@ -155,7 +161,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 生成新ID（在真实场景中，这应该由数据库自动生成）
-    const maxId = Math.max(...products.map(p => p.id), 0)
+    const maxId = Math.max(...productsData.map(p => p.id), 0)
     const newId = maxId + 1
     
     // 创建新商品
@@ -172,7 +178,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 添加到商品列表
-    products.push(newProduct)
+    productsData.push(newProduct)
     
     // 返回新创建的商品
     return NextResponse.json(newProduct, { status: 201 })

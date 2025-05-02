@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 从上层导入商品数据
-// 由于在API路由之间不能直接导入变量，我们在这里单独定义
-// 在真实应用中，这应该是一个数据库操作
-let products = [
+// 使用与根路由相同的模拟商品数据
+// 这在真实应用中应该使用数据库
+const productsData = [
   {
     id: 1,
     name: '智能手表',
@@ -92,7 +91,7 @@ export async function GET(
     const id = parseInt(params.id)
     
     // 查找商品
-    const product = products.find(p => p.id === id)
+    const product = productsData.find(p => p.id === id)
     
     if (!product) {
       return NextResponse.json(
@@ -120,7 +119,7 @@ export async function PUT(
     const id = parseInt(params.id)
     
     // 查找商品索引
-    const productIndex = products.findIndex(p => p.id === id)
+    const productIndex = productsData.findIndex(p => p.id === id)
     
     if (productIndex === -1) {
       return NextResponse.json(
@@ -134,17 +133,17 @@ export async function PUT(
     
     // 更新商品
     const updatedProduct = {
-      ...products[productIndex],
-      name: data.name || products[productIndex].name,
-      description: data.description || products[productIndex].description,
-      price: parseFloat(data.price) || products[productIndex].price,
-      image: data.image || products[productIndex].image,
-      category: parseInt(data.category) || products[productIndex].category,
-      inventory: parseInt(data.inventory) || products[productIndex].inventory
+      ...productsData[productIndex],
+      name: data.name || productsData[productIndex].name,
+      description: data.description || productsData[productIndex].description,
+      price: parseFloat(data.price) || productsData[productIndex].price,
+      image: data.image || productsData[productIndex].image,
+      category: parseInt(data.category) || productsData[productIndex].category,
+      inventory: parseInt(data.inventory) || productsData[productIndex].inventory
     }
     
     // 替换原商品
-    products[productIndex] = updatedProduct
+    productsData[productIndex] = updatedProduct
     
     return NextResponse.json(updatedProduct)
   } catch (error) {
@@ -165,7 +164,7 @@ export async function DELETE(
     const id = parseInt(params.id)
     
     // 查找商品索引
-    const productIndex = products.findIndex(p => p.id === id)
+    const productIndex = productsData.findIndex(p => p.id === id)
     
     if (productIndex === -1) {
       return NextResponse.json(
@@ -175,7 +174,7 @@ export async function DELETE(
     }
     
     // 删除商品
-    const removedProduct = products.splice(productIndex, 1)[0]
+    const removedProduct = productsData.splice(productIndex, 1)[0]
     
     return NextResponse.json({ 
       message: '商品删除成功',
