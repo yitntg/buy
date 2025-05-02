@@ -14,6 +14,8 @@ export default function Header() {
   
   // 模拟用户菜单状态
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  // 管理菜单状态
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false)
   // 搜索关键词
   const [searchQuery, setSearchQuery] = useState('')
   
@@ -21,6 +23,9 @@ export default function Header() {
   const handleClickOutside = () => {
     if (isUserMenuOpen) {
       setIsUserMenuOpen(false)
+    }
+    if (isAdminMenuOpen) {
+      setIsAdminMenuOpen(false)
     }
   }
   
@@ -30,12 +35,26 @@ export default function Header() {
     return () => {
       document.removeEventListener('click', handleClickOutside)
     }
-  }, [isUserMenuOpen])
+  }, [isUserMenuOpen, isAdminMenuOpen])
   
   // 用户菜单点击处理函数
   const handleUserMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation() // 阻止事件冒泡
     setIsUserMenuOpen(!isUserMenuOpen)
+    // 关闭管理菜单
+    if (isAdminMenuOpen) {
+      setIsAdminMenuOpen(false)
+    }
+  }
+  
+  // 管理菜单点击处理函数
+  const handleAdminMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // 阻止事件冒泡
+    setIsAdminMenuOpen(!isAdminMenuOpen)
+    // 关闭用户菜单
+    if (isUserMenuOpen) {
+      setIsUserMenuOpen(false)
+    }
   }
   
   // 退出登录处理函数
@@ -114,6 +133,63 @@ export default function Header() {
             )}
           </Link>
           
+          {isAuthenticated && isAdmin && (
+            <div className="relative">
+              <button
+                onClick={handleAdminMenuClick}
+                className="flex items-center space-x-1 text-gray-700 hover:text-primary focus:outline-none"
+              >
+                <span>管理</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+              
+              {isAdminMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                  <Link href="/admin/dashboard" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
+                    管理仪表盘
+                  </Link>
+                  <Link href="/admin/products" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    商品管理
+                  </Link>
+                  <Link href="/admin/products/new" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    添加商品
+                  </Link>
+                  <Link href="/admin/orders" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    订单管理
+                  </Link>
+                  <Link href="/admin/users" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    用户管理
+                  </Link>
+                  <Link href="/admin/setup" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    数据库设置
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+          
           {isAuthenticated ? (
             <div className="relative">
               <button
@@ -145,19 +221,6 @@ export default function Header() {
                   <Link href="/account/favorites" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     收藏夹
                   </Link>
-                  {isAdmin && (
-                    <>
-                      <Link href="/admin/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        商品管理
-                      </Link>
-                      <Link href="/admin/setup" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        数据库设置
-                      </Link>
-                      <Link href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        管理员仪表盘
-                      </Link>
-                    </>
-                  )}
                   <div className="border-t border-gray-100 my-1"></div>
                   <button
                     onClick={handleLogout}
