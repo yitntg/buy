@@ -23,6 +23,18 @@ VALUES
   ('有机坚果礼盒', '精选有机坚果礼盒，包含多种坚果，营养丰富', 169, 'https://picsum.photos/id/40/500/500', 5, 100, 4.7, 48),
   ('瑜伽垫', '专业瑜伽垫，防滑耐磨，厚度适中，适合各种瑜伽动作', 128, 'https://picsum.photos/id/50/500/500', 6, 60, 4.4, 72);
 
+-- 创建评论表
+CREATE TABLE IF NOT EXISTS reviews (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  user_id VARCHAR(255) NOT NULL,
+  username VARCHAR(255) NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT unique_user_product_review UNIQUE (product_id, user_id)
+);
+
 -- 创建产品分类表
 CREATE TABLE IF NOT EXISTS categories (
   id SERIAL PRIMARY KEY,

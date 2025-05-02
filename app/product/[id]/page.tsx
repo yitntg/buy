@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
+import ReviewSection from '../../components/ReviewSection'
 
 // 定义商品类型接口
 interface Product {
@@ -600,6 +601,13 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         </div>
       </main>
       <Footer />
+      
+      {/* 评论组件 */}
+      {!loading && product && (
+        <section className="container mx-auto px-4 py-8">
+          <ReviewSection productId={params.id} />
+        </section>
+      )}
     </>
   )
 } 
