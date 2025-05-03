@@ -137,12 +137,42 @@ export default function UploadProduct() {
     setIsSubmitting(true)
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // 首先使用第一张图片作为产品图片URL（在实际环境中应上传到存储服务）
+      let imageUrl = 'https://picsum.photos/id/1/500/500' // 默认图片
       
-      // 在真实应用中，这里会上传图片和表单数据到后端API
-      console.log('表单数据:', formData)
-      console.log('图片:', images)
+      if (images.length > 0 && imagePreviewUrls.length > 0) {
+        // 在实际环境中这里应该上传图片到Supabase Storage或其他存储服务
+        // 这里我们暂时使用预览URL作为示例
+        imageUrl = imagePreviewUrls[0]
+      }
+      
+      // 准备产品数据
+      const productData = {
+        name: formData.name,
+        category: parseInt(formData.category),
+        price: parseFloat(formData.price),
+        inventory: parseInt(formData.inventory),
+        description: formData.description,
+        image: imageUrl,
+        // 其他可选字段可以根据需要添加
+        specifications: formData.specifications || '',
+        brand: formData.brand || '',
+        model: formData.model || ''
+      }
+      
+      // 发送产品数据到API
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(productData),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || '上传失败')
+      }
       
       // 提交成功
       setSubmitSuccess(true)
@@ -169,7 +199,7 @@ export default function UploadProduct() {
       
     } catch (error) {
       console.error('上传失败:', error)
-      alert('上传失败，请稍后重试')
+      alert(`上传失败: ${error instanceof Error ? error.message : '请稍后重试'}`)
     } finally {
       setIsSubmitting(false)
     }

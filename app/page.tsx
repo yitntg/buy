@@ -3,48 +3,92 @@ import Link from 'next/link'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ProductCard from './components/ProductCard'
+import { supabase } from '@/lib/supabase'
 
-export default function Home() {
-  // 模拟的热门商品数据
-  const featuredProducts = [
-    {
-      id: 1,
-      name: '高品质蓝牙耳机',
-      description: '无线降噪耳机，长续航，高音质',
-      price: 299,
-      image: 'https://picsum.photos/id/1/400/300'
-    },
-    {
-      id: 2,
-      name: '智能手表',
-      description: '全面健康监测，多功能运动模式',
-      price: 599,
-      image: 'https://picsum.photos/id/2/400/300'
-    },
-    {
-      id: 3,
-      name: '轻薄笔记本电脑',
-      description: '高性能处理器，长达12小时续航',
-      price: 4999,
-      image: 'https://picsum.photos/id/3/400/300'
-    },
-    {
-      id: 4,
-      name: '专业摄影相机',
-      description: '2400万像素，4K视频录制',
-      price: 3299,
-      image: 'https://picsum.photos/id/4/400/300'
+// 定义商品类型接口
+interface Product {
+  id: number
+  name: string
+  description: string
+  price: number
+  image: string
+  category: number
+  inventory: number
+  rating: number
+  reviews: number
+}
+
+// 定义分类类型接口
+interface Category {
+  id: number
+  name: string
+  icon: string
+}
+
+// 获取商品数据
+async function getProducts() {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(4)
+
+    if (error) {
+      console.error('获取商品失败:', error)
+      return []
     }
-  ]
 
-  const categories = [
-    { id: 1, name: '电子产品', icon: '📱' },
-    { id: 2, name: '家居用品', icon: '🏠' },
-    { id: 3, name: '服装鞋帽', icon: '👕' },
-    { id: 4, name: '美妆护肤', icon: '💄' },
-    { id: 5, name: '食品饮料', icon: '🍎' },
-    { id: 6, name: '运动户外', icon: '⚽' }
-  ]
+    return data || []
+  } catch (error) {
+    console.error('获取商品异常:', error)
+    return []
+  }
+}
+
+// 获取分类数据
+async function getCategories() {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('id', { ascending: true })
+
+    if (error) {
+      console.error('获取分类失败:', error)
+      return []
+    }
+
+    // 为分类添加图标
+    const categoriesWithIcons = data.map(category => ({
+      ...category,
+      icon: getCategoryIcon(category.id)
+    }))
+
+    return categoriesWithIcons || []
+  } catch (error) {
+    console.error('获取分类异常:', error)
+    return []
+  }
+}
+
+// 获取分类图标
+function getCategoryIcon(categoryId: number): string {
+  const icons: Record<number, string> = {
+    1: '📱',
+    2: '🏠',
+    3: '👕',
+    4: '💄',
+    5: '🍎',
+    6: '⚽'
+  }
+  return icons[categoryId] || '🔍'
+}
+
+export default async function Home() {
+  // 从数据库获取数据
+  const featuredProducts = await getProducts()
+  const categories = await getCategories()
 
   return (
     <main className="min-h-screen">
@@ -80,7 +124,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold mb-8 text-center">热门分类</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {categories.map((category) => (
-              <Link href="/" key={category.id} className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow text-center">
+              <Link href={`/category/${category.id}`} key={category.id} className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow text-center">
                 <div className="text-3xl mb-2">{category.icon}</div>
                 <h3 className="font-medium">{category.name}</h3>
               </Link>
@@ -93,11 +137,20 @@ export default function Home() {
       <section className="py-12">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold mb-8 text-center">热门商品</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">暂无商品数据，请先添加商品</p>
+              <Link href="/upload" className="mt-4 inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600">
+                添加商品
+              </Link>
+            </div>
+          )}
           <div className="text-center mt-8">
             <Link href="/products" className="text-primary font-medium hover:underline">
               查看更多商品 →

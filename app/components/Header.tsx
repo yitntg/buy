@@ -191,6 +191,18 @@ export default function Header() {
                     </svg>
                     数据库设置
                   </Link>
+                  <Link href="/setup" className="flex items-center px-4 py-2 text-sm text-orange-600 hover:bg-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                    </svg>
+                    数据库初始化
+                  </Link>
+                  <Link href="/env-debug" className="flex items-center px-4 py-2 text-sm text-blue-600 hover:bg-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    环境变量检查
+                  </Link>
                 </div>
               )}
             </div>
