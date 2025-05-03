@@ -370,6 +370,22 @@ export default function SetupPage() {
                     {tablesResult.message}
                   </div>
                 )}
+
+                {/* 添加直接执行命令的按钮 */}
+                {tablesResult && !tablesResult.success && (
+                  <div className="mt-4">
+                    <a 
+                      href="/api/db/run-init-script"
+                      target="_blank"
+                      className="block w-full text-center py-3 px-4 rounded-md font-medium bg-orange-500 text-white hover:bg-orange-600"
+                    >
+                      一键执行命令行初始化
+                    </a>
+                    <p className="mt-2 text-xs text-gray-500">
+                      点击上方按钮将通过服务器执行 npm run init-db 命令，无需您自己在终端运行
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
