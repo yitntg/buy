@@ -163,6 +163,20 @@ export default function SetupPage() {
         { id: 6, name: '运动户外', description: '运动器材、户外装备' }
       ]
 
+      // 先检查分类表是否可访问，以确认表结构初始化成功
+      addLog('正在验证分类表是否可用...')
+      const { data: categoryCheck, error: categoryCheckError } = await supabase
+        .from('categories')
+        .select('count')
+        .limit(1)
+      
+      if (categoryCheckError) {
+        throw new Error(`分类表验证失败，表可能未成功创建: ${categoryCheckError.message}`)
+      }
+      
+      addLog('分类表验证成功，继续添加数据')
+
+      // 使用upsert替代insert以避免重复添加
       const { error: categoriesError } = await supabase
         .from('categories')
         .upsert(categories, { onConflict: 'id' })
@@ -184,16 +198,29 @@ export default function SetupPage() {
         { name: '瑜伽垫', description: '专业瑜伽垫，防滑耐磨，厚度适中，适合各种瑜伽动作', price: 128, image: 'https://picsum.photos/id/50/500/500', category: 6, inventory: 60, rating: 4.4, reviews: 72 }
       ]
 
-      // 逐个插入产品数据
-      for (const product of products) {
-        const { error: prodError } = await supabase
-          .from('products')
-          .upsert(product)
-
-        if (prodError) {
-          throw new Error(`添加产品数据失败: ${prodError.message}`)
-        }
+      // 检查products表是否可用
+      addLog('正在验证产品表是否可用...')
+      const { data: productsCheck, error: productsCheckError } = await supabase
+        .from('products')
+        .select('count')
+        .limit(1)
+      
+      if (productsCheckError) {
+        throw new Error(`产品表验证失败，表可能未成功创建: ${productsCheckError.message}`)
       }
+      
+      addLog('产品表验证成功，继续添加数据')
+
+      // 使用事务批量插入所有产品，而不是逐个插入
+      // 由于Supabase客户端不直接支持事务，我们使用upsert批量插入
+      const { error: productsError } = await supabase
+        .from('products')
+        .upsert(products)
+
+      if (productsError) {
+        throw new Error(`添加产品数据失败: ${productsError.message}`)
+      }
+      
       addLog('产品数据添加成功')
 
       setDataResult({
