@@ -69,154 +69,18 @@ export default function SetupPage() {
       if (!categoriesExists || !productsExists || !reviewsExists) {
         addLog('开始创建缺失的表...')
 
-        // 创建分类表
-        if (!categoriesExists) {
-          addLog('正在创建分类表...')
-          const { error: createCatError } = await supabase.rpc('execute_sql', {
-            sql: `
-            CREATE TABLE IF NOT EXISTS categories (
-              id SERIAL PRIMARY KEY,
-              name VARCHAR(100) NOT NULL,
-              description TEXT,
-              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );`
-          })
-          
-          if (createCatError) {
-            // 如果RPC失败，尝试使用REST API
-            const result = await fetch('/api/db/create-table', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                table: 'categories',
-                sql: `
-                CREATE TABLE IF NOT EXISTS categories (
-                  id SERIAL PRIMARY KEY,
-                  name VARCHAR(100) NOT NULL,
-                  description TEXT,
-                  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                );`
-              }),
-            })
-            
-            if (!result.ok) {
-              throw new Error(`创建分类表失败: ${await result.text()}`)
-            }
-            
-            addLog('分类表创建成功（通过API）')
-          } else {
-            addLog('分类表创建成功（通过RPC）')
-          }
+        // 直接调用我们的初始化API来创建表
+        addLog('正在调用数据库初始化API...')
+        const response = await fetch('/api/db/run-init-script')
+        if (!response.ok) {
+          const errorText = await response.text()
+          addLog(`API调用失败: ${response.status} ${response.statusText}`)
+          throw new Error(`调用初始化API失败: ${response.status} ${response.statusText}`)
         }
         
-        // 创建产品表
-        if (!productsExists) {
-          addLog('正在创建产品表...')
-          const { error: createProdError } = await supabase.rpc('execute_sql', {
-            sql: `
-            CREATE TABLE IF NOT EXISTS products (
-              id SERIAL PRIMARY KEY,
-              name VARCHAR(255) NOT NULL,
-              description TEXT NOT NULL,
-              price DECIMAL(10,2) NOT NULL,
-              image VARCHAR(255) NOT NULL,
-              category INTEGER NOT NULL,
-              inventory INTEGER NOT NULL DEFAULT 0,
-              rating DECIMAL(3,1) NOT NULL DEFAULT 0,
-              reviews INTEGER NOT NULL DEFAULT 0,
-              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );`
-          })
-          
-          if (createProdError) {
-            // 如果RPC失败，尝试使用REST API
-            const result = await fetch('/api/db/create-table', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                table: 'products',
-                sql: `
-                CREATE TABLE IF NOT EXISTS products (
-                  id SERIAL PRIMARY KEY,
-                  name VARCHAR(255) NOT NULL,
-                  description TEXT NOT NULL,
-                  price DECIMAL(10,2) NOT NULL,
-                  image VARCHAR(255) NOT NULL,
-                  category INTEGER NOT NULL,
-                  inventory INTEGER NOT NULL DEFAULT 0,
-                  rating DECIMAL(3,1) NOT NULL DEFAULT 0,
-                  reviews INTEGER NOT NULL DEFAULT 0,
-                  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                );`
-              }),
-            })
-            
-            if (!result.ok) {
-              throw new Error(`创建产品表失败: ${await result.text()}`)
-            }
-            
-            addLog('产品表创建成功（通过API）')
-          } else {
-            addLog('产品表创建成功（通过RPC）')
-          }
-        }
+        addLog('API调用成功，等待表创建结果验证...')
         
-        // 创建评论表
-        if (!reviewsExists) {
-          addLog('正在创建评论表...')
-          const { error: createReviewError } = await supabase.rpc('execute_sql', {
-            sql: `
-            CREATE TABLE IF NOT EXISTS reviews (
-              id SERIAL PRIMARY KEY,
-              product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-              user_id VARCHAR(255) NOT NULL,
-              username VARCHAR(255) NOT NULL,
-              rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-              comment TEXT,
-              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-              CONSTRAINT unique_user_product_review UNIQUE (product_id, user_id)
-            );`
-          })
-          
-          if (createReviewError) {
-            // 如果RPC失败，尝试使用REST API
-            const result = await fetch('/api/db/create-table', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                table: 'reviews',
-                sql: `
-                CREATE TABLE IF NOT EXISTS reviews (
-                  id SERIAL PRIMARY KEY,
-                  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-                  user_id VARCHAR(255) NOT NULL,
-                  username VARCHAR(255) NOT NULL,
-                  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-                  comment TEXT,
-                  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                  CONSTRAINT unique_user_product_review UNIQUE (product_id, user_id)
-                );`
-              }),
-            })
-            
-            if (!result.ok) {
-              throw new Error(`创建评论表失败: ${await result.text()}`)
-            }
-            
-            addLog('评论表创建成功（通过API）')
-          } else {
-            addLog('评论表创建成功（通过RPC）')
-          }
-        }
-        
-        // 再次检查表是否都创建成功
-        addLog('正在验证表创建结果...')
+        // 验证表是否创建成功
         const { error: verifyError } = await supabase
           .from('categories')
           .select('count')
@@ -225,7 +89,7 @@ export default function SetupPage() {
         if (verifyError) {
           setTablesResult({
             success: false,
-            message: '表创建失败。请尝试使用终端命令 npm run init-db 初始化数据库。'
+            message: '表创建失败。请查看详细日志或手动初始化数据库。'
           })
           addLog('表创建验证失败，请使用以下方法之一:')
           addLog('1. 在Supabase仪表板中运行SQL脚本')

@@ -4,9 +4,23 @@ import pg from 'pg'
 // 使用Postgres环境变量，而不是依赖npm run init-db
 export async function GET() {
   try {
+    // 记录当前环境变量情况（非敏感信息）
+    const postgresUrlExists = !!process.env.POSTGRES_URL
+    const postgresUrlNonPoolingExists = !!process.env.POSTGRES_URL_NON_POOLING
+    console.log('数据库URL环境变量情况:', { 
+      postgresUrlExists, 
+      postgresUrlNonPoolingExists 
+    })
+
+    // 选择连接URL
+    const connectionString = process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING
+    if (!connectionString) {
+      throw new Error('未找到数据库连接URL环境变量')
+    }
+
     // 创建一个PostgreSQL客户端
     const client = new pg.Client({
-      connectionString: process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING,
+      connectionString,
       // 添加SSL配置，允许自签名证书
       ssl: {
         rejectUnauthorized: false // 设置为false，跳过SSL证书验证
@@ -17,7 +31,13 @@ export async function GET() {
     console.log('正在连接到PostgreSQL数据库并创建表...')
     
     // 连接到数据库
-    await client.connect()
+    try {
+      await client.connect()
+      console.log('数据库连接成功')
+    } catch (err: any) {
+      console.error('数据库连接失败:', err)
+      throw new Error(`无法连接到数据库: ${err.message}`)
+    }
     
     // 创建三个表的SQL语句
     const createCategoriesTableSQL = `
@@ -60,23 +80,32 @@ export async function GET() {
     // 执行创建表的SQL语句
     let results: string[] = []
     try {
+      console.log('正在执行创建分类表SQL...')
       const result1 = await client.query(createCategoriesTableSQL)
+      console.log('分类表创建结果:', result1)
       results.push('分类表创建成功')
     } catch (err: any) {
+      console.error('分类表创建失败:', err)
       results.push(`分类表创建失败: ${err.message}`)
     }
     
     try {
+      console.log('正在执行创建产品表SQL...')
       const result2 = await client.query(createProductsTableSQL)
+      console.log('产品表创建结果:', result2)
       results.push('产品表创建成功')
     } catch (err: any) {
+      console.error('产品表创建失败:', err)
       results.push(`产品表创建失败: ${err.message}`)
     }
     
     try {
+      console.log('正在执行创建评论表SQL...')
       const result3 = await client.query(createReviewsTableSQL)
+      console.log('评论表创建结果:', result3)
       results.push('评论表创建成功')
     } catch (err: any) {
+      console.error('评论表创建失败:', err)
       results.push(`评论表创建失败: ${err.message}`)
     }
     
@@ -127,12 +156,23 @@ export async function GET() {
             body { font-family: system-ui, sans-serif; line-height: 1.5; padding: 2rem; max-width: 800px; margin: 0 auto; }
             .error { color: #e53e3e; }
             .back { margin-top: 1rem; display: inline-block; }
+            pre { background: #f7f7f7; padding: 1rem; border-radius: 0.5rem; overflow: auto; }
           </style>
         </head>
         <body>
           <h1 class="error">初始化失败</h1>
           <p>执行数据库初始化操作时发生错误：</p>
-          <p>${error instanceof Error ? error.message : '未知错误'}</p>
+          <pre>${error instanceof Error ? error.message : '未知错误'}</pre>
+          
+          <div>
+            <h3>可能的解决方案：</h3>
+            <ol>
+              <li>检查数据库连接环境变量是否正确设置</li>
+              <li>确认Supabase项目已经创建且正常运行</li>
+              <li>在Supabase仪表板中手动创建表</li>
+            </ol>
+          </div>
+          
           <p>5秒后将自动返回到初始化页面，或者 <a href="/setup" class="back">立即返回</a></p>
         </body>
       </html>
