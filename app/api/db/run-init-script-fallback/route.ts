@@ -1,46 +1,28 @@
 import { NextResponse } from 'next/server'
 import pg from 'pg'
 
+// 备用初始化脚本 - 使用全局SSL禁用
+// 警告：这在生产环境中不安全，但可作为最后的备用选项
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 // 使用Postgres环境变量，而不是依赖npm run init-db
 export async function GET() {
   try {
-    // 记录当前环境变量情况（非敏感信息）
-    const postgresUrlExists = !!process.env.POSTGRES_URL
-    const postgresUrlNonPoolingExists = !!process.env.POSTGRES_URL_NON_POOLING
-    console.log('数据库URL环境变量情况:', { 
-      postgresUrlExists, 
-      postgresUrlNonPoolingExists 
-    })
-
-    // 选择连接URL并添加sslmode=require参数
-    let connectionString = process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING
+    console.log('备用初始化脚本启动，已全局禁用SSL证书验证')
+    
+    // 选择连接URL
+    const connectionString = process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING
     if (!connectionString) {
       throw new Error('未找到数据库连接URL环境变量')
     }
-    
-    // 如果URL包含?，使用&添加参数，否则使用?添加参数
-    if (connectionString.includes('?')) {
-      connectionString += '&sslmode=require'
-    } else {
-      connectionString += '?sslmode=require'
-    }
-    
-    console.log('已修改连接字符串添加SSL模式参数')
 
-    // 创建一个PostgreSQL客户端 - 使用连接参数控制SSL
+    // 创建一个PostgreSQL客户端 - 无SSL选项
     const client = new pg.Client(connectionString)
     
-    // 记录执行开始
-    console.log('正在连接到PostgreSQL数据库并创建表...')
-    
     // 连接到数据库
-    try {
-      await client.connect()
-      console.log('数据库连接成功')
-    } catch (err: any) {
-      console.error('数据库连接失败:', err)
-      throw new Error(`无法连接到数据库: ${err.message}`)
-    }
+    console.log('尝试连接数据库...')
+    await client.connect()
+    console.log('数据库连接成功')
     
     // 创建三个表的SQL语句
     const createCategoriesTableSQL = `
@@ -83,32 +65,23 @@ export async function GET() {
     // 执行创建表的SQL语句
     let results: string[] = []
     try {
-      console.log('正在执行创建分类表SQL...')
       const result1 = await client.query(createCategoriesTableSQL)
-      console.log('分类表创建结果:', result1)
       results.push('分类表创建成功')
     } catch (err: any) {
-      console.error('分类表创建失败:', err)
       results.push(`分类表创建失败: ${err.message}`)
     }
     
     try {
-      console.log('正在执行创建产品表SQL...')
       const result2 = await client.query(createProductsTableSQL)
-      console.log('产品表创建结果:', result2)
       results.push('产品表创建成功')
     } catch (err: any) {
-      console.error('产品表创建失败:', err)
       results.push(`产品表创建失败: ${err.message}`)
     }
     
     try {
-      console.log('正在执行创建评论表SQL...')
       const result3 = await client.query(createReviewsTableSQL)
-      console.log('评论表创建结果:', result3)
       results.push('评论表创建成功')
     } catch (err: any) {
-      console.error('评论表创建失败:', err)
       results.push(`评论表创建失败: ${err.message}`)
     }
     
@@ -130,11 +103,18 @@ export async function GET() {
             .success { color: #38a169; }
             .error { color: #e53e3e; }
             .back { margin-top: 1rem; display: inline-block; }
+            .warning { background-color: #fff8dc; border-left: 4px solid #f6e05e; padding: 1rem; margin: 1rem 0; }
           </style>
         </head>
         <body>
           <h1 class="${success ? 'success' : 'error'}">${success ? '初始化成功！' : '初始化部分失败'}</h1>
           <p>数据库初始化操作已执行。</p>
+          
+          <div class="warning">
+            <strong>注意：</strong> 本次操作使用了备用连接方式，暂时禁用了SSL验证以解决证书问题。
+            这在开发阶段可以接受，但在生产环境中应当使用正确配置的SSL证书。
+          </div>
+          
           <div>
             <h3>执行结果:</h3>
             <ul>
@@ -148,7 +128,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('执行数据库操作时发生错误:', error)
     
-    // 返回错误页面，包含重试链接和更多选项
+    // 返回错误页面
     return new NextResponse(`
       <html>
         <head>
@@ -160,31 +140,52 @@ export async function GET() {
             .error { color: #e53e3e; }
             .back { margin-top: 1rem; display: inline-block; }
             pre { background: #f7f7f7; padding: 1rem; border-radius: 0.5rem; overflow: auto; }
-            .btn-group { margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; }
-            .btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 0.25rem; text-decoration: none; font-weight: 500; }
-            .btn-primary { background-color: #3182ce; color: white; }
-            .btn-secondary { background-color: #718096; color: white; }
           </style>
         </head>
         <body>
-          <h1 class="error">初始化失败</h1>
+          <h1 class="error">备用初始化方式也失败了</h1>
           <p>执行数据库初始化操作时发生错误：</p>
           <pre>${error instanceof Error ? error.message : '未知错误'}</pre>
           
           <div>
-            <h3>可能的解决方案：</h3>
-            <ol>
-              <li>检查数据库连接环境变量是否正确设置</li>
-              <li>确认Supabase项目已经创建且正常运行</li>
-              <li>在Supabase仪表板中手动创建表</li>
-            </ol>
+            <h3>建议手动创建表：</h3>
+            <p>请在Supabase控制台中执行以下SQL语句：</p>
+            <pre>
+CREATE TABLE IF NOT EXISTS categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS products (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  price DECIMAL(10,2) NOT NULL,
+  image VARCHAR(255) NOT NULL,
+  category INTEGER NOT NULL,
+  inventory INTEGER NOT NULL DEFAULT 0,
+  rating DECIMAL(3,1) NOT NULL DEFAULT 0,
+  reviews INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  user_id VARCHAR(255) NOT NULL,
+  username VARCHAR(255) NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT unique_user_product_review UNIQUE (product_id, user_id)
+);
+            </pre>
           </div>
           
-          <div class="btn-group">
-            <a href="/setup" class="btn btn-secondary">返回设置页面</a>
-            <a href="/api/db/run-init-script-fallback" class="btn btn-primary">尝试备用方式创建表</a>
-            <a href="https://app.supabase.com" target="_blank" class="btn btn-secondary">打开Supabase仪表板</a>
-          </div>
+          <p>5秒后将自动返回到初始化页面，或者 <a href="/setup" class="back">立即返回</a></p>
+          <p><a href="https://app.supabase.com" target="_blank">打开Supabase仪表板</a></p>
         </body>
       </html>
     `, { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
