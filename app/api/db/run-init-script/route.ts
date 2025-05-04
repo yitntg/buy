@@ -6,7 +6,11 @@ export async function GET() {
   try {
     // 创建一个PostgreSQL客户端
     const client = new pg.Client({
-      connectionString: process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING
+      connectionString: process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING,
+      // 添加SSL配置，允许自签名证书
+      ssl: {
+        rejectUnauthorized: false // 设置为false，跳过SSL证书验证
+      }
     })
     
     // 记录执行开始
