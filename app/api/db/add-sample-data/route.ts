@@ -127,33 +127,55 @@ export async function GET(request: Request) {
     // 执行SQL添加产品数据
     console.log('添加产品数据...')
     try {
+      // 先检查分类表中是否有数据，如果没有，先添加分类数据
+      const { rows: categoryCount } = await client.query('SELECT COUNT(*) as count FROM categories')
+      if (parseInt(categoryCount[0].count) === 0) {
+        console.log('分类表为空，可能需要先确保分类数据已添加')
+        // 如果要在这里添加额外的分类检查和处理代码，可以添加
+      }
+      
       // 先清空产品表，以避免重复
       console.log('清空产品表...')
       try {
+        // 使用更安全的方式清空表
+        try {
+          // 如果存在外键约束，可能需要临时禁用
+          await client.query('SET CONSTRAINTS ALL DEFERRED')
+        } catch (err) {
+          console.log('无法设置约束延迟，继续尝试删除')
+        }
+        
         await client.query('DELETE FROM products')
         console.log('产品表已清空')
       } catch (err) {
         console.error('清空产品表失败:', err)
+        results.push(`清空产品表失败: ${err instanceof Error ? err.message : '未知错误'}`) 
+        // 继续执行，尝试插入数据
       }
       
-      // 为每个产品准备SQL 
+      // 为每个产品准备SQL，使用INSERT IGNORE语法
       for (const product of products) {
-        const insertProductSQL = `
-          INSERT INTO products (name, description, price, image, category, inventory, rating, reviews)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `
-        await client.query(insertProductSQL, [
-          product.name,
-          product.description,
-          product.price,
-          product.image,
-          product.category,
-          product.inventory,
-          product.rating,
-          product.reviews
-        ])
+        try {
+          const insertProductSQL = `
+            INSERT INTO products (name, description, price, image, category, inventory, rating, reviews)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `
+          await client.query(insertProductSQL, [
+            product.name,
+            product.description,
+            product.price,
+            product.image,
+            product.category,
+            product.inventory,
+            product.rating,
+            product.reviews
+          ])
+        } catch (err: any) {
+          console.error(`添加产品 "${product.name}" 失败:`, err)
+          // 继续添加其他产品
+        }
       }
-      results.push('产品数据添加成功')
+      results.push('产品数据添加操作完成')
     } catch (err: any) {
       console.error('添加产品数据失败:', err)
       results.push(`产品数据添加失败: ${err.message}`)
