@@ -7,12 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "init-db": "node scripts/init-supabase.js"
+    "init-db": "node scripts/init-supabase.js",
+    "init-db-local": "node -r dotenv/config scripts/init-supabase.js",
+    "direct-init": "node scripts/direct-init.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
     "autoprefixer": "^10.4.16",
-    "dotenv": "^16.5.0",
+    "dotenv": "16.5.0",
     "next": "^14.0.4",
     "pg": "^8.15.6",
     "postcss": "^8.4.32",
