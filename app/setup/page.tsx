@@ -72,6 +72,7 @@ export default function SetupPage() {
         // 直接调用我们的初始化API来创建表
         addLog('正在调用数据库初始化API...')
         const response = await fetch('/api/db/run-init-script')
+        
         if (!response.ok) {
           const errorText = await response.text()
           addLog(`API调用失败: ${response.status} ${response.statusText}`)
@@ -80,26 +81,50 @@ export default function SetupPage() {
         
         addLog('API调用成功，等待表创建结果验证...')
         
-        // 验证表是否创建成功
-        const { error: verifyError } = await supabase
-          .from('categories')
-          .select('count')
-          .limit(1)
+        // 添加延迟，等待数据库操作完成
+        addLog('等待数据库操作完成...')
+        await new Promise(resolve => setTimeout(resolve, 2000))
         
-        if (verifyError) {
-          setTablesResult({
-            success: false,
-            message: '表创建失败。请查看详细日志或手动初始化数据库。'
-          })
-          addLog('表创建验证失败，请使用以下方法之一:')
-          addLog('1. 在Supabase仪表板中运行SQL脚本')
-          addLog('2. 在终端运行命令: npm run init-db')
-        } else {
+        // 使用重试机制验证表是否创建成功
+        let verifySuccess = false
+        const maxRetries = 3
+        
+        for (let i = 0; i < maxRetries; i++) {
+          addLog(`正在验证表创建结果 (尝试 ${i+1}/${maxRetries})...`)
+          
+          const { error: verifyError } = await supabase
+            .from('categories')
+            .select('count')
+            .limit(1)
+          
+          if (!verifyError) {
+            verifySuccess = true
+            addLog('表验证成功！')
+            break
+          }
+          
+          if (i < maxRetries - 1) {
+            addLog(`验证未通过，将在2秒后重试...`)
+            await new Promise(resolve => setTimeout(resolve, 2000))
+          }
+        }
+        
+        if (verifySuccess) {
           setTablesResult({
             success: true,
             message: '所有表都已成功创建！可以继续添加数据。'
           })
           addLog('表创建验证成功，所有表已准备就绪')
+        } else {
+          // 即使验证失败，表可能也已创建成功，只是验证有问题
+          setTablesResult({
+            success: false,
+            message: '表可能已创建，但验证失败。请查看API返回结果或手动验证。'
+          })
+          addLog('表创建验证失败，但API报告创建成功')
+          addLog('建议：')
+          addLog('1. 继续添加数据，可能依然能正常工作')
+          addLog('2. 在Supabase仪表板中检查表是否存在')
         }
       } else {
         setTablesResult({
