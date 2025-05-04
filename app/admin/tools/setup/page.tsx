@@ -199,147 +199,123 @@ export default function SetupPage() {
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
           <div className="mb-8">
             <h1 className="text-2xl font-bold mb-2">数据库初始化工具</h1>
-            <p className="text-gray-600">
-              此页面可帮助您初始化数据库表结构并添加示例数据
+            <p className="text-gray-600 mb-6">
+              此页面可帮助您创建必要的数据库表和示例数据
             </p>
-            <div className="mt-4">
-              <Link href="/" className="text-primary hover:underline">
-                ← 返回首页
+            
+            <div className="mb-6">
+              <Link href="/admin" className="text-primary hover:underline">
+                ← 返回管理面板
               </Link>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-4">步骤1: 检查表结构</h2>
-                <p className="text-gray-600 mb-4">
-                  点击下方按钮检查必要的数据库表结构是否存在
-                </p>
+            {/* 当前状态 */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-3">系统状态</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-medium mb-2">表结构状态</h3>
+                  <p className="text-sm text-gray-600 mb-4">必要的数据库表是否已创建</p>
+                  {tablesResult ? (
+                    <div className={`text-sm p-3 rounded ${
+                      tablesResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                    }`}>
+                      {tablesResult.message}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">尚未检查</p>
+                  )}
+                </div>
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-medium mb-2">示例数据状态</h3>
+                  <p className="text-sm text-gray-600 mb-4">初始示例数据是否已添加</p>
+                  {dataResult ? (
+                    <div className={`text-sm p-3 rounded ${
+                      dataResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                    }`}>
+                      {dataResult.message}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">尚未检查</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 操作按钮 */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-3">操作</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={createTables}
                   disabled={isCreatingTables}
-                  className={`w-full py-3 px-4 rounded-md font-medium flex items-center justify-center ${
-                    isCreatingTables 
-                      ? 'bg-gray-300 cursor-not-allowed' 
-                      : 'bg-primary text-white hover:bg-blue-600'
-                  }`}
                 >
-                  {isCreatingTables ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      检查中...
-                    </>
-                  ) : '检查表结构'}
+                  {isCreatingTables ? '创建中...' : '创建数据库表'}
                 </button>
-                {tablesResult && (
-                  <div className={`mt-4 p-4 rounded-md ${tablesResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                    {tablesResult.message}
-                  </div>
-                )}
-
-                {/* 添加直接执行命令的按钮 */}
-                {tablesResult && !tablesResult.success && (
-                  <div className="mt-4">
-                    <a 
-                      href="/api/db/run-init-script"
-                      target="_blank"
-                      className="block w-full text-center py-3 px-4 rounded-md font-medium bg-orange-500 text-white hover:bg-orange-600"
-                    >
-                      一键执行命令行初始化
-                    </a>
-                    <p className="mt-2 text-xs text-gray-500">
-                      点击上方按钮将通过服务器执行初始化，无需您自己在终端运行
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h2 className="text-xl font-semibold mb-4">步骤2: 添加示例数据</h2>
-                <p className="text-gray-600 mb-4">
-                  点击下方按钮添加示例分类和产品数据
-                </p>
                 <button
+                  className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={insertSampleData}
-                  disabled={isInsertingData || (tablesResult !== null && !tablesResult.success)}
-                  className={`w-full py-3 px-4 rounded-md font-medium flex items-center justify-center ${
-                    isInsertingData || (tablesResult !== null && !tablesResult.success)
-                      ? 'bg-gray-300 cursor-not-allowed' 
-                      : 'bg-primary text-white hover:bg-blue-600'
-                  }`}
+                  disabled={isInsertingData}
                 >
-                  {isInsertingData ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      添加中...
-                    </>
-                  ) : '添加示例数据'}
+                  {isInsertingData ? '添加中...' : '添加示例数据'}
                 </button>
-                {dataResult && (
-                  <div className={`mt-4 p-4 rounded-md ${dataResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                    {dataResult.message}
-                  </div>
-                )}
-                
-                {dataResult && !dataResult.success && (
-                  <div className="mt-4">
-                    <a 
-                      href="/api/db/add-sample-data"
-                      target="_blank"
-                      className="block w-full text-center py-3 px-4 rounded-md font-medium bg-orange-500 text-white hover:bg-orange-600"
-                    >
-                      直接添加示例数据
-                    </a>
-                    <p className="mt-2 text-xs text-gray-500">
-                      如果按钮无效，可以尝试直接访问上面的链接添加示例数据
-                    </p>
-                  </div>
+              </div>
+            </div>
+
+            {/* 执行日志 */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-3">执行日志</h2>
+              <div className="border rounded-lg bg-gray-50 p-4 h-64 overflow-y-auto">
+                {statusMessages.length > 0 ? (
+                  <ol className="list-decimal ml-6 space-y-1">
+                    {statusMessages.map((message, index) => (
+                      <li key={index} className="text-sm text-gray-800">{message}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center mt-12">执行操作后，日志将显示在这里</p>
                 )}
               </div>
             </div>
 
-            <div className="bg-gray-100 rounded-lg p-4">
-              <h2 className="text-lg font-semibold mb-2">执行日志</h2>
-              <div className="h-96 overflow-y-auto font-mono text-sm bg-gray-900 text-green-400 p-4 rounded">
-                {statusMessages.length === 0 ? (
-                  <p className="text-gray-500">等待操作...</p>
-                ) : (
-                  statusMessages.map((message, index) => (
-                    <div key={index} className="mb-1">
-                      <span className="text-gray-400">{`[${new Date().toLocaleTimeString()}]`}</span> {message}
-                    </div>
-                  ))
-                )}
+            {/* 帮助信息 */}
+            <div>
+              <h2 className="text-xl font-semibold mb-3">帮助信息</h2>
+              <div className="space-y-4 text-sm">
+                <div className="border-l-4 border-blue-500 pl-4 py-2">
+                  <h3 className="font-medium mb-1">首次运行说明</h3>
+                  <p className="text-gray-600">
+                    如果您是首次设置应用，请先点击"创建数据库表"，然后再点击"添加示例数据"。
+                  </p>
+                </div>
+                
+                <div className="border-l-4 border-blue-500 pl-4 py-2">
+                  <h3 className="font-medium mb-1">问题排查</h3>
+                  <p className="text-gray-600 mb-2">
+                    如果遇到问题，请尝试以下方法：
+                  </p>
+                  <ul className="list-disc ml-5 space-y-1 text-gray-600">
+                    <li>检查 Supabase 环境变量是否正确设置</li>
+                    <li>在开发环境中使用控制台查看详细错误</li>
+                    <li>确保 Supabase 项目已创建并处于活跃状态</li>
+                    <li>检查数据库权限设置</li>
+                  </ul>
+                </div>
+                
+                <div className="border-l-4 border-blue-500 pl-4 py-2">
+                  <h3 className="font-medium mb-1">高级用户选项</h3>
+                  <p className="text-gray-600 mb-2">
+                    高级用户可以直接使用以下 API 端点：
+                  </p>
+                  <ul className="list-disc ml-5 space-y-1 text-gray-600">
+                    <li><code>/api/db/run-init-script</code> - 创建所有必要的表</li>
+                    <li><code>/api/db/add-sample-data</code> - 添加示例数据</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-
-          {(tablesResult?.success && dataResult?.success) && (
-            <div className="mt-8 bg-green-50 p-6 rounded-lg">
-              <h2 className="text-xl font-semibold text-green-700 mb-4">✓ 初始化完成</h2>
-              <p className="mb-4">
-                数据库初始化已完成。现在您可以：
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link href="/" className="bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600">
-                  返回首页
-                </Link>
-                <Link href="/upload" className="border border-primary text-primary px-6 py-2 rounded-md hover:bg-blue-50">
-                  添加商品
-                </Link>
-                <Link href="/env-debug" className="border border-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-100">
-                  环境变量检查
-                </Link>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

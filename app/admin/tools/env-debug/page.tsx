@@ -120,8 +120,8 @@ export default function EnvDebugPage() {
               此页面用于测试环境变量配置和Supabase连接是否正常
             </p>
             <div className="mt-4 mb-6">
-              <Link href="/" className="text-primary hover:underline">
-                ← 返回首页
+              <Link href="/admin" className="text-primary hover:underline">
+                ← 返回管理面板
               </Link>
             </div>
             

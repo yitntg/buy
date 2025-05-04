@@ -85,8 +85,8 @@ export default function DbCheckPage() {
               此页面执行一系列测试，以诊断Supabase数据库连接问题
             </p>
             <div className="flex space-x-4 mb-6">
-              <Link href="/" className="text-primary hover:underline">
-                ← 返回首页
+              <Link href="/admin" className="text-primary hover:underline">
+                ← 返回管理面板
               </Link>
               <button
                 onClick={retryTest}
@@ -251,9 +251,12 @@ export default function DbCheckPage() {
                           )}
                         </div>
                       ) : test.data ? (
-                        <pre className="bg-gray-50 p-3 rounded text-sm overflow-auto whitespace-pre-wrap">
-                          {JSON.stringify(test.data, null, 2)}
-                        </pre>
+                        <div>
+                          <p className="font-medium text-gray-700">结果:</p>
+                          <pre className="mt-2 p-2 bg-gray-50 rounded text-xs whitespace-pre-wrap">
+                            {JSON.stringify(test.data, null, 2)}
+                          </pre>
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -262,75 +265,85 @@ export default function DbCheckPage() {
             </div>
           )}
           
-          {/* 原始数据 */}
+          {/* 原始数据查看 */}
           {results && !loading && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">原始响应</h2>
-                <button 
+                <h2 className="text-xl font-semibold">调试信息</h2>
+                <button
                   onClick={() => setShowRawData(!showRawData)}
-                  className="text-blue-600 text-sm hover:underline"
+                  className="text-sm text-gray-600 hover:text-gray-900"
                 >
-                  {showRawData ? '隐藏' : '显示'}
+                  {showRawData ? '隐藏' : '显示'} 原始数据
                 </button>
               </div>
               
+              <div className="text-sm text-gray-600">
+                <p>测试环境: {results.environment}</p>
+                <p>测试时间: {results.timestamp}</p>
+              </div>
+              
               {showRawData && (
-                <pre className="bg-gray-50 p-3 rounded text-sm overflow-auto max-h-96 whitespace-pre-wrap">
-                  {JSON.stringify(results, null, 2)}
-                </pre>
+                <div className="mt-4">
+                  <p className="font-medium text-gray-700 mb-2">原始测试数据:</p>
+                  <pre className="bg-gray-50 p-4 rounded text-xs whitespace-pre-wrap overflow-auto h-60">
+                    {JSON.stringify(results, null, 2)}
+                  </pre>
+                </div>
               )}
+              
+              <div className="mt-6 text-sm">
+                <h3 className="font-medium mb-2">添加新的表后测试注意事项:</h3>
+                <p className="mb-2">
+                  如果您刚刚添加了新的数据库表并遇到问题，请检查:
+                </p>
+                <ul className="list-disc ml-5 space-y-1">
+                  <li>表是否已创建成功 (可通过Supabase控制台检查)</li>
+                  <li>是否添加了正确的RLS策略 (默认情况下新表拒绝所有操作)</li>
+                  <li>模型定义和表结构是否匹配</li>
+                </ul>
+              </div>
             </div>
           )}
           
           {/* 解决方案建议 */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">解决方案</h2>
+            <h2 className="text-xl font-semibold mb-4">常见问题解决方案</h2>
             
             <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-medium mb-2">1. 检查环境变量</h3>
-                <p>
-                  在Vercel项目设置中，确保正确配置了以下环境变量：
+              <div className="border-l-4 border-blue-500 pl-4 py-2">
+                <h3 className="font-medium mb-1">环境变量缺失</h3>
+                <p className="text-gray-600">
+                  确保在.env.local文件或部署平台上设置了正确的环境变量。
                 </p>
-                <ul className="list-disc list-inside mt-2 ml-4">
-                  <li>NEXT_PUBLIC_SUPABASE_URL - 必须是完整URL (https://xxxx.supabase.co)</li>
-                  <li>NEXT_PUBLIC_SUPABASE_ANON_KEY - 匿名API密钥</li>
-                  <li>SUPABASE_SERVICE_ROLE_KEY - 服务角色密钥 (可选但推荐用于管理操作)</li>
-                </ul>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-medium mb-2">2. 检查Supabase项目状态</h3>
-                <p>
-                  登录Supabase控制台，确保您的项目：
+              <div className="border-l-4 border-blue-500 pl-4 py-2">
+                <h3 className="font-medium mb-1">RLS策略问题</h3>
+                <p className="text-gray-600">
+                  检查在Supabase控制台中表的Row Level Security策略是否正确配置。
                 </p>
-                <ul className="list-disc list-inside mt-2 ml-4">
-                  <li>处于活跃状态而非暂停</li>
-                  <li>不在维护模式</li>
-                  <li>数据库正常运行</li>
-                </ul>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-medium mb-2">3. 使用直接初始化脚本</h3>
-                <p>
-                  使用我们提供的直接初始化脚本创建必要的数据库表：
+              <div className="border-l-4 border-blue-500 pl-4 py-2">
+                <h3 className="font-medium mb-1">网络问题</h3>
+                <p className="text-gray-600">
+                  如果在本地开发中遇到问题，请确认您的网络可以访问Supabase服务器。
                 </p>
-                <pre className="bg-white p-3 rounded text-sm mt-2">
-                  {`node scripts/direct-init.js --url YOUR_SUPABASE_URL --key YOUR_KEY`}
-                </pre>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-medium mb-2">4. 检查RLS策略</h3>
-                <p>
-                  如果基本连接测试通过但数据查询失败，请检查Row Level Security策略：
+              <div className="border-l-4 border-blue-500 pl-4 py-2">
+                <h3 className="font-medium mb-1">服务限制</h3>
+                <p className="text-gray-600">
+                  如果您使用的是免费计划，请检查是否达到了API请求限制或数据库连接数限制。
                 </p>
-                <ul className="list-disc list-inside mt-2 ml-4">
-                  <li>确保适当的表允许匿名访问权限</li>
-                  <li>尝试暂时禁用RLS以测试是否为权限问题</li>
-                </ul>
+              </div>
+              
+              <div className="border-l-4 border-blue-500 pl-4 py-2">
+                <h3 className="font-medium mb-1">查看完整日志</h3>
+                <p className="text-gray-600">
+                  在项目根目录运行 <code>npm run dev</code> 可以查看更详细的错误日志。
+                </p>
               </div>
             </div>
           </div>
