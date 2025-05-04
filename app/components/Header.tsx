@@ -133,17 +133,6 @@ export default function Header() {
             )}
           </Link>
           
-          {isAuthenticated && isAdmin && (
-            <div className="relative">
-              <Link
-                href="/admin"
-                className="flex items-center space-x-1 text-gray-700 hover:text-primary focus:outline-none"
-              >
-                <span>管理</span>
-              </Link>
-            </div>
-          )}
-          
           {isAuthenticated ? (
             <div className="relative">
               <button
@@ -192,6 +181,17 @@ export default function Header() {
               </Link>
               <Link href="/auth/register" className="bg-primary text-white px-4 py-2 rounded-full hover:bg-blue-600">
                 注册
+              </Link>
+            </div>
+          )}
+          
+          {isAuthenticated && isAdmin && (
+            <div className="relative ml-4">
+              <Link
+                href="/admin"
+                className="flex items-center space-x-1 text-gray-700 hover:text-primary focus:outline-none"
+              >
+                <span>管理</span>
               </Link>
             </div>
           )}
