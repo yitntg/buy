@@ -17,6 +17,18 @@ export default function AdminToolsPage() {
       color: 'bg-blue-100 text-blue-600'
     },
     {
+      id: 'sql-executor',
+      name: 'SQL执行器',
+      description: '直接执行SQL语句并查看结果',
+      path: '/admin/tools/sql-executor',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      color: 'bg-indigo-100 text-indigo-600'
+    },
+    {
       id: 'db-check',
       name: '数据库连接诊断',
       description: '测试与Supabase数据库的连接和验证数据表',
