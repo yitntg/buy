@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server'
 import pg from 'pg'
 
 // 添加示例数据API
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    console.log('开始添加示例数据...')
+    // 获取URL参数，用于检查模式
+    const { searchParams } = new URL(request.url)
+    const checkOnly = searchParams.get('check') === 'true'
+    
+    console.log(checkOnly ? '检查数据...' : '开始添加示例数据...')
     
     // 选择连接URL
     const connectionString = process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING
@@ -24,6 +28,54 @@ export async function GET() {
     console.log('尝试连接数据库...')
     await client.connect()
     console.log('数据库连接成功')
+    
+    // 如果只是检查数据，则查询表内容
+    if (checkOnly) {
+      const results: string[] = []
+      
+      // 检查分类表数据
+      try {
+        const { rows: categories } = await client.query('SELECT COUNT(*) as count FROM categories')
+        results.push(`分类表中有 ${categories[0].count} 条记录`)
+      } catch (err: any) {
+        results.push(`分类表检查失败: ${err.message}`)
+      }
+      
+      // 检查产品表数据
+      try {
+        const { rows: products } = await client.query('SELECT COUNT(*) as count FROM products')
+        results.push(`产品表中有 ${products[0].count} 条记录`)
+      } catch (err: any) {
+        results.push(`产品表检查失败: ${err.message}`)
+      }
+      
+      // 关闭数据库连接
+      await client.end()
+      
+      return new NextResponse(`
+        <html>
+          <head>
+            <title>检查数据</title>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: system-ui, sans-serif; line-height: 1.5; padding: 2rem; max-width: 800px; margin: 0 auto; }
+              pre { background: #f0f0f0; padding: 1rem; border-radius: 0.5rem; overflow: auto; max-height: 400px; }
+              .back { margin-top: 1rem; display: inline-block; }
+            </style>
+          </head>
+          <body>
+            <h1>数据检查结果</h1>
+            <ul>
+              ${results.map(result => `<li>${result}</li>`).join('')}
+            </ul>
+            <div>
+              <a href="/setup" class="back">返回设置页面</a> | 
+              <a href="/api/db/add-sample-data">添加示例数据</a>
+            </div>
+          </body>
+        </html>
+      `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+    }
     
     // 准备添加的示例数据
     const categories = [
@@ -75,12 +127,20 @@ export async function GET() {
     // 执行SQL添加产品数据
     console.log('添加产品数据...')
     try {
-      // 为每个产品准备SQL
+      // 先清空产品表，以避免重复
+      console.log('清空产品表...')
+      try {
+        await client.query('DELETE FROM products')
+        console.log('产品表已清空')
+      } catch (err) {
+        console.error('清空产品表失败:', err)
+      }
+      
+      // 为每个产品准备SQL 
       for (const product of products) {
         const insertProductSQL = `
           INSERT INTO products (name, description, price, image, category, inventory, rating, reviews)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-          ON CONFLICT (name) DO NOTHING;
         `
         await client.query(insertProductSQL, [
           product.name,
@@ -97,6 +157,17 @@ export async function GET() {
     } catch (err: any) {
       console.error('添加产品数据失败:', err)
       results.push(`产品数据添加失败: ${err.message}`)
+    }
+    
+    // 检查添加后的数据
+    try {
+      const { rows: categories } = await client.query('SELECT COUNT(*) as count FROM categories')
+      results.push(`现在分类表中有 ${categories[0].count} 条记录`)
+      
+      const { rows: products } = await client.query('SELECT COUNT(*) as count FROM products')
+      results.push(`现在产品表中有 ${products[0].count} 条记录`)
+    } catch (err: any) {
+      results.push(`数据验证失败: ${err.message}`)
     }
     
     // 关闭数据库连接
@@ -129,6 +200,7 @@ export async function GET() {
             </ul>
           </div>
           <p>3秒后将自动返回到初始化页面，或者 <a href="/setup" class="back">立即返回</a></p>
+          <p><a href="/api/db/add-sample-data?check=true">检查当前数据</a></p>
         </body>
       </html>
     `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
