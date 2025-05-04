@@ -1,44 +1,85 @@
 import { NextResponse } from 'next/server'
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import pg from 'pg'
 
-const execAsync = promisify(exec)
-
+// 使用Postgres环境变量，而不是依赖npm run init-db
 export async function GET() {
   try {
+    // 创建一个PostgreSQL客户端
+    const client = new pg.Client({
+      connectionString: process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING
+    })
+    
     // 记录执行开始
-    console.log('正在执行初始化命令: npm run init-db')
+    console.log('正在连接到PostgreSQL数据库并创建表...')
     
-    // 执行命令
-    const { stdout, stderr } = await execAsync('npm run init-db')
+    // 连接到数据库
+    await client.connect()
     
-    // 检查是否有错误
-    if (stderr && !stderr.includes('npm notice')) {
-      console.error('命令执行出错:', stderr)
-      return new NextResponse(`
-        <html>
-          <head>
-            <title>数据库初始化</title>
-            <meta charset="utf-8">
-            <meta http-equiv="refresh" content="5;url=/setup">
-            <style>
-              body { font-family: system-ui, sans-serif; line-height: 1.5; padding: 2rem; max-width: 800px; margin: 0 auto; }
-              pre { background: #f0f0f0; padding: 1rem; border-radius: 0.5rem; overflow: auto; }
-              .error { color: #e53e3e; }
-              .back { margin-top: 1rem; display: inline-block; }
-            </style>
-          </head>
-          <body>
-            <h1 class="error">初始化失败</h1>
-            <p>执行数据库初始化命令时出错：</p>
-            <pre>${stderr}</pre>
-            <p>5秒后将自动返回到初始化页面，或者 <a href="/setup" class="back">立即返回</a></p>
-          </body>
-        </html>
-      `, { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+    // 创建三个表的SQL语句
+    const createCategoriesTableSQL = `
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `
+    
+    const createProductsTableSQL = `
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        image VARCHAR(255) NOT NULL,
+        category INTEGER NOT NULL,
+        inventory INTEGER NOT NULL DEFAULT 0,
+        rating DECIMAL(3,1) NOT NULL DEFAULT 0,
+        reviews INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `
+    
+    const createReviewsTableSQL = `
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        user_id VARCHAR(255) NOT NULL,
+        username VARCHAR(255) NOT NULL,
+        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        CONSTRAINT unique_user_product_review UNIQUE (product_id, user_id)
+      );
+    `
+    
+    // 执行创建表的SQL语句
+    let results: string[] = []
+    try {
+      const result1 = await client.query(createCategoriesTableSQL)
+      results.push('分类表创建成功')
+    } catch (err: any) {
+      results.push(`分类表创建失败: ${err.message}`)
     }
     
-    console.log('命令执行成功:', stdout)
+    try {
+      const result2 = await client.query(createProductsTableSQL)
+      results.push('产品表创建成功')
+    } catch (err: any) {
+      results.push(`产品表创建失败: ${err.message}`)
+    }
+    
+    try {
+      const result3 = await client.query(createReviewsTableSQL)
+      results.push('评论表创建成功')
+    } catch (err: any) {
+      results.push(`评论表创建失败: ${err.message}`)
+    }
+    
+    // 关闭数据库连接
+    await client.end()
+    
+    const success = results.every(r => !r.includes('失败'))
     
     // 返回成功页面
     return new NextResponse(`
@@ -51,22 +92,25 @@ export async function GET() {
             body { font-family: system-ui, sans-serif; line-height: 1.5; padding: 2rem; max-width: 800px; margin: 0 auto; }
             pre { background: #f0f0f0; padding: 1rem; border-radius: 0.5rem; overflow: auto; max-height: 400px; }
             .success { color: #38a169; }
+            .error { color: #e53e3e; }
             .back { margin-top: 1rem; display: inline-block; }
           </style>
         </head>
         <body>
-          <h1 class="success">初始化成功！</h1>
-          <p>数据库初始化命令已成功执行。</p>
-          <details>
-            <summary>查看详细输出</summary>
-            <pre>${stdout}</pre>
-          </details>
+          <h1 class="${success ? 'success' : 'error'}">${success ? '初始化成功！' : '初始化部分失败'}</h1>
+          <p>数据库初始化操作已执行。</p>
+          <div>
+            <h3>执行结果:</h3>
+            <ul>
+              ${results.map(result => `<li>${result}</li>`).join('')}
+            </ul>
+          </div>
           <p>3秒后将自动返回到初始化页面，或者 <a href="/setup" class="back">立即返回</a></p>
         </body>
       </html>
     `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
-  } catch (error) {
-    console.error('执行命令时发生错误:', error)
+  } catch (error: any) {
+    console.error('执行数据库操作时发生错误:', error)
     
     // 返回错误页面
     return new NextResponse(`
@@ -83,7 +127,7 @@ export async function GET() {
         </head>
         <body>
           <h1 class="error">初始化失败</h1>
-          <p>执行数据库初始化命令时发生错误：</p>
+          <p>执行数据库初始化操作时发生错误：</p>
           <p>${error instanceof Error ? error.message : '未知错误'}</p>
           <p>5秒后将自动返回到初始化页面，或者 <a href="/setup" class="back">立即返回</a></p>
         </body>
