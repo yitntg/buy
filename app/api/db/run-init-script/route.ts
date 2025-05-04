@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server'
 import pg from 'pg'
 
-// 全局禁用SSL证书验证（仅用于开发环境）
-// 警告：这在生产环境中不安全，但对于使用自签名证书的开发环境很有用
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 // 使用Postgres环境变量，而不是依赖npm run init-db
 export async function GET() {
   try {
@@ -22,12 +18,14 @@ export async function GET() {
       throw new Error('未找到数据库连接URL环境变量')
     }
 
-    // 创建一个PostgreSQL客户端 - 使用两种方式禁用SSL验证
+    // 创建一个PostgreSQL客户端 - 使用安全但兼容的SSL配置
     const client = new pg.Client({
       connectionString,
-      // 添加SSL配置，允许自签名证书
+      // 使用更安全的SSL配置
       ssl: {
-        rejectUnauthorized: false // 设置为false，跳过SSL证书验证
+        rejectUnauthorized: false, // 允许自签名证书，但仅适用于此连接
+        // 在生产环境中，应该配置正确的CA证书
+        // ca: fs.readFileSync('/path/to/server-certificates/root.crt').toString(),
       }
     })
     
