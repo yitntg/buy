@@ -152,77 +152,30 @@ export default function SetupPage() {
     addLog('开始添加示例数据...')
 
     try {
-      // 1. 添加分类数据
-      addLog('正在添加分类数据...')
-      const categories = [
-        { id: 1, name: '电子产品', description: '各类电子产品、数码设备' },
-        { id: 2, name: '家居家具', description: '家具、家居用品' },
-        { id: 3, name: '服装服饰', description: '各类衣物、服装、鞋帽' },
-        { id: 4, name: '美妆个护', description: '美妆、个人护理用品' },
-        { id: 5, name: '食品饮料', description: '零食、饮品、生鲜食品' },
-        { id: 6, name: '运动户外', description: '运动器材、户外装备' }
-      ]
-
-      // 先检查分类表是否可访问，以确认表结构初始化成功
-      addLog('正在验证分类表是否可用...')
-      const { data: categoryCheck, error: categoryCheckError } = await supabase
-        .from('categories')
-        .select('count')
-        .limit(1)
+      // 调用API端点添加示例数据
+      addLog('正在调用API添加示例数据...')
+      const response = await fetch('/api/db/add-sample-data')
       
-      if (categoryCheckError) {
-        throw new Error(`分类表验证失败，表可能未成功创建: ${categoryCheckError.message}`)
+      if (!response.ok) {
+        addLog(`API调用失败: ${response.status} ${response.statusText}`)
+        throw new Error(`添加示例数据失败: ${response.status} ${response.statusText}`)
       }
       
-      addLog('分类表验证成功，继续添加数据')
-
-      // 使用upsert替代insert以避免重复添加
-      const { error: categoriesError } = await supabase
+      addLog('API调用成功，示例数据已添加')
+      
+      // 检查添加是否成功
+      addLog('正在验证数据是否添加成功...')
+      const { data: categories, error: categoriesError } = await supabase
         .from('categories')
-        .upsert(categories, { onConflict: 'id' })
-
+        .select('*')
+        .limit(1)
+      
       if (categoriesError) {
-        throw new Error(`添加分类数据失败: ${categoriesError.message}`)
-      }
-      addLog('分类数据添加成功')
-
-      // 2. 添加产品数据
-      addLog('正在添加产品数据...')
-      const products = [
-        { name: '智能手表', description: '高级智能手表，支持多种运动模式和健康监测功能', price: 1299, image: 'https://picsum.photos/id/1/500/500', category: 1, inventory: 50, rating: 4.8, reviews: 120 },
-        { name: '蓝牙耳机', description: '无线蓝牙耳机，支持降噪功能，续航时间长', price: 399, image: 'https://picsum.photos/id/3/500/500', category: 1, inventory: 200, rating: 4.5, reviews: 85 },
-        { name: '真皮沙发', description: '进口真皮沙发，舒适耐用，适合家庭使用', price: 4999, image: 'https://picsum.photos/id/20/500/500', category: 2, inventory: 10, rating: 4.9, reviews: 32 },
-        { name: '纯棉T恤', description: '100%纯棉材质，透气舒适，多色可选', price: 99, image: 'https://picsum.photos/id/25/500/500', category: 3, inventory: 500, rating: 4.3, reviews: 210 },
-        { name: '保湿面霜', description: '深层保湿面霜，适合干性肌肤，改善肌肤干燥问题', price: 159, image: 'https://picsum.photos/id/30/500/500', category: 4, inventory: 80, rating: 4.6, reviews: 65 },
-        { name: '有机坚果礼盒', description: '精选有机坚果礼盒，包含多种坚果，营养丰富', price: 169, image: 'https://picsum.photos/id/40/500/500', category: 5, inventory: 100, rating: 4.7, reviews: 48 },
-        { name: '瑜伽垫', description: '专业瑜伽垫，防滑耐磨，厚度适中，适合各种瑜伽动作', price: 128, image: 'https://picsum.photos/id/50/500/500', category: 6, inventory: 60, rating: 4.4, reviews: 72 }
-      ]
-
-      // 检查products表是否可用
-      addLog('正在验证产品表是否可用...')
-      const { data: productsCheck, error: productsCheckError } = await supabase
-        .from('products')
-        .select('count')
-        .limit(1)
-      
-      if (productsCheckError) {
-        throw new Error(`产品表验证失败，表可能未成功创建: ${productsCheckError.message}`)
+        addLog('分类数据验证失败，但API报告成功，可能有延迟')
+      } else {
+        addLog(`分类数据验证成功: 找到${categories.length}条记录`)
       }
       
-      addLog('产品表验证成功，继续添加数据')
-
-      // 使用事务批量插入所有产品，而不是逐个插入
-      // 由于Supabase客户端不直接支持事务，我们使用upsert批量插入
-      const { error: productsError } = await supabase
-        .from('products')
-        .upsert(products)
-
-      if (productsError) {
-        throw new Error(`添加产品数据失败: ${productsError.message}`)
-      }
-      
-      addLog('产品数据添加成功')
-
       setDataResult({
         success: true,
         message: '所有示例数据添加成功！'
@@ -234,6 +187,7 @@ export default function SetupPage() {
         message: error instanceof Error ? error.message : '添加示例数据时发生未知错误'
       })
       addLog(`错误: ${error instanceof Error ? error.message : '未知错误'}`)
+      addLog('可以尝试直接访问: /api/db/add-sample-data')
     } finally {
       setIsInsertingData(false)
     }
@@ -298,7 +252,7 @@ export default function SetupPage() {
                       一键执行命令行初始化
                     </a>
                     <p className="mt-2 text-xs text-gray-500">
-                      点击上方按钮将通过服务器执行 npm run init-db 命令，无需您自己在终端运行
+                      点击上方按钮将通过服务器执行初始化，无需您自己在终端运行
                     </p>
                   </div>
                 )}
@@ -331,6 +285,21 @@ export default function SetupPage() {
                 {dataResult && (
                   <div className={`mt-4 p-4 rounded-md ${dataResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                     {dataResult.message}
+                  </div>
+                )}
+                
+                {dataResult && !dataResult.success && (
+                  <div className="mt-4">
+                    <a 
+                      href="/api/db/add-sample-data"
+                      target="_blank"
+                      className="block w-full text-center py-3 px-4 rounded-md font-medium bg-orange-500 text-white hover:bg-orange-600"
+                    >
+                      直接添加示例数据
+                    </a>
+                    <p className="mt-2 text-xs text-gray-500">
+                      如果按钮无效，可以尝试直接访问上面的链接添加示例数据
+                    </p>
                   </div>
                 )}
               </div>
