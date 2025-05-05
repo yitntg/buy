@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types/products'
+import { createClient } from '@supabase/supabase-js'
+
+// 备用的Supabase客户端，确保服务器端API能正常工作
+const backupSupabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
+const backupSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
+const backupClient = createClient(backupSupabaseUrl, backupSupabaseKey)
+
+// 使用可用的客户端
+const db = supabase || backupClient
 
 // 获取商品列表
 export async function GET(request: NextRequest) {
@@ -12,7 +21,7 @@ export async function GET(request: NextRequest) {
   const sortBy = url.searchParams.get('sortBy') || 'relevance'
   
   // 构建查询
-  let query = supabase.from('products').select('*', { count: 'exact' })
+  let query = db.from('products').select('*', { count: 'exact' })
   
   // 关键词搜索
   if (keyword) {
@@ -94,7 +103,7 @@ export async function POST(request: NextRequest) {
     console.log('尝试插入商品数据:', newProduct)
     
     // 添加到数据库
-    const { data: createdProduct, error } = await supabase
+    const { data: createdProduct, error } = await db
       .from('products')
       .insert(newProduct)
       .select()

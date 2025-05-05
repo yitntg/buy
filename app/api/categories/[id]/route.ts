@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+// 备用的Supabase客户端，确保服务器端API能正常工作
+const backupSupabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
+const backupSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
+const backupClient = createClient(backupSupabaseUrl, backupSupabaseKey)
+
+// 使用可用的客户端
+const db = supabase || backupClient
 
 // 获取单个分类
 export async function GET(
@@ -9,7 +18,7 @@ export async function GET(
   try {
     const id = params.id
     
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('categories')
       .select('*')
       .eq('id', id)
@@ -58,7 +67,7 @@ export async function PUT(
     }
     
     // 检查分类是否存在
-    const { data: existingCategory, error: checkError } = await supabase
+    const { data: existingCategory, error: checkError } = await db
       .from('categories')
       .select('id')
       .eq('id', id)
@@ -80,7 +89,7 @@ export async function PUT(
     }
     
     // 更新分类
-    const { data: updatedCategory, error } = await supabase
+    const { data: updatedCategory, error } = await db
       .from('categories')
       .update({
         name: data.name,
@@ -117,7 +126,7 @@ export async function DELETE(
     const id = params.id
     
     // 检查分类是否存在
-    const { data: existingCategory, error: checkError } = await supabase
+    const { data: existingCategory, error: checkError } = await db
       .from('categories')
       .select('id')
       .eq('id', id)
@@ -139,7 +148,7 @@ export async function DELETE(
     }
     
     // 删除分类
-    const { error } = await supabase
+    const { error } = await db
       .from('categories')
       .delete()
       .eq('id', id)

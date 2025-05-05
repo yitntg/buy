@@ -49,29 +49,34 @@ export default function NewProductPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // 在实际应用中，这里应该调用API获取分类数据
-        // 这里使用模拟数据
-        const mockCategories = [
-          { id: 1, name: '电子产品' },
-          { id: 2, name: '家居用品' },
-          { id: 3, name: '服装鞋帽' },
-          { id: 4, name: '美妆护肤' },
-          { id: 5, name: '食品饮料' },
-          { id: 6, name: '运动户外' }
-        ]
-        setCategories(mockCategories)
+        // 从API获取真实分类数据
+        const response = await fetch('/api/categories', {
+          method: 'GET',
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+
+        if (!response.ok) {
+          throw new Error(`获取分类失败: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setCategories(data);
         
         // 默认选择第一个分类
-        if (mockCategories.length > 0) {
-          setFormData(prev => ({ ...prev, category: mockCategories[0].id.toString() }))
+        if (data.length > 0) {
+          setFormData(prev => ({ ...prev, category: data[0].id.toString() }));
         }
       } catch (err) {
-        console.error('获取分类失败:', err)
+        console.error('获取分类失败:', err);
+        // 出错时不使用模拟数据，显示错误状态
+        setCategories([]);
+        alert('获取商品分类失败，请刷新页面重试。');
       }
-    }
+    };
     
-    fetchCategories()
-  }, [])
+    fetchCategories();
+  }, []);
   
   // 表单字段变化处理
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -209,6 +214,19 @@ export default function NewProductPage() {
     setIsLoading(true)
     setErrors({})
     
+    // 表单验证
+    const validationErrors: Record<string, string> = {}
+    
+    if (!formData.name.trim()) validationErrors.name = '商品名称不能为空'
+    if (!formData.price || parseFloat(formData.price) <= 0) validationErrors.price = '请输入有效价格'
+    if (!formData.category) validationErrors.category = '请选择商品分类'
+    
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      setIsLoading(false)
+      return
+    }
+    
     try {
       // 使用上传的图片或URL图片
       let imageUrl = formData.image
@@ -225,15 +243,15 @@ export default function NewProductPage() {
       
       // 构建商品数据
       const productData = {
-        name: formData.name || '未命名商品',
-        description: formData.description || `该商品暂无描述`,
+        name: formData.name.trim(),
+        description: formData.description.trim() || `该商品暂无描述`,
         price: parseFloat(formData.price || '0'),
         inventory: parseInt(formData.inventory || '0'),
         category: parseInt(formData.category || '1'),
         image: imageUrl,
-        brand: formData.brand || '',
-        model: formData.model || '',
-        specifications: formData.specifications || '',
+        brand: formData.brand?.trim() || '',
+        model: formData.model?.trim() || '',
+        specifications: formData.specifications?.trim() || '',
         free_shipping: formData.free_shipping,
         returnable: formData.returnable,
         warranty: formData.warranty,
@@ -249,7 +267,8 @@ export default function NewProductPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(productData)
+        body: JSON.stringify(productData),
+        cache: 'no-store'
       })
       
       if (!res.ok) {
@@ -304,7 +323,7 @@ export default function NewProductPage() {
       
       // 在控制台记录更多调试信息
       if (err instanceof Error) {
-        console.error('错误详情:', err.stack)
+        console.error('错误详情:', err)
       }
       
       setSubmitSuccess(false)

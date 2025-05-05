@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+// 备用的Supabase客户端，确保服务器端API能正常工作
+const backupSupabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
+const backupSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
+const backupClient = createClient(backupSupabaseUrl, backupSupabaseKey)
+
+// 使用可用的客户端
+const db = supabase || backupClient
 
 // 获取所有分类
 export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('categories')
       .select('*')
       .order('id', { ascending: true })
@@ -41,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 创建新分类
-    const { data: newCategory, error } = await supabase
+    const { data: newCategory, error } = await db
       .from('categories')
       .insert({
         name: data.name,
