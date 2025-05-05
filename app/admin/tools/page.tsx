@@ -7,7 +7,7 @@ export default function AdminToolsPage() {
     {
       id: 'env-debug',
       name: '环境变量调试',
-      description: '检查和验证Supabase环境变量配置是否正确',
+      description: '检查和验证Supabase环境变量配置是否正确，确保系统能够正常连接数据库',
       path: '/admin/tools/env-debug',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -19,7 +19,7 @@ export default function AdminToolsPage() {
     {
       id: 'sql-executor',
       name: 'SQL执行器',
-      description: '直接执行SQL语句并查看结果',
+      description: '直接执行SQL语句并查看结果，用于高级数据操作和调试',
       path: '/admin/tools/sql-executor',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -31,7 +31,7 @@ export default function AdminToolsPage() {
     {
       id: 'db-check',
       name: '数据库连接诊断',
-      description: '测试与Supabase数据库的连接和验证数据表',
+      description: '测试与Supabase数据库的连接和验证数据表结构是否正确',
       path: '/admin/tools/db-check',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -43,7 +43,7 @@ export default function AdminToolsPage() {
     {
       id: 'setup',
       name: '数据库初始化工具',
-      description: '创建数据库表和添加示例数据',
+      description: '创建数据库表结构和添加示例数据，用于系统初始设置',
       path: '/admin/tools/setup',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -53,17 +53,40 @@ export default function AdminToolsPage() {
       color: 'bg-purple-100 text-purple-600'
     },
     {
-      id: 'admin-setup',
-      name: '管理员设置工具',
-      description: '高级数据库配置和SQL执行工具',
-      path: '/admin/setup',
+      id: 'function-manager',
+      name: 'SQL函数管理',
+      description: '创建和管理数据库函数，如exec_sql和query_sql等高级功能',
+      path: '/admin/tools/function-manager',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+        </svg>
+      ),
+      color: 'bg-yellow-100 text-yellow-600'
+    },
+    {
+      id: 'data-backup',
+      name: '数据备份工具',
+      description: '导出和导入数据，用于系统迁移和数据备份',
+      path: '/admin/tools/data-backup',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
         </svg>
       ),
       color: 'bg-red-100 text-red-600'
+    },
+    {
+      id: 'system-logs',
+      name: '系统日志查看器',
+      description: '查看系统操作日志，用于问题排查和性能监控',
+      path: '/admin/tools/system-logs',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      color: 'bg-gray-100 text-gray-600'
     }
   ]
 
@@ -72,7 +95,18 @@ export default function AdminToolsPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">开发工具</h1>
         <p className="text-gray-600">
-          以下是一些帮助开发和调试的工具，这些工具只应在开发或故障排除时使用。
+          以下是一些帮助开发和调试的技术工具，这些工具只应在开发或故障排除时使用，不建议在生产环境中操作。
+        </p>
+      </div>
+
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4 text-yellow-800">开发人员指南</h2>
+        <p className="text-yellow-700 mb-4">
+          这些工具专为技术人员设计，提供对系统底层的直接操作能力。如果您不是开发人员或数据库管理员，建议在操作前咨询技术支持。
+        </p>
+        <p className="text-yellow-700">
+          一般管理任务（如商品管理、订单处理等）请使用<Link href="/admin" className="text-blue-600 hover:underline">管理后台</Link>的相应功能。
+          系统配置请使用<Link href="/admin/settings" className="text-blue-600 hover:underline">系统设置</Link>页面。
         </p>
       </div>
 
@@ -104,10 +138,11 @@ export default function AdminToolsPage() {
         ))}
       </div>
 
-      <div className="mt-10 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <h2 className="text-xl font-semibold mb-2 text-yellow-800">⚠️ 注意</h2>
-        <p className="text-yellow-700">
-          这些开发工具可能直接修改数据库或系统配置。请在生产环境中谨慎使用这些工具，以免造成数据丢失或系统不稳定。
+      <div className="mt-10 p-6 bg-red-50 border border-red-200 rounded-lg">
+        <h2 className="text-xl font-semibold mb-2 text-red-800">⚠️ 安全警告</h2>
+        <p className="text-red-700">
+          这些开发工具可能直接修改数据库或系统配置。在生产环境中使用这些工具可能会导致数据丢失或系统不稳定。
+          请确保在操作前进行数据备份，并理解所有操作的潜在风险。
         </p>
       </div>
     </div>

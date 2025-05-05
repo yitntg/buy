@@ -10,23 +10,16 @@ export default function AdminSettings() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [initStatus, setInitStatus] = useState<{success?: boolean; message?: string}>({})
-  const [activeTab, setActiveTab] = useState('database')
-  const [statusMessages, setStatusMessages] = useState<string[]>([])
-  const [supabaseStatus, setSupabaseStatus] = useState<{success?: boolean; message?: string; data?: any}>({})
-  const [isTestingConnection, setIsTestingConnection] = useState(false)
-  
-  // 获取环境变量信息
-  const clientEnvVars = {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '未设置',
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '已设置(隐藏)' : '未设置',
-    NODE_ENV: process.env.NODE_ENV || '未知'
-  }
-
-  // 添加日志
-  const addLog = (message: string) => {
-    setStatusMessages(prev => [...prev, message])
-  }
+  const [activeTab, setActiveTab] = useState('general')
+  const [statusMessage, setStatusMessage] = useState<{success?: boolean; message?: string}>({})
+  const [systemSettings, setSystemSettings] = useState({
+    siteName: '电子商务系统',
+    contactEmail: 'admin@example.com',
+    currency: 'CNY',
+    itemsPerPage: 10,
+    allowGuestCheckout: true,
+    enableReviews: true
+  })
   
   // 检查用户是否已登录并且是管理员
   useEffect(() => {
@@ -34,152 +27,79 @@ export default function AdminSettings() {
       router.push('/auth/login?redirect=/admin/settings')
     } else if (user?.role !== 'admin') {
       router.push('/') // 如果不是管理员，重定向到首页
+    } else {
+      // 获取系统设置（实际应用中从API获取）
+      loadSystemSettings()
     }
   }, [isAuthenticated, user, router])
   
-  // 创建exec_sql函数
-  const handleCreateExecSQL = async () => {
-    if (!confirm('确定要在Supabase中创建执行SQL的函数吗？这是初始化数据库的前提。')) {
-      return
-    }
-    
+  // 加载系统设置
+  const loadSystemSettings = async () => {
+    // 在实际应用中，这里应该从API获取设置
+    // 现在使用模拟数据
     setLoading(true)
-    setInitStatus({})
-    addLog('正在创建exec_sql函数...')
-    
     try {
-      const response = await fetch('/api/admin/setup/create-exec-sql', {
-        method: 'POST'
+      await new Promise(resolve => setTimeout(resolve, 600))
+      // 模拟从API获取设置
+      setSystemSettings({
+        siteName: '电子商务系统',
+        contactEmail: 'admin@example.com',
+        currency: 'CNY',
+        itemsPerPage: 10,
+        allowGuestCheckout: true,
+        enableReviews: true
       })
-      
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || '创建exec_sql函数失败')
-      }
-      
-      setInitStatus({
-        success: true,
-        message: data.message || 'exec_sql函数已成功创建！'
-      })
-      addLog('exec_sql函数创建成功')
-    } catch (error: any) {
-      console.error('创建exec_sql函数失败:', error)
-      setInitStatus({
-        success: false,
-        message: error.message || '创建exec_sql函数失败，请查看控制台获取详细信息'
-      })
-      addLog(`错误: ${error.message || '未知错误'}`)
+    } catch (error) {
+      console.error('加载系统设置失败:', error)
     } finally {
       setLoading(false)
     }
   }
   
-  // 初始化数据库
-  const handleInitDatabase = async () => {
-    if (!confirm('确定要初始化数据库吗？如果表不存在，将会创建新表。')) {
-      return
-    }
-    
+  // 保存系统设置
+  const saveSystemSettings = async () => {
     setLoading(true)
-    setInitStatus({})
-    addLog('开始初始化数据库...')
+    setStatusMessage({})
     
     try {
-      const response = await fetch('/api/admin/setup/init', {
-        method: 'POST'
-      })
+      // 在实际应用中，这里应该调用API保存设置
+      await new Promise(resolve => setTimeout(resolve, 800))
       
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || '初始化数据库失败')
-      }
-      
-      setInitStatus({
+      setStatusMessage({
         success: true,
-        message: data.message || '数据库初始化成功！'
+        message: '系统设置保存成功！'
       })
-      addLog('数据库初始化成功')
     } catch (error: any) {
-      console.error('初始化数据库失败:', error)
-      setInitStatus({
+      console.error('保存系统设置失败:', error)
+      setStatusMessage({
         success: false,
-        message: error.message || '初始化数据库失败，请查看控制台获取详细信息'
+        message: error.message || '保存系统设置失败'
       })
-      addLog(`错误: ${error.message || '未知错误'}`)
     } finally {
       setLoading(false)
     }
   }
   
-  // 重置数据库
-  const handleResetDatabase = async () => {
-    if (!confirm('确定要重置数据库吗？这将删除所有现有数据并重新创建表！此操作不可撤销。')) {
+  // 初始化系统
+  const handleInitializeSystem = async () => {
+    if (!confirm('确定要初始化系统吗？这将重置部分系统配置。')) {
       return
     }
     
     setLoading(true)
-    setInitStatus({})
-    addLog('正在重置数据库...')
+    setStatusMessage({})
     
     try {
-      const response = await fetch('/api/admin/setup/reset', {
-        method: 'POST'
-      })
-      
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || '重置数据库失败')
-      }
-      
-      setInitStatus({
-        success: true,
-        message: data.message || '数据库重置成功！'
-      })
-      addLog('数据库重置成功')
+      // 跳转到开发工具中的数据库初始化工具
+      router.push('/admin/tools/setup')
     } catch (error: any) {
-      console.error('重置数据库失败:', error)
-      setInitStatus({
+      console.error('初始化系统失败:', error)
+      setStatusMessage({
         success: false,
-        message: error.message || '重置数据库失败，请查看控制台获取详细信息'
+        message: error.message || '初始化系统失败'
       })
-      addLog(`错误: ${error.message || '未知错误'}`)
     } finally {
       setLoading(false)
-    }
-  }
-
-  // 测试Supabase连接
-  const testSupabaseConnection = async () => {
-    setIsTestingConnection(true)
-    setSupabaseStatus({})
-    
-    try {
-      // 尝试从Supabase获取一些数据
-      const { data, error } = await supabase
-        .from('products')
-        .select('count')
-        .single()
-
-      if (error) {
-        throw error
-      }
-
-      setSupabaseStatus({
-        success: true,
-        message: '成功连接到Supabase并获取数据',
-        data: data
-      })
-    } catch (err) {
-      console.error('Supabase连接测试失败:', err)
-      setSupabaseStatus({
-        success: false,
-        message: err instanceof Error ? err.message : '未知错误'
-      })
-    } finally {
-      setIsTestingConnection(false)
     }
   }
   
@@ -200,211 +120,515 @@ export default function AdminSettings() {
         <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
           <div className="flex border-b">
             <button
-              onClick={() => setActiveTab('database')}
+              onClick={() => setActiveTab('general')}
               className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'database' 
+                activeTab === 'general' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              数据库管理
+              基本设置
             </button>
             <button
-              onClick={() => setActiveTab('environment')}
+              onClick={() => setActiveTab('payment')}
               className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'environment' 
+                activeTab === 'payment' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              环境变量
+              支付设置
             </button>
             <button
-              onClick={() => setActiveTab('system')}
+              onClick={() => setActiveTab('notifications')}
               className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'system' 
+                activeTab === 'notifications' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              系统信息
+              通知设置
+            </button>
+            <button
+              onClick={() => setActiveTab('advanced')}
+              className={`px-6 py-3 text-sm font-medium ${
+                activeTab === 'advanced' 
+                ? 'border-b-2 border-primary text-primary' 
+                : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              高级设置
             </button>
           </div>
         </div>
 
-        {/* 数据库管理 */}
-        {activeTab === 'database' && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
+        {/* 状态消息 */}
+        {statusMessage.message && (
+          <div className={`mb-6 p-4 rounded ${statusMessage.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+            {statusMessage.message}
+          </div>
+        )}
+
+        {/* 基本设置 */}
+        {activeTab === 'general' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">数据库管理</h2>
-              
-              {initStatus.message && (
-                <div className={`mb-6 p-4 rounded ${initStatus.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                  {initStatus.message}
-                </div>
-              )}
+              <h2 className="text-xl font-bold mb-4">基本设置</h2>
               
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-medium mb-2">第1步：创建SQL执行函数</h3>
-                  <p className="text-gray-600 mb-4">
-                    首先需要在Supabase中创建exec_sql函数，此函数用于执行SQL语句初始化数据库。这个步骤只需要执行一次。
-                  </p>
-                  <button
-                    onClick={handleCreateExecSQL}
-                    disabled={loading}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                  <label htmlFor="siteName" className="block text-sm font-medium text-gray-700 mb-1">
+                    网站名称
+                  </label>
+                  <input
+                    type="text"
+                    id="siteName"
+                    value={systemSettings.siteName}
+                    onChange={(e) => setSystemSettings({...systemSettings, siteName: e.target.value})}
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                    联系邮箱
+                  </label>
+                  <input
+                    type="email"
+                    id="contactEmail"
+                    value={systemSettings.contactEmail}
+                    onChange={(e) => setSystemSettings({...systemSettings, contactEmail: e.target.value})}
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
+                    货币单位
+                  </label>
+                  <select
+                    id="currency"
+                    value={systemSettings.currency}
+                    onChange={(e) => setSystemSettings({...systemSettings, currency: e.target.value})}
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
                   >
-                    {loading ? '处理中...' : '创建exec_sql函数'}
-                  </button>
+                    <option value="CNY">人民币 (CNY)</option>
+                    <option value="USD">美元 (USD)</option>
+                    <option value="EUR">欧元 (EUR)</option>
+                    <option value="GBP">英镑 (GBP)</option>
+                    <option value="JPY">日元 (JPY)</option>
+                  </select>
                 </div>
                 
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-medium mb-2">第2步：数据库初始化</h3>
-                  <p className="text-gray-600 mb-4">
-                    如果您是首次使用系统，或者数据库表尚未创建，请点击此按钮初始化数据库。此操作将创建所需的数据库表。
-                  </p>
+                <div>
+                  <label htmlFor="itemsPerPage" className="block text-sm font-medium text-gray-700 mb-1">
+                    每页显示商品数
+                  </label>
+                  <input
+                    type="number"
+                    id="itemsPerPage"
+                    value={systemSettings.itemsPerPage}
+                    onChange={(e) => setSystemSettings({...systemSettings, itemsPerPage: parseInt(e.target.value)})}
+                    min="5"
+                    max="100"
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                  />
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="allowGuestCheckout"
+                    checked={systemSettings.allowGuestCheckout}
+                    onChange={(e) => setSystemSettings({...systemSettings, allowGuestCheckout: e.target.checked})}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <label htmlFor="allowGuestCheckout" className="ml-2 block text-sm text-gray-700">
+                    允许游客结账
+                  </label>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="enableReviews"
+                    checked={systemSettings.enableReviews}
+                    onChange={(e) => setSystemSettings({...systemSettings, enableReviews: e.target.checked})}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <label htmlFor="enableReviews" className="ml-2 block text-sm text-gray-700">
+                    启用商品评论功能
+                  </label>
+                </div>
+                
+                <div className="pt-4">
                   <button
-                    onClick={handleInitDatabase}
+                    onClick={saveSystemSettings}
                     disabled={loading}
-                    className="bg-primary text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                   >
-                    {loading ? '处理中...' : '初始化数据库'}
+                    {loading ? '保存中...' : '保存设置'}
                   </button>
-                </div>
-                
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-medium mb-2 text-red-600">重置数据库</h3>
-                  <p className="text-gray-600 mb-4">
-                    <strong className="text-red-600">警告：</strong> 此操作将删除所有现有数据并重新创建表结构。此操作不可撤销。
-                  </p>
-                  <button
-                    onClick={handleResetDatabase}
-                    disabled={loading}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50"
-                  >
-                    {loading ? '处理中...' : '重置数据库'}
-                  </button>
-                </div>
-              </div>
-
-              {/* 操作日志 */}
-              {statusMessages.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-medium mb-2">操作日志</h3>
-                  <div className="bg-gray-50 p-4 rounded-md h-60 overflow-y-auto">
-                    {statusMessages.map((message, index) => (
-                      <div key={index} className="text-sm mb-1">
-                        <span className="text-gray-400">[{new Date().toLocaleTimeString()}]</span> {message}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 环境变量 */}
-        {activeTab === 'environment' && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">环境变量</h2>
-              
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-2">客户端环境变量</h3>
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <pre className="whitespace-pre-wrap break-all">
-                    {JSON.stringify(clientEnvVars, null, 2)}
-                  </pre>
-                </div>
-              </div>
-              
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-2">Supabase连接测试</h3>
-                <button
-                  onClick={testSupabaseConnection}
-                  disabled={isTestingConnection}
-                  className="bg-primary text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 mb-4"
-                >
-                  {isTestingConnection ? '测试中...' : '测试Supabase连接'}
-                </button>
-                
-                {isTestingConnection ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary border-opacity-50 mx-auto"></div>
-                    <p className="mt-2 text-gray-600">正在测试Supabase连接...</p>
-                  </div>
-                ) : supabaseStatus.success === true ? (
-                  <div className="bg-green-50 border border-green-200 text-green-600 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">连接成功</h3>
-                    <p className="mb-2">{supabaseStatus.message}</p>
-                    {supabaseStatus.data && (
-                      <pre className="bg-white p-3 rounded text-sm overflow-auto">
-                        {JSON.stringify(supabaseStatus.data, null, 2)}
-                      </pre>
-                    )}
-                  </div>
-                ) : supabaseStatus.success === false ? (
-                  <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">连接失败</h3>
-                    <p>{supabaseStatus.message || '连接测试失败，请检查控制台获取详细错误信息'}</p>
-                  </div>
-                ) : null}
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">环境变量设置指南</h3>
-                <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                  <h4 className="font-medium mb-2">本地开发环境</h4>
-                  <p className="mb-2">
-                    在项目根目录创建 <code className="bg-gray-100 px-1 py-0.5 rounded">.env</code> 文件，包含以下内容：
-                  </p>
-                  <pre className="bg-white p-3 rounded text-sm overflow-auto">
-                    {`# Supabase配置
-NEXT_PUBLIC_SUPABASE_URL=您的Supabase项目URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=您的Supabase匿名密钥
-
-# PostgreSQL连接（二选一即可）
-POSTGRES_URL=postgres://user:password@host:port/database
-# POSTGRES_URL_NON_POOLING=postgres://user:password@host:port/database`}
-                  </pre>
-                </div>
-                
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">生产环境</h4>
-                  <p>
-                    确保在Vercel或其他部署平台的项目设置中添加了相应的环境变量。
-                  </p>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* 系统信息 */}
-        {activeTab === 'system' && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
+        {/* 支付设置 */}
+        {activeTab === 'payment' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">系统信息</h2>
-              <div className="bg-gray-50 p-4 rounded">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-500 mb-1">应用环境</div>
-                    <div>{process.env.NODE_ENV || '开发'}</div>
+              <h2 className="text-xl font-bold mb-4">支付设置</h2>
+              
+              <div className="space-y-6">
+                <div className="border p-4 rounded-lg">
+                  <h3 className="text-lg font-medium mb-3">支付宝设置</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        应用ID (APPID)
+                      </label>
+                      <input
+                        type="text"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="例如：2021000000000000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        商户私钥
+                      </label>
+                      <textarea
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        rows={3}
+                        placeholder="以MII开头的私钥内容"
+                      ></textarea>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        支付宝公钥
+                      </label>
+                      <textarea
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        rows={3}
+                        placeholder="以MII开头的公钥内容"
+                      ></textarea>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="enableAlipay"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <label htmlFor="enableAlipay" className="ml-2 block text-sm text-gray-700">
+                        启用支付宝支付
+                      </label>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm text-gray-500 mb-1">版本</div>
-                    <div>1.0.0</div>
+                </div>
+                
+                <div className="border p-4 rounded-lg">
+                  <h3 className="text-lg font-medium mb-3">微信支付设置</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        商户号 (Mch ID)
+                      </label>
+                      <input
+                        type="text"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="例如：1900000000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        API密钥
+                      </label>
+                      <input
+                        type="password"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        AppID
+                      </label>
+                      <input
+                        type="text"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="例如：wx8888888888888888"
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="enableWechatPay"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <label htmlFor="enableWechatPay" className="ml-2 block text-sm text-gray-700">
+                        启用微信支付
+                      </label>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm text-gray-500 mb-1">Node.js</div>
-                    <div>{process.version || '未知'}</div>
+                </div>
+                
+                <div className="pt-4">
+                  <button
+                    onClick={saveSystemSettings}
+                    disabled={loading}
+                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                  >
+                    {loading ? '保存中...' : '保存支付设置'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 通知设置 */}
+        {activeTab === 'notifications' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">通知设置</h2>
+              
+              <div className="space-y-6">
+                <div className="border p-4 rounded-lg">
+                  <h3 className="text-lg font-medium mb-3">邮件通知</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        SMTP服务器
+                      </label>
+                      <input
+                        type="text"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="例如：smtp.example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        SMTP端口
+                      </label>
+                      <input
+                        type="number"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="例如：587"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        邮箱账号
+                      </label>
+                      <input
+                        type="email"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="例如：notification@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        邮箱密码
+                      </label>
+                      <input
+                        type="password"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="enableEmailNotifications"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <label htmlFor="enableEmailNotifications" className="ml-2 block text-sm text-gray-700">
+                        启用邮件通知
+                      </label>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm text-gray-500 mb-1">操作系统</div>
-                    <div>Web服务器</div>
+                </div>
+                
+                <div className="border p-4 rounded-lg">
+                  <h3 className="text-lg font-medium mb-3">通知事件</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="notifyNewOrder"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                        defaultChecked
+                      />
+                      <label htmlFor="notifyNewOrder" className="ml-2 block text-sm text-gray-700">
+                        新订单通知
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="notifyLowStock"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                        defaultChecked
+                      />
+                      <label htmlFor="notifyLowStock" className="ml-2 block text-sm text-gray-700">
+                        库存不足通知
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="notifyNewReview"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <label htmlFor="notifyNewReview" className="ml-2 block text-sm text-gray-700">
+                        新评论通知
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="notifyNewUser"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <label htmlFor="notifyNewUser" className="ml-2 block text-sm text-gray-700">
+                        新用户注册通知
+                      </label>
+                    </div>
                   </div>
+                </div>
+                
+                <div className="pt-4">
+                  <button
+                    onClick={saveSystemSettings}
+                    disabled={loading}
+                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                  >
+                    {loading ? '保存中...' : '保存通知设置'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 高级设置 */}
+        {activeTab === 'advanced' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">高级设置</h2>
+              
+              <div className="space-y-4">
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">
+                        注意：以下设置可能会影响系统运行。除非您明确了解这些设置的作用，否则请谨慎修改。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    缓存时间 (秒)
+                  </label>
+                  <input
+                    type="number"
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    defaultValue="3600"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    上传文件大小限制 (MB)
+                  </label>
+                  <input
+                    type="number"
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    defaultValue="5"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    会话超时时间 (分钟)
+                  </label>
+                  <input
+                    type="number"
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    defaultValue="30"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    日志级别
+                  </label>
+                  <select
+                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+                    defaultValue="info"
+                  >
+                    <option value="debug">Debug (调试)</option>
+                    <option value="info">Info (信息)</option>
+                    <option value="warn">Warn (警告)</option>
+                    <option value="error">Error (错误)</option>
+                  </select>
+                </div>
+                
+                <div className="pt-6">
+                  <h3 className="text-lg font-medium mb-3">系统维护</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="maintenanceMode"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <label htmlFor="maintenanceMode" className="ml-2 block text-sm text-gray-700">
+                        启用维护模式（所有非管理员访问将看到维护页面）
+                      </label>
+                    </div>
+                    
+                    <div className="space-x-4">
+                      <Link 
+                        href="/admin/tools"
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                      >
+                        开发工具
+                      </Link>
+                      
+                      <button
+                        onClick={handleInitializeSystem}
+                        disabled={loading}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                      >
+                        初始化系统
+                      </button>
+                      
+                      <button
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                      >
+                        清理缓存
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="pt-4">
+                  <button
+                    onClick={saveSystemSettings}
+                    disabled={loading}
+                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                  >
+                    {loading ? '保存中...' : '保存高级设置'}
+                  </button>
                 </div>
               </div>
             </div>
