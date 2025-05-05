@@ -14,6 +14,8 @@ export default function SQLExecutorPage() {
   const [executeTime, setExecuteTime] = useState<number | null>(null)
   const [showAllColumns, setShowAllColumns] = useState(false)
   const [logMessages, setLogMessages] = useState<string[]>([])
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [isDangerousSQL, setIsDangerousSQL] = useState(false)
 
   const addLog = (message: string) => {
     setLogMessages(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`])
@@ -50,8 +52,36 @@ export default function SQLExecutorPage() {
           setError(`获取查询结果失败: ${queryResult.error.message}。您可能需要创建query_sql函数。`)
           addLog(`错误: ${queryResult.error.message}`)
         } else {
-          setResults(queryResult.data)
-          addLog(`查询成功: 返回 ${queryResult.data?.length || 0} 行数据`)
+          // 处理查询结果，确保结果是数组形式
+          let formattedData = queryResult.data
+          
+          // 如果数据是JSON字符串，尝试解析
+          if (typeof formattedData === 'string') {
+            try {
+              formattedData = JSON.parse(formattedData)
+            } catch (e) {
+              // 如果解析失败，使用原始数据
+              console.log('无法解析JSON字符串结果')
+            }
+          }
+          
+          // 处理不同格式的查询结果
+          if (formattedData && !Array.isArray(formattedData)) {
+            if (typeof formattedData === 'object') {
+              // 如果是单个对象，转换为数组
+              if (Object.keys(formattedData).length > 0) {
+                formattedData = [formattedData]
+              } else {
+                formattedData = []
+              }
+            } else {
+              // 如果是其他类型，创建包含单个值的数组
+              formattedData = [{ value: formattedData }]
+            }
+          }
+          
+          setResults(formattedData || [])
+          addLog(`查询成功: 返回 ${formattedData?.length || 0} 行数据`)
         }
       } else {
         // 对于非SELECT语句，显示成功消息
@@ -60,8 +90,20 @@ export default function SQLExecutorPage() {
       }
     } catch (err: any) {
       console.error('执行SQL失败:', err)
-      setError(`执行SQL失败: ${err.message}`)
-      addLog(`错误: ${err.message}`)
+      // 提供更详细的错误信息
+      let errorMessage = err.message || '未知错误'
+      
+      // 添加常见错误的帮助提示
+      if (errorMessage.includes('function') && errorMessage.includes('does not exist')) {
+        errorMessage += '。您可能需要先创建相应的SQL函数。'
+      } else if (errorMessage.includes('permission denied')) {
+        errorMessage += '。您可能没有执行该操作的权限。'
+      } else if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
+        errorMessage += '。请检查表名是否正确。'
+      }
+      
+      setError(`执行SQL失败: ${errorMessage}`)
+      addLog(`错误: ${errorMessage}`)
     } finally {
       const endTime = performance.now()
       setExecuteTime(endTime - startTime)
@@ -78,6 +120,24 @@ export default function SQLExecutorPage() {
     addLog('正在创建query_sql函数...')
 
     try {
+      // 先检查函数是否已存在
+      try {
+        const checkResult = await supabase.rpc('query_sql', { 
+          sql: 'SELECT 1 as test' 
+        })
+        
+        if (!checkResult.error) {
+          addLog('query_sql函数已存在且工作正常')
+          alert('query_sql函数已存在且工作正常！')
+          setLoading(false)
+          return
+        }
+      } catch (err) {
+        // 函数不存在或无法正常工作，继续创建
+        console.log('query_sql函数不存在或无法正常工作，尝试创建...')
+      }
+
+      // 尝试创建函数
       const response = await fetch('/api/admin/setup/create-query-sql', {
         method: 'POST'
       })
@@ -88,8 +148,22 @@ export default function SQLExecutorPage() {
         throw new Error(data.error || '创建query_sql函数失败')
       }
       
-      addLog('query_sql函数创建成功')
-      alert(data.message || 'query_sql函数已成功创建！现在您可以执行SELECT查询并查看结果了。')
+      // 创建成功后进行验证测试
+      try {
+        const testResult = await supabase.rpc('query_sql', { 
+          sql: 'SELECT 1 as test' 
+        })
+        
+        if (testResult.error) {
+          throw new Error(`函数创建成功但测试失败: ${testResult.error.message}`)
+        }
+        
+        addLog('query_sql函数创建并测试成功')
+        alert('query_sql函数已成功创建并测试通过！现在您可以执行SELECT查询并查看结果了。')
+      } catch (testErr: any) {
+        addLog(`函数创建后测试失败: ${testErr.message}`)
+        alert(`query_sql函数已创建，但测试失败。错误: ${testErr.message}`)
+      }
     } catch (err: any) {
       console.error('创建query_sql函数失败:', err)
       addLog(`错误: ${err.message}`)
@@ -97,6 +171,87 @@ export default function SQLExecutorPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // 判断SQL是否是危险操作
+  const checkDangerousSQL = (sqlText: string) => {
+    const upperSQL = sqlText.trim().toUpperCase()
+    // 检查是否包含数据修改或结构修改关键字
+    return (
+      upperSQL.includes('DROP TABLE') || 
+      upperSQL.includes('DROP DATABASE') ||
+      upperSQL.includes('TRUNCATE TABLE') ||
+      upperSQL.includes('DELETE FROM') ||
+      upperSQL.includes('ALTER TABLE') && upperSQL.includes('DROP')
+    )
+  }
+
+  const handleSQLExecution = () => {
+    const trimmedSQL = sql.trim()
+    if (!trimmedSQL) {
+      setError('请输入SQL语句')
+      return
+    }
+    
+    // 检查SQL是否危险
+    const dangerous = checkDangerousSQL(trimmedSQL)
+    setIsDangerousSQL(dangerous)
+    
+    // 危险SQL或影响数据的SQL需要确认
+    if (dangerous || 
+        !trimmedSQL.toUpperCase().startsWith('SELECT') && 
+        !trimmedSQL.toUpperCase().startsWith('SHOW') && 
+        !trimmedSQL.toUpperCase().startsWith('EXPLAIN')) {
+      setShowConfirmation(true)
+    } else {
+      // 安全的查询SQL可直接执行
+      executeSQL()
+    }
+  }
+  
+  // 确认框
+  const SQLConfirmationDialog = () => {
+    if (!showConfirmation) return null
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <h3 className="text-lg font-bold mb-2">
+            {isDangerousSQL ? '⚠️ 危险操作确认' : '操作确认'}
+          </h3>
+          <div className={`p-3 rounded-md mb-4 ${isDangerousSQL ? 'bg-red-50 text-red-700' : 'bg-yellow-50 text-yellow-700'}`}>
+            <p>您将执行以下SQL语句:</p>
+            <pre className="mt-2 p-2 bg-gray-100 rounded overflow-x-auto text-sm">
+              {sql}
+            </pre>
+            {isDangerousSQL && (
+              <p className="mt-2 font-bold">此操作可能会删除或破坏数据，且不可恢复！</p>
+            )}
+          </div>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowConfirmation(false)}
+              className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+            >
+              取消
+            </button>
+            <button
+              onClick={() => {
+                setShowConfirmation(false)
+                executeSQL()
+              }}
+              className={`px-4 py-2 rounded text-white ${
+                isDangerousSQL 
+                  ? 'bg-red-600 hover:bg-red-700' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              确认执行
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // 渲染结果表格
@@ -196,7 +351,7 @@ export default function SQLExecutorPage() {
 
       <div className="flex space-x-4 mb-8">
         <button
-          onClick={executeSQL}
+          onClick={handleSQLExecution}
           disabled={loading}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
         >
@@ -278,6 +433,9 @@ export default function SQLExecutorPage() {
           </ul>
         </div>
       </div>
+
+      {/* 确认对话框 */}
+      <SQLConfirmationDialog />
     </div>
   )
 } 

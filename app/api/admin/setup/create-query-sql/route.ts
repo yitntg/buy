@@ -36,8 +36,13 @@ export async function POST(request: NextRequest) {
     DECLARE
       result JSONB;
     BEGIN
-      EXECUTE sql INTO result;
-      RETURN result;
+      -- 尝试将结果转换为JSON数组，便于前端处理
+      EXECUTE 'SELECT to_jsonb(array_agg(row_to_json(t))) FROM (' || sql || ') t' INTO result;
+      -- 如果结果为null（空查询结果），返回空数组
+      RETURN COALESCE(result, '[]'::jsonb);
+    EXCEPTION WHEN OTHERS THEN
+      -- 记录错误并重新抛出
+      RAISE EXCEPTION '执行查询失败: %', SQLERRM;
     END;
     $$;
 
