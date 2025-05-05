@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { PostgrestError } from '@supabase/supabase-js'
+
+// 定义检查结果类型
+interface CategoryCheckResult {
+  exists: boolean;
+  reason?: 'not_found' | 'table_not_exist' | 'error' | 'exception';
+  error?: PostgrestError | Error;
+  data?: any;
+}
 
 // 确保请求的分类ID存在
-async function ensureCategoryExists(id: string) {
+async function ensureCategoryExists(id: string): Promise<CategoryCheckResult> {
   try {
     const { data, error } = await supabase
       .from('categories')
@@ -22,7 +31,7 @@ async function ensureCategoryExists(id: string) {
     return { exists: true, data }
   } catch (error) {
     console.error('检查分类ID存在性失败:', error)
-    return { exists: false, reason: 'exception', error }
+    return { exists: false, reason: 'exception', error: error instanceof Error ? error : new Error('未知错误') }
   }
 }
 
@@ -38,20 +47,27 @@ export async function GET(
     // 检查分类是否存在
     const check = await ensureCategoryExists(id)
     if (!check.exists) {
-      if (check.reason === 'table_not_exist') {
+      if (check.reason === 'table_not_exist' && check.error) {
+        const pgError = check.error as PostgrestError
         return NextResponse.json(
-          { error: '分类表不存在，请初始化数据库', details: check.error.message, code: check.error.code },
+          { error: '分类表不存在，请初始化数据库', details: pgError.message, code: pgError.code },
           { status: 404 }
         )
-      } else if (check.reason === 'not_found') {
+      } else if (check.reason === 'not_found' && check.error) {
+        const pgError = check.error as PostgrestError
         return NextResponse.json(
-          { error: '分类不存在', details: check.error.message, code: check.error.code },
+          { error: '分类不存在', details: pgError.message, code: pgError.code },
           { status: 404 }
         )
       }
       
+      // 处理其他错误情况
+      const errorDetails = check.error instanceof Error ? 
+        { message: check.error.message, code: (check.error as any).code } : 
+        { message: '未知错误', code: 'UNKNOWN' }
+      
       return NextResponse.json(
-        { error: '获取分类失败', details: check.error.message, code: check.error.code },
+        { error: '获取分类失败', details: errorDetails.message, code: errorDetails.code },
         { status: 500 }
       )
     }
@@ -102,20 +118,27 @@ export async function PUT(
     // 检查分类是否存在
     const check = await ensureCategoryExists(id)
     if (!check.exists) {
-      if (check.reason === 'table_not_exist') {
+      if (check.reason === 'table_not_exist' && check.error) {
+        const pgError = check.error as PostgrestError
         return NextResponse.json(
-          { error: '分类表不存在，请初始化数据库', details: check.error.message, code: check.error.code },
+          { error: '分类表不存在，请初始化数据库', details: pgError.message, code: pgError.code },
           { status: 404 }
         )
-      } else if (check.reason === 'not_found') {
+      } else if (check.reason === 'not_found' && check.error) {
+        const pgError = check.error as PostgrestError
         return NextResponse.json(
-          { error: '分类不存在', details: check.error.message, code: check.error.code },
+          { error: '分类不存在', details: pgError.message, code: pgError.code },
           { status: 404 }
         )
       }
       
+      // 处理其他错误情况
+      const errorDetails = check.error instanceof Error ? 
+        { message: check.error.message, code: (check.error as any).code } : 
+        { message: '未知错误', code: 'UNKNOWN' }
+      
       return NextResponse.json(
-        { error: '更新分类失败', details: check.error.message, code: check.error.code },
+        { error: '更新分类失败', details: errorDetails.message, code: errorDetails.code },
         { status: 500 }
       )
     }
@@ -162,20 +185,27 @@ export async function DELETE(
     // 检查分类是否存在
     const check = await ensureCategoryExists(id)
     if (!check.exists) {
-      if (check.reason === 'table_not_exist') {
+      if (check.reason === 'table_not_exist' && check.error) {
+        const pgError = check.error as PostgrestError
         return NextResponse.json(
-          { error: '分类表不存在，请初始化数据库', details: check.error.message, code: check.error.code },
+          { error: '分类表不存在，请初始化数据库', details: pgError.message, code: pgError.code },
           { status: 404 }
         )
-      } else if (check.reason === 'not_found') {
+      } else if (check.reason === 'not_found' && check.error) {
+        const pgError = check.error as PostgrestError
         return NextResponse.json(
-          { error: '分类不存在', details: check.error.message, code: check.error.code },
+          { error: '分类不存在', details: pgError.message, code: pgError.code },
           { status: 404 }
         )
       }
       
+      // 处理其他错误情况
+      const errorDetails = check.error instanceof Error ? 
+        { message: check.error.message, code: (check.error as any).code } : 
+        { message: '未知错误', code: 'UNKNOWN' }
+      
       return NextResponse.json(
-        { error: '删除分类失败', details: check.error.message, code: check.error.code },
+        { error: '删除分类失败', details: errorDetails.message, code: errorDetails.code },
         { status: 500 }
       )
     }
