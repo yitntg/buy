@@ -64,19 +64,19 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
   global: {
     // 当API请求失败时添加更有用的错误信息
-    fetch: (url, options) => {
+    fetch: (url, options = {}) => {
       // 添加请求时间戳
       const timestamp = new Date().toISOString();
       console.log(`[${timestamp}] Supabase请求: ${url.toString().substring(0, 100)}...`);
       
-      // 确保请求头存在
-      options.headers = options.headers || {};
+      // 确保请求头存在并添加默认请求头
+      const customHeaders = options.headers as Record<string, string> || {};
       
-      // 添加标准请求头
-      const headers = {
-        ...options.headers,
+      // 创建新的headers对象
+      const headers: Record<string, string> = {
         'X-Client-Info': 'supabase-js/2.0.0',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...customHeaders
       };
       
       // 确保包含apikey头
