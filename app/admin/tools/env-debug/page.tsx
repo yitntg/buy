@@ -90,6 +90,7 @@ export default function EnvDebugPage() {
           const pingUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://app.supabase.com'
           const pingResponse = await fetch(pingUrl, { 
             method: 'HEAD',
+            mode: 'no-cors',
             cache: 'no-store'
           })
           

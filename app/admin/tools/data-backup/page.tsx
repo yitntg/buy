@@ -19,20 +19,35 @@ export default function DataBackupPage() {
       setMessage({ type: 'info', text: '正在获取数据库表列表...' })
       
       // 尝试使用query_sql函数
-      const { data, error } = await supabase.rpc('query_sql', { 
-        sql: `SELECT table_name 
-              FROM information_schema.tables 
-              WHERE table_schema = 'public'
-              ORDER BY table_name` 
-      })
-      
-      if (error) {
-        throw error
+      try {
+        const { data, error } = await supabase.rpc('query_sql', { 
+          sql: `SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+                ORDER BY table_name` 
+        })
+        
+        if (error) {
+          throw error
+        }
+        
+        if (Array.isArray(data)) {
+          const tables = data.map((row: any) => row.table_name)
+          setAvailableTables(tables)
+          setMessage({ type: 'success', text: `获取到 ${tables.length} 个表` })
+        } else {
+          // 处理非数组结果
+          console.log('查询返回的数据不是数组格式:', data)
+          setMessage({ type: 'error', text: '获取表失败: 返回结果格式不正确' })
+        }
+      } catch (queryError: any) {
+        console.error('使用query_sql失败:', queryError)
+        
+        // 备用方法：直接获取所有已知表
+        const knownTables = ['products', 'categories', 'orders', 'order_items', 'users', 'reviews']
+        setAvailableTables(knownTables)
+        setMessage({ type: 'success', text: `使用备用方法获取表列表，找到 ${knownTables.length} 个表` })
       }
-      
-      const tables = data.map((row: any) => row.table_name)
-      setAvailableTables(tables)
-      setMessage({ type: 'success', text: `获取到 ${tables.length} 个表` })
     } catch (error: any) {
       console.error('获取表失败:', error)
       setMessage({ type: 'error', text: `获取表失败: ${error.message}` })

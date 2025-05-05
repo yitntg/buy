@@ -133,7 +133,16 @@ export async function POST(request: NextRequest) {
                 successCount++;
                 break;
               } else {
-                const errorText = await response.text();
+                // 克隆响应以避免重复读取body
+                const responseClone = response.clone();
+                let errorText = '';
+                try {
+                  errorText = await responseClone.text();
+                } catch (textError) {
+                  console.error('无法读取响应文本:', textError);
+                  errorText = '无法读取错误详情';
+                }
+                
                 console.error(`执行SQL失败 (endpoint: ${endpoint}):`, response.status, errorText.substring(0, 100));
                 
                 // 如果是表已存在错误，则视为成功

@@ -123,42 +123,78 @@ export async function POST(request: NextRequest) {
         '/rest/v1/sql',
         '/rest/v1/query',
         '/rest/v1/',
-        '/rest/v1'
+        '/rest/v1',
+        '/rest/v1/pg', // 新增可能的端点
+        '/sql', // 尝试不同路径
+        '/' // 直接访问根路径
+      ];
+      
+      // 尝试不同的请求格式
+      const payloadFormats = [
+        // 标准SQL对象格式
+        (sql: string) => ({ query: sql }),
+        // 简单字符串格式
+        (sql: string) => ({ sql: sql }),
+        // 命令格式
+        (sql: string) => ({ command: sql }),
+        // 包含多个字段的格式
+        (sql: string) => ({ query: sql, sql: sql, command: sql }),
+        // 纯SQL字符串格式
+        (sql: string) => sql
       ];
       
       let lastError = null;
+      let success = false;
+      
+      // 尝试不同的内容类型
+      const contentTypes = [
+        'application/json',
+        'text/plain',
+        'application/sql'
+      ];
+      
       for (const endpoint of endpoints) {
-        try {
-          console.log(`尝试使用endpoint: ${endpoint}`);
-          const pgResponse = await fetch(`${supabaseUrl}${endpoint}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': adminKey,
-              'Authorization': `Bearer ${adminKey}`,
-              'Prefer': 'resolution=ignore-duplicates'
-            },
-            body: JSON.stringify({
-              query: createFunctionSQL,
-              // 尝试多种参数格式
-              "command": createFunctionSQL,
-              "sql": createFunctionSQL
-            })
-          });
+        if (success) break;
+        
+        for (const formatFn of payloadFormats) {
+          if (success) break;
           
-          if (pgResponse.ok) {
-            console.log(`PostgreSQL API请求成功 使用endpoint: ${endpoint}`);
-            return NextResponse.json({
-              success: true,
-              message: 'query_sql函数已成功创建'
-            });
-          } else {
-            const errorBody = await pgResponse.text();
-            console.log(`尝试endpoint ${endpoint} 失败:`, pgResponse.status, errorBody.substring(0, 100));
-            lastError = { status: pgResponse.status, body: errorBody };
+          for (const contentType of contentTypes) {
+            try {
+              console.log(`尝试使用endpoint: ${endpoint}, contentType: ${contentType}`);
+              
+              const payload = formatFn(createFunctionSQL);
+              const body = contentType === 'application/json' ? 
+                JSON.stringify(payload) : 
+                typeof payload === 'string' ? payload : JSON.stringify(payload);
+              
+              const pgResponse = await fetch(`${supabaseUrl}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': contentType,
+                  'apikey': adminKey,
+                  'Authorization': `Bearer ${adminKey}`,
+                  'Prefer': 'resolution=ignore-duplicates'
+                },
+                body: body
+              });
+              
+              if (pgResponse.ok) {
+                console.log(`PostgreSQL API请求成功 使用endpoint: ${endpoint}, contentType: ${contentType}`);
+                success = true;
+                return NextResponse.json({
+                  success: true,
+                  message: 'query_sql函数已成功创建'
+                });
+              } else {
+                const errorBody = await pgResponse.text();
+                console.log(`尝试endpoint ${endpoint} 失败:`, pgResponse.status, errorBody.substring(0, 100));
+                lastError = { status: pgResponse.status, body: errorBody, endpoint, contentType };
+              }
+            } catch (endpointError) {
+              console.log(`尝试endpoint ${endpoint}, contentType: ${contentType} 出错:`, endpointError);
+            }
           }
-        } catch (endpointError) {
-          console.log(`尝试endpoint ${endpoint} 出错:`, endpointError);
         }
       }
       

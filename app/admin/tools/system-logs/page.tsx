@@ -99,30 +99,44 @@ export default function SystemLogsPage() {
       setError(null)
       
       // 使用exec_sql RPC函数创建日志表
-      const { error } = await supabase.rpc('exec_sql', { 
-        sql: `
-          CREATE TABLE IF NOT EXISTS system_logs (
-            id SERIAL PRIMARY KEY,
-            timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            level VARCHAR(10) NOT NULL,
-            module VARCHAR(50) NOT NULL,
-            action VARCHAR(100) NOT NULL,
-            user_id UUID,
-            details JSONB,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-          );
-          
-          CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON system_logs(timestamp);
-          CREATE INDEX IF NOT EXISTS idx_logs_level ON system_logs(level);
-          CREATE INDEX IF NOT EXISTS idx_logs_module ON system_logs(module);
-        `
-      })
-      
-      if (error) {
-        throw error
+      try {
+        const { error } = await supabase.rpc('exec_sql', { 
+          sql: `
+            CREATE TABLE IF NOT EXISTS system_logs (
+              id SERIAL PRIMARY KEY,
+              timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+              level VARCHAR(10) NOT NULL,
+              module VARCHAR(50) NOT NULL,
+              action VARCHAR(100) NOT NULL,
+              user_id UUID,
+              details JSONB,
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON system_logs(timestamp);
+            CREATE INDEX IF NOT EXISTS idx_logs_level ON system_logs(level);
+            CREATE INDEX IF NOT EXISTS idx_logs_module ON system_logs(module);
+          `
+        })
+        
+        if (error) {
+          throw error
+        }
+        
+        return true
+      } catch (execSqlError: any) {
+        console.error('使用exec_sql创建日志表失败:', execSqlError)
+        
+        // 尝试直接执行SQL（备用方法）
+        try {
+          // 这里可以添加备用方法，例如直接请求特定API端点
+          // 或使用其他功能来创建表
+          setError('创建日志表失败，需要先创建exec_sql函数')
+          return false
+        } catch (backupMethodError: any) {
+          throw backupMethodError
+        }
       }
-      
-      return true
     } catch (err: any) {
       console.error('创建日志表失败:', err)
       setError(`创建日志表失败: ${err.message}`)
@@ -136,26 +150,54 @@ export default function SystemLogsPage() {
   const addSampleLogs = async () => {
     try {
       // 使用exec_sql RPC函数插入示例日志
-      const { error } = await supabase.rpc('exec_sql', { 
-        sql: `
-          INSERT INTO system_logs (timestamp, level, module, action, details)
-          VALUES 
-            (NOW() - INTERVAL '1 hour', 'info', 'auth', '用户登录', '{"ip": "192.168.1.100", "browser": "Chrome"}'),
-            (NOW() - INTERVAL '2 hours', 'warning', 'products', '库存不足', '{"product_id": 123, "current_stock": 2, "required": 5}'),
-            (NOW() - INTERVAL '1 day', 'error', 'orders', '支付失败', '{"order_id": 456, "error_code": "PAYMENT_DECLINED"}'),
-            (NOW() - INTERVAL '2 days', 'info', 'users', '新用户注册', '{"email": "user@example.com"}'),
-            (NOW() - INTERVAL '3 days', 'info', 'admin', '系统设置更新', '{"setting": "tax_rate", "old_value": 0.05, "new_value": 0.06}'),
-            (NOW() - INTERVAL '4 days', 'warning', 'security', '多次登录失败', '{"ip": "203.0.113.1", "attempts": 5}'),
-            (NOW() - INTERVAL '5 days', 'info', 'products', '商品更新', '{"product_id": 789, "fields": ["price", "description"]}'),
-            (NOW() - INTERVAL '1 week', 'error', 'database', '备份失败', '{"reason": "disk_full", "available_space": "120MB"}')
-        `
-      })
-      
-      if (error) {
-        throw error
+      try {
+        const { error } = await supabase.rpc('exec_sql', { 
+          sql: `
+            INSERT INTO system_logs (timestamp, level, module, action, details)
+            VALUES 
+              (NOW() - INTERVAL '1 hour', 'info', 'auth', '用户登录', '{"ip": "192.168.1.100", "browser": "Chrome"}'),
+              (NOW() - INTERVAL '2 hours', 'warning', 'products', '库存不足', '{"product_id": 123, "current_stock": 2, "required": 5}'),
+              (NOW() - INTERVAL '1 day', 'error', 'orders', '支付失败', '{"order_id": 456, "error_code": "PAYMENT_DECLINED"}'),
+              (NOW() - INTERVAL '2 days', 'info', 'users', '新用户注册', '{"email": "user@example.com"}'),
+              (NOW() - INTERVAL '3 days', 'info', 'admin', '系统设置更新', '{"setting": "tax_rate", "old_value": 0.05, "new_value": 0.06}'),
+              (NOW() - INTERVAL '4 days', 'warning', 'security', '多次登录失败', '{"ip": "203.0.113.1", "attempts": 5}'),
+              (NOW() - INTERVAL '5 days', 'info', 'products', '商品更新', '{"product_id": 789, "fields": ["price", "description"]}'),
+              (NOW() - INTERVAL '1 week', 'error', 'database', '备份失败', '{"reason": "disk_full", "available_space": "120MB"}')
+          `
+        })
+        
+        if (error) {
+          throw error
+        }
+        
+        return true
+      } catch (execSqlError: any) {
+        console.error('使用exec_sql添加示例日志失败:', execSqlError)
+        
+        // 尝试使用supabase.from API（备用方法）
+        try {
+          // 创建单个日志记录作为示例
+          const { error: insertError } = await supabase
+            .from('system_logs')
+            .insert([
+              {
+                level: 'info',
+                module: 'system',
+                action: '系统初始化',
+                details: { message: '系统日志功能初始化' }
+              }
+            ])
+          
+          if (insertError) {
+            throw insertError
+          }
+          
+          return true
+        } catch (backupMethodError: any) {
+          console.error('备用方法添加示例日志失败:', backupMethodError)
+          return false
+        }
       }
-      
-      return true
     } catch (err: any) {
       console.error('添加示例日志失败:', err)
       return false
