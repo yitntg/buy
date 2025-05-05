@@ -207,6 +207,7 @@ export default function NewProductPage() {
     e.preventDefault()
     
     setIsLoading(true)
+    setErrors({})
     
     try {
       // 使用上传的图片或URL图片
@@ -240,6 +241,8 @@ export default function NewProductPage() {
         reviews: 0
       }
       
+      console.log('正在提交商品数据:', productData)
+      
       // 发送API请求
       const res = await fetch('/api/products', {
         method: 'POST',
@@ -250,8 +253,17 @@ export default function NewProductPage() {
       })
       
       if (!res.ok) {
-        throw new Error('创建商品失败')
+        const errorData = await res.json().catch(() => ({}))
+        console.error('API返回错误:', {
+          status: res.status,
+          statusText: res.statusText,
+          data: errorData
+        })
+        throw new Error(errorData.error || errorData.details || '创建商品失败，服务器返回错误：' + res.status)
       }
+      
+      const createdProduct = await res.json()
+      console.log('商品创建成功:', createdProduct)
       
       // 创建成功
       setSubmitSuccess(true)
@@ -283,9 +295,18 @@ export default function NewProductPage() {
           router.push('/admin/products')
         }
       }, 2000)
-    } catch (err) {
+    } catch (err: any) {
       console.error('保存商品失败:', err)
-      alert('保存商品失败，请重试')
+      
+      // 显示具体错误信息
+      const errorMessage = err.message || '保存商品失败，请重试'
+      alert(errorMessage)
+      
+      // 在控制台记录更多调试信息
+      if (err instanceof Error) {
+        console.error('错误详情:', err.stack)
+      }
+      
       setSubmitSuccess(false)
     } finally {
       setIsLoading(false)

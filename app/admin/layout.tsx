@@ -29,7 +29,6 @@ export default function AdminLayout({
     { id: 'dashboard', name: '控制面板', icon: 'dashboard', path: '/admin' },
     { id: 'products', name: '商品管理', icon: 'shopping-bag', path: '/admin/products' },
     { id: 'new-product', name: '添加商品', icon: 'add', path: '/admin/products/new' },
-    { id: 'upload', name: '上传商品', icon: 'upload', path: '/upload' },
     { id: 'orders', name: '订单管理', icon: 'clipboard-list', path: '/admin/orders' },
     { id: 'users', name: '用户管理', icon: 'users', path: '/admin/users' },
     { id: 'categories', name: '分类管理', icon: 'tag', path: '/admin/categories' },
@@ -61,12 +60,6 @@ export default function AdminLayout({
       case 'shopping-bag':
         return (
           <ShoppingBag className="h-5 w-5" />
-        )
-      case 'upload':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
         )
       case 'clipboard-list':
         return (

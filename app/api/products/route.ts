@@ -69,6 +69,8 @@ export async function POST(request: NextRequest) {
     // 解析请求体
     const data = await request.json()
     
+    console.log('收到商品创建请求数据:', data)
+    
     // 创建新商品，使用默认值处理空字段
     const newProduct: Omit<Product, 'id'> = {
       name: data.name || '未命名商品',
@@ -89,6 +91,8 @@ export async function POST(request: NextRequest) {
     if (data.returnable !== undefined) newProduct.returnable = data.returnable
     if (data.warranty !== undefined) newProduct.warranty = data.warranty
     
+    console.log('尝试插入商品数据:', newProduct)
+    
     // 添加到数据库
     const { data: createdProduct, error } = await supabase
       .from('products')
@@ -98,16 +102,24 @@ export async function POST(request: NextRequest) {
     
     if (error) {
       console.error('创建商品失败:', error)
-      return NextResponse.json({ error: '创建商品失败', details: error.message }, { status: 500 })
+      return NextResponse.json({ 
+        error: '创建商品失败', 
+        details: error.message,
+        code: error.code,
+        hint: error.hint || '可能是数据库结构与提交的数据不匹配'
+      }, { status: 500 })
     }
+    
+    console.log('商品创建成功:', createdProduct)
     
     // 返回新创建的商品
     return NextResponse.json(createdProduct, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('创建商品失败:', error)
     return NextResponse.json({ 
       error: '创建商品失败', 
-      details: error instanceof Error ? error.message : '未知错误' 
+      details: error instanceof Error ? error.message : '未知错误',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 })
   }
 } 
