@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+
+// 检查是否在浏览器环境
+const isBrowser = typeof window !== 'undefined';
 
 // 分类接口
 interface Category {
@@ -16,6 +19,12 @@ export default function NewProductPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // 图片上传状态
+  const [images, setImages] = useState<File[]>([])
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   
   // 表单状态
   const [formData, setFormData] = useState({
@@ -24,7 +33,13 @@ export default function NewProductPage() {
     price: '',
     category: '',
     inventory: '10',
-    image: ''
+    image: '',
+    brand: '',
+    model: '',
+    specifications: '',
+    free_shipping: false,
+    returnable: false,
+    warranty: false
   })
   
   // 错误信息
@@ -74,6 +89,15 @@ export default function NewProductPage() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
   
+  // 处理复选框变化
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked
+    }))
+  }
+  
   // 处理图片URL变化
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target
@@ -96,6 +120,88 @@ export default function NewProductPage() {
     }
   }
   
+  // 处理图片上传
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isBrowser) return;
+    
+    const fileList = e.target.files
+    
+    if (!fileList) return
+    
+    const newImages: File[] = []
+    const newImageUrls: string[] = []
+    
+    // 限制最多上传5张图片
+    const maxImages = 5
+    const totalImages = images.length + fileList.length
+    const imagesToProcess = totalImages > maxImages ? maxImages - images.length : fileList.length
+    
+    // 处理选择的图片
+    for (let i = 0; i < imagesToProcess; i++) {
+      const file = fileList[i]
+      newImages.push(file)
+      
+      // 创建预览URL
+      const url = URL.createObjectURL(file)
+      newImageUrls.push(url)
+    }
+    
+    // 更新状态
+    setImages(prev => [...prev, ...newImages])
+    setImagePreviewUrls(prev => [...prev, ...newImageUrls])
+    
+    // 如果超过5张图片，显示提示
+    if (totalImages > maxImages) {
+      alert(`最多只能上传5张图片，已选择前${maxImages}张。`)
+    }
+    
+    // 如果是第一张图片且没有设置主图URL，则自动设置
+    if (imagePreviewUrls.length === 0 && newImageUrls.length > 0 && !formData.image) {
+      setFormData(prev => ({ ...prev, image: newImageUrls[0] }))
+      setImagePreview(newImageUrls[0])
+    }
+  }
+  
+  // 移除图片
+  const removeImage = (index: number) => {
+    if (!isBrowser) return;
+    
+    // 从数组中移除图片
+    const newImages = [...images]
+    const newImageUrls = [...imagePreviewUrls]
+    
+    // 检查是否移除的是作为主图的图片
+    const removedUrl = newImageUrls[index]
+    if (removedUrl === formData.image) {
+      // 如果还有其他图片，选择第一张作为主图
+      if (newImageUrls.length > 1) {
+        const newMainImage = index === 0 ? newImageUrls[1] : newImageUrls[0]
+        setFormData(prev => ({ ...prev, image: newMainImage }))
+        setImagePreview(newMainImage)
+      } else {
+        // 没有其他图片了，清除主图
+        setFormData(prev => ({ ...prev, image: '' }))
+        setImagePreview(null)
+      }
+    }
+    
+    // 释放预览URL的内存
+    URL.revokeObjectURL(newImageUrls[index])
+    
+    newImages.splice(index, 1)
+    newImageUrls.splice(index, 1)
+    
+    setImages(newImages)
+    setImagePreviewUrls(newImageUrls)
+  }
+  
+  // 触发图片选择对话框
+  const handleSelectImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+    }
+  }
+  
   // 验证表单
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -104,29 +210,18 @@ export default function NewProductPage() {
       newErrors.name = '请输入商品名称'
     }
     
-    if (!formData.description.trim()) {
-      newErrors.description = '请输入商品描述'
-    }
-    
     if (!formData.price) {
       newErrors.price = '请输入商品价格'
     } else if (isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
       newErrors.price = '价格必须是大于0的数字'
     }
     
-    if (!formData.inventory) {
-      newErrors.inventory = '请输入库存数量'
-    } else if (isNaN(Number(formData.inventory)) || Number(formData.inventory) < 0) {
-      newErrors.inventory = '库存必须是不小于0的整数'
-    }
-    
     if (!formData.category) {
       newErrors.category = '请选择商品分类'
     }
     
-    if (!formData.image.trim()) {
-      newErrors.image = '请输入商品图片URL'
-    } else if (!isValidUrl(formData.image)) {
+    // 图片URL可选，但如果提供了则需要验证
+    if (formData.image && !isValidUrl(formData.image)) {
       newErrors.image = '请输入有效的图片URL'
     }
     
@@ -156,18 +251,33 @@ export default function NewProductPage() {
     setIsLoading(true)
     
     try {
-      // 在实际应用中，这里应该调用API创建商品
-      // 模拟API请求
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // 使用上传的图片或URL图片
+      let imageUrl = formData.image
+      
+      // 如果有上传的图片但没有设置URL，使用第一张上传的图片
+      if (!imageUrl && imagePreviewUrls.length > 0) {
+        imageUrl = imagePreviewUrls[0]
+      }
+      
+      // 如果仍然没有图片，使用默认图片
+      if (!imageUrl) {
+        imageUrl = 'https://picsum.photos/id/1/500/500'
+      }
       
       // 构建商品数据
       const productData = {
         name: formData.name,
-        description: formData.description,
+        description: formData.description || `${formData.name}是一款优质商品`,
         price: parseFloat(formData.price),
-        inventory: parseInt(formData.inventory),
+        inventory: parseInt(formData.inventory || '0'),
         category: parseInt(formData.category),
-        image: formData.image,
+        image: imageUrl,
+        brand: formData.brand || '',
+        model: formData.model || '',
+        specifications: formData.specifications || '',
+        free_shipping: formData.free_shipping,
+        returnable: formData.returnable,
+        warranty: formData.warranty,
         rating: 0,
         reviews: 0
       }
@@ -185,11 +295,40 @@ export default function NewProductPage() {
         throw new Error('创建商品失败')
       }
       
-      // 创建成功，重定向到商品列表
-      router.push('/admin/products')
+      // 创建成功
+      setSubmitSuccess(true)
+      
+      // 2秒后重置表单或跳转
+      setTimeout(() => {
+        if (confirm('商品添加成功！是否继续添加新商品？')) {
+          // 重置表单
+          setFormData({
+            name: '',
+            description: '',
+            price: '',
+            category: categories.length > 0 ? categories[0].id.toString() : '',
+            inventory: '10',
+            image: '',
+            brand: '',
+            model: '',
+            specifications: '',
+            free_shipping: false,
+            returnable: false,
+            warranty: false
+          })
+          setImages([])
+          setImagePreviewUrls([])
+          setImagePreview(null)
+          setSubmitSuccess(false)
+        } else {
+          // 跳转到商品列表
+          router.push('/admin/products')
+        }
+      }, 2000)
     } catch (err) {
       console.error('保存商品失败:', err)
       alert('保存商品失败，请重试')
+      setSubmitSuccess(false)
     } finally {
       setIsLoading(false)
     }
