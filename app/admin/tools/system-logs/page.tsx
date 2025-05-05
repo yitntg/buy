@@ -81,7 +81,7 @@ export default function SystemLogsPage() {
       
       // 收集唯一的模块名称
       if (data && data.length > 0) {
-        const uniqueModules = [...new Set(data.map(log => log.module))].filter(Boolean)
+        const uniqueModules = Array.from(new Set(data.map(log => log.module))).filter(Boolean)
         setModules(uniqueModules)
       }
     } catch (err: any) {
