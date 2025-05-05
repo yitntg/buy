@@ -1,8 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-// 获取环境变量
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+// 使用正确的生产环境API密钥
+const supabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
+// 使用正确的ANON_KEY
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
+
+// 确认凭证
+console.log('Supabase URL:', supabaseUrl)
+console.log('API密钥存在:', !!supabaseKey)
 
 // 诊断URL和密钥
 let urlDiagnostic = '正常'

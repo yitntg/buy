@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types/products'
-import { createClient } from '@supabase/supabase-js'
-
-// 备用的Supabase客户端，确保服务器端API能正常工作
-const backupSupabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
-const backupSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
-const backupClient = createClient(backupSupabaseUrl, backupSupabaseKey)
-
-// 使用可用的客户端
-const db = supabase || backupClient
 
 // 获取商品列表
 export async function GET(request: NextRequest) {
@@ -20,8 +11,10 @@ export async function GET(request: NextRequest) {
   const category = url.searchParams.get('category')
   const sortBy = url.searchParams.get('sortBy') || 'relevance'
   
+  console.log('获取商品列表，参数:', { page, limit, keyword, category, sortBy })
+  
   // 构建查询
-  let query = db.from('products').select('*', { count: 'exact' })
+  let query = supabase.from('products').select('*', { count: 'exact' })
   
   // 关键词搜索
   if (keyword) {
@@ -59,12 +52,14 @@ export async function GET(request: NextRequest) {
   
   if (error) {
     console.error('获取商品列表失败:', error)
-    return NextResponse.json({ error: '获取商品列表失败' }, { status: 500 })
+    return NextResponse.json({ error: '获取商品列表失败', details: error.message }, { status: 500 })
   }
+  
+  console.log(`成功获取${products?.length || 0}件商品，总数:${count || 0}`)
   
   // 返回结果
   return NextResponse.json({
-    products,
+    products: products || [],
     total: count || 0,
     page,
     limit,
@@ -82,8 +77,8 @@ export async function POST(request: NextRequest) {
     
     // 创建新商品，使用默认值处理空字段
     const newProduct: Omit<Product, 'id'> = {
-      name: data.name || '未命名商品',
-      description: data.description || '该商品暂无描述',
+      name: data.name.trim(),
+      description: data.description.trim() || '该商品暂无描述',
       price: parseFloat(data.price || '0'),
       image: data.image || 'https://picsum.photos/id/1/500/500', // 默认图片
       category: parseInt(data.category || '1'),
@@ -93,9 +88,9 @@ export async function POST(request: NextRequest) {
     }
     
     // 添加其他可选字段
-    if (data.brand) newProduct.brand = data.brand
-    if (data.model) newProduct.model = data.model
-    if (data.specifications) newProduct.specifications = data.specifications
+    if (data.brand) newProduct.brand = data.brand.trim()
+    if (data.model) newProduct.model = data.model.trim()
+    if (data.specifications) newProduct.specifications = data.specifications.trim()
     if (data.free_shipping !== undefined) newProduct.free_shipping = data.free_shipping
     if (data.returnable !== undefined) newProduct.returnable = data.returnable
     if (data.warranty !== undefined) newProduct.warranty = data.warranty
@@ -103,7 +98,7 @@ export async function POST(request: NextRequest) {
     console.log('尝试插入商品数据:', newProduct)
     
     // 添加到数据库
-    const { data: createdProduct, error } = await db
+    const { data: createdProduct, error } = await supabase
       .from('products')
       .insert(newProduct)
       .select()

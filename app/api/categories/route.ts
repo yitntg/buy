@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { createClient } from '@supabase/supabase-js'
-
-// 备用的Supabase客户端，确保服务器端API能正常工作
-const backupSupabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
-const backupSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
-const backupClient = createClient(backupSupabaseUrl, backupSupabaseKey)
-
-// 使用可用的客户端
-const db = supabase || backupClient
 
 // 获取所有分类
 export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await db
+    console.log('正在获取分类数据...')
+
+    const { data, error } = await supabase
       .from('categories')
       .select('*')
       .order('id', { ascending: true })
@@ -21,12 +14,13 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('获取分类失败:', error)
       return NextResponse.json(
-        { error: '获取分类失败' },
+        { error: '获取分类失败', details: error.message },
         { status: 500 }
       )
     }
     
-    return NextResponse.json(data)
+    console.log('成功获取分类数据:', data?.length || 0, '条记录')
+    return NextResponse.json(data || [])
   } catch (error: any) {
     console.error('获取分类失败:', error)
     return NextResponse.json(
@@ -40,6 +34,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
+    console.log('创建分类请求数据:', data)
     
     // 验证必填字段
     if (!data.name) {
@@ -50,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 创建新分类
-    const { data: newCategory, error } = await db
+    const { data: newCategory, error } = await supabase
       .from('categories')
       .insert({
         name: data.name,
@@ -62,11 +57,12 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('创建分类失败:', error)
       return NextResponse.json(
-        { error: '创建分类失败' },
+        { error: '创建分类失败', details: error.message },
         { status: 500 }
       )
     }
     
+    console.log('分类创建成功:', newCategory)
     return NextResponse.json(newCategory, { status: 201 })
   } catch (error: any) {
     console.error('创建分类失败:', error)

@@ -1,14 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { createClient } from '@supabase/supabase-js'
-
-// 备用的Supabase客户端，确保服务器端API能正常工作
-const backupSupabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
-const backupSupabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
-const backupClient = createClient(backupSupabaseUrl, backupSupabaseKey)
-
-// 使用可用的客户端
-const db = supabase || backupClient
 
 // 获取单个分类
 export async function GET(
@@ -17,8 +8,9 @@ export async function GET(
 ) {
   try {
     const id = params.id
+    console.log(`获取分类ID: ${id}`)
     
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('categories')
       .select('*')
       .eq('id', id)
@@ -34,7 +26,7 @@ export async function GET(
       
       console.error('获取分类失败:', error)
       return NextResponse.json(
-        { error: '获取分类失败' },
+        { error: '获取分类失败', details: error.message },
         { status: 500 }
       )
     }
@@ -57,6 +49,7 @@ export async function PUT(
   try {
     const id = params.id
     const data = await request.json()
+    console.log(`更新分类ID: ${id}，数据:`, data)
     
     // 验证必填字段
     if (!data.name) {
@@ -67,7 +60,7 @@ export async function PUT(
     }
     
     // 检查分类是否存在
-    const { data: existingCategory, error: checkError } = await db
+    const { data: existingCategory, error: checkError } = await supabase
       .from('categories')
       .select('id')
       .eq('id', id)
@@ -83,13 +76,13 @@ export async function PUT(
       
       console.error('检查分类失败:', checkError)
       return NextResponse.json(
-        { error: '检查分类失败' },
+        { error: '检查分类失败', details: checkError.message },
         { status: 500 }
       )
     }
     
     // 更新分类
-    const { data: updatedCategory, error } = await db
+    const { data: updatedCategory, error } = await supabase
       .from('categories')
       .update({
         name: data.name,
@@ -102,11 +95,12 @@ export async function PUT(
     if (error) {
       console.error('更新分类失败:', error)
       return NextResponse.json(
-        { error: '更新分类失败' },
+        { error: '更新分类失败', details: error.message },
         { status: 500 }
       )
     }
     
+    console.log('分类更新成功:', updatedCategory)
     return NextResponse.json(updatedCategory)
   } catch (error: any) {
     console.error('更新分类失败:', error)
@@ -124,9 +118,10 @@ export async function DELETE(
 ) {
   try {
     const id = params.id
+    console.log(`删除分类ID: ${id}`)
     
     // 检查分类是否存在
-    const { data: existingCategory, error: checkError } = await db
+    const { data: existingCategory, error: checkError } = await supabase
       .from('categories')
       .select('id')
       .eq('id', id)
@@ -142,13 +137,13 @@ export async function DELETE(
       
       console.error('检查分类失败:', checkError)
       return NextResponse.json(
-        { error: '检查分类失败' },
+        { error: '检查分类失败', details: checkError.message },
         { status: 500 }
       )
     }
     
     // 删除分类
-    const { error } = await db
+    const { error } = await supabase
       .from('categories')
       .delete()
       .eq('id', id)
@@ -156,11 +151,12 @@ export async function DELETE(
     if (error) {
       console.error('删除分类失败:', error)
       return NextResponse.json(
-        { error: '删除分类失败' },
+        { error: '删除分类失败', details: error.message },
         { status: 500 }
       )
     }
     
+    console.log('分类删除成功')
     return NextResponse.json({ success: true, message: '分类已成功删除' })
   } catch (error: any) {
     console.error('删除分类失败:', error)
