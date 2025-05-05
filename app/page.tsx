@@ -146,7 +146,7 @@ export default async function Home() {
           ) : (
             <div className="text-center py-10 bg-gray-50 rounded-lg">
               <p className="text-gray-500">暂无商品数据，请先添加商品</p>
-              <Link href="/upload" className="mt-4 inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600">
+              <Link href="/admin/products/new" className="mt-4 inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600">
                 添加商品
               </Link>
             </div>

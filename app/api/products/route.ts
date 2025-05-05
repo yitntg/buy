@@ -69,22 +69,25 @@ export async function POST(request: NextRequest) {
     // 解析请求体
     const data = await request.json()
     
-    // 验证必填字段
-    if (!data.name || !data.description || !data.price || !data.image || !data.category) {
-      return NextResponse.json({ error: '缺少必填字段' }, { status: 400 })
-    }
-    
-    // 创建新商品
+    // 创建新商品，使用默认值处理空字段
     const newProduct: Omit<Product, 'id'> = {
-      name: data.name,
-      description: data.description,
-      price: parseFloat(data.price),
-      image: data.image,
-      category: parseInt(data.category),
-      inventory: parseInt(data.inventory) || 0,
+      name: data.name || '未命名商品',
+      description: data.description || '该商品暂无描述',
+      price: parseFloat(data.price || '0'),
+      image: data.image || 'https://picsum.photos/id/1/500/500', // 默认图片
+      category: parseInt(data.category || '1'),
+      inventory: parseInt(data.inventory || '0'),
       rating: 0,
       reviews: 0
     }
+    
+    // 添加其他可选字段
+    if (data.brand) newProduct.brand = data.brand
+    if (data.model) newProduct.model = data.model
+    if (data.specifications) newProduct.specifications = data.specifications
+    if (data.free_shipping !== undefined) newProduct.free_shipping = data.free_shipping
+    if (data.returnable !== undefined) newProduct.returnable = data.returnable
+    if (data.warranty !== undefined) newProduct.warranty = data.warranty
     
     // 添加到数据库
     const { data: createdProduct, error } = await supabase
@@ -95,13 +98,16 @@ export async function POST(request: NextRequest) {
     
     if (error) {
       console.error('创建商品失败:', error)
-      return NextResponse.json({ error: '创建商品失败' }, { status: 500 })
+      return NextResponse.json({ error: '创建商品失败', details: error.message }, { status: 500 })
     }
     
     // 返回新创建的商品
     return NextResponse.json(createdProduct, { status: 201 })
   } catch (error) {
     console.error('创建商品失败:', error)
-    return NextResponse.json({ error: '创建商品失败' }, { status: 500 })
+    return NextResponse.json({ 
+      error: '创建商品失败', 
+      details: error instanceof Error ? error.message : '未知错误' 
+    }, { status: 500 })
   }
 } 

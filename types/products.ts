@@ -9,4 +9,10 @@ export type Product = {
   rating: number
   reviews: number
   created_at?: string
+  brand?: string
+  model?: string
+  specifications?: string
+  free_shipping?: boolean
+  returnable?: boolean
+  warranty?: boolean
 } 
