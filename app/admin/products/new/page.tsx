@@ -202,51 +202,9 @@ export default function NewProductPage() {
     }
   }
   
-  // 验证表单
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-    
-    if (!formData.name.trim()) {
-      newErrors.name = '请输入商品名称'
-    }
-    
-    if (!formData.price) {
-      newErrors.price = '请输入商品价格'
-    } else if (isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
-      newErrors.price = '价格必须是大于0的数字'
-    }
-    
-    if (!formData.category) {
-      newErrors.category = '请选择商品分类'
-    }
-    
-    // 图片URL可选，但如果提供了则需要验证
-    if (formData.image && !isValidUrl(formData.image)) {
-      newErrors.image = '请输入有效的图片URL'
-    }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-  
-  // 检查URL是否有效
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url)
-      return true
-    } catch (e) {
-      return false
-    }
-  }
-  
   // 表单提交处理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // 验证表单
-    if (!validateForm()) {
-      return
-    }
     
     setIsLoading(true)
     
@@ -266,11 +224,11 @@ export default function NewProductPage() {
       
       // 构建商品数据
       const productData = {
-        name: formData.name,
-        description: formData.description || `${formData.name}是一款优质商品`,
-        price: parseFloat(formData.price),
+        name: formData.name || '未命名商品',
+        description: formData.description || `该商品暂无描述`,
+        price: parseFloat(formData.price || '0'),
         inventory: parseInt(formData.inventory || '0'),
-        category: parseInt(formData.category),
+        category: parseInt(formData.category || '1'),
         image: imageUrl,
         brand: formData.brand || '',
         model: formData.model || '',
@@ -349,141 +307,362 @@ export default function NewProductPage() {
         </Link>
       </div>
       
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                商品名称
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
-            </div>
-            
-            <div className="md:col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                商品描述
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                rows={4}
-                value={formData.description}
-                onChange={handleInputChange}
-                className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
-            </div>
-            
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                价格 (¥)
-              </label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                step="0.01"
-                value={formData.price}
-                onChange={handleInputChange}
-                className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
-            </div>
-            
-            <div>
-              <label htmlFor="inventory" className="block text-sm font-medium text-gray-700">
-                库存数量
-              </label>
-              <input
-                type="number"
-                id="inventory"
-                name="inventory"
-                value={formData.inventory}
-                onChange={handleInputChange}
-                className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.inventory ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.inventory && <p className="mt-1 text-sm text-red-500">{errors.inventory}</p>}
-            </div>
-            
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                商品分类
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.category ? 'border-red-500' : 'border-gray-300'}`}
-              >
-                <option value="">请选择分类</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
-            </div>
-            
-            <div>
-              <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-                商品图片URL
-              </label>
-              <input
-                type="text"
-                id="image"
-                name="image"
-                value={formData.image}
-                onChange={handleImageChange}
-                placeholder="https://example.com/image.jpg"
-                className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.image ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
-              
-              {/* 图片预览 */}
-              {imagePreview && (
-                <div className="mt-2 relative h-40 w-40 border rounded-md overflow-hidden">
-                  <Image
-                    src={imagePreview}
-                    alt="商品图片预览"
-                    fill
-                    className="object-cover"
-                    onError={() => {
-                      setErrors(prev => ({ ...prev, image: '图片加载失败，请检查URL' }))
-                      setImagePreview(null)
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="mt-6 flex items-center justify-end">
-            <Link
-              href="/admin/products"
-              className="mr-4 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              取消
-            </Link>
+      {submitSuccess ? (
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <div className="text-6xl text-green-500 mb-4">✓</div>
+          <h2 className="text-2xl font-medium mb-4">商品添加成功！</h2>
+          <p className="text-gray-600 mb-8">您的商品已成功添加，将立即显示在商城中。</p>
+          <div className="flex justify-center space-x-4">
             <button
-              type="submit"
-              disabled={isLoading}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-600 disabled:opacity-70"
+              onClick={() => {
+                setFormData({
+                  name: '',
+                  description: '',
+                  price: '',
+                  category: categories.length > 0 ? categories[0].id.toString() : '',
+                  inventory: '10',
+                  image: '',
+                  brand: '',
+                  model: '',
+                  specifications: '',
+                  free_shipping: false,
+                  returnable: false,
+                  warranty: false
+                })
+                setImages([])
+                setImagePreviewUrls([])
+                setImagePreview(null)
+                setSubmitSuccess(false)
+              }}
+              className="px-4 py-2 border border-primary rounded-md text-primary hover:bg-blue-50"
             >
-              {isLoading ? '保存中...' : '保存商品'}
+              继续添加商品
+            </button>
+            <button
+              onClick={() => router.push('/admin/products')}
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-600"
+            >
+              返回商品列表
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="space-y-6">
+              {/* 基本信息区域 */}
+              <div>
+                <h2 className="text-xl font-medium mb-4">基本信息</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      商品名称
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.name ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:outline-none`}
+                    />
+                    {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                      商品分类
+                    </label>
+                    <select
+                      id="category"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.category ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:outline-none`}
+                    >
+                      <option value="">请选择分类</option>
+                      {categories.map(category => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+                      价格 (¥)
+                    </label>
+                    <input
+                      type="number"
+                      id="price"
+                      name="price"
+                      step="0.01"
+                      min="0"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.price ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:outline-none`}
+                    />
+                    {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="inventory" className="block text-sm font-medium text-gray-700">
+                      库存数量
+                    </label>
+                    <input
+                      type="number"
+                      id="inventory"
+                      name="inventory"
+                      min="0"
+                      value={formData.inventory}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.inventory ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:outline-none`}
+                    />
+                    {errors.inventory && <p className="mt-1 text-sm text-red-500">{errors.inventory}</p>}
+                  </div>
+                </div>
+              </div>
+              
+              {/* 商品描述 */}
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  商品描述
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={4}
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.description ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:outline-none`}
+                />
+                {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
+              </div>
+              
+              {/* 商品规格 */}
+              <div>
+                <h2 className="text-xl font-medium mb-4">商品规格</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="brand" className="block text-sm font-medium text-gray-700">
+                      品牌
+                    </label>
+                    <input
+                      type="text"
+                      id="brand"
+                      name="brand"
+                      value={formData.brand}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none`}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="model" className="block text-sm font-medium text-gray-700">
+                      型号
+                    </label>
+                    <input
+                      type="text"
+                      id="model"
+                      name="model"
+                      value={formData.model}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none`}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="specifications" className="block text-sm font-medium text-gray-700">
+                      规格参数
+                    </label>
+                    <textarea
+                      id="specifications"
+                      name="specifications"
+                      value={formData.specifications}
+                      onChange={handleInputChange}
+                      rows={3}
+                      placeholder="例如：尺寸、重量、材质、颜色等"
+                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none`}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* 商品图片部分 */}
+              <div>
+                <h2 className="text-xl font-medium mb-4">商品图片</h2>
+                
+                {/* 图片上传区域 */}
+                <div 
+                  className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    if (e.dataTransfer.files.length > 0) {
+                      const fileList = e.dataTransfer.files
+                      const changeEvent = {
+                        target: { files: fileList }
+                      } as unknown as React.ChangeEvent<HTMLInputElement>
+                      handleImageUpload(changeEvent)
+                    }
+                  }}
+                >
+                  <div className="space-y-2">
+                    <div className="text-4xl text-gray-400">📸</div>
+                    <p className="text-gray-500">点击上传或拖拽图片至此处</p>
+                    <p className="text-xs text-gray-400">支持 JPG, PNG 格式，最多可上传 5 张图片</p>
+                    <input
+                      type="file"
+                      id="images"
+                      ref={fileInputRef}
+                      accept="image/jpeg, image/png"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSelectImageClick}
+                      className="mt-2 inline-flex items-center px-4 py-2 border border-primary text-primary rounded-full hover:bg-blue-50 focus:outline-none"
+                    >
+                      选择图片
+                    </button>
+                  </div>
+                </div>
+                
+                {/* 图片预览区域 */}
+                {imagePreviewUrls.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                    {imagePreviewUrls.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <div className="relative h-24 w-full rounded-md overflow-hidden border border-gray-200">
+                          <Image 
+                            src={url}
+                            alt={`Preview ${index}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* URL输入区域 */}
+                <div className="mt-4">
+                  <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+                    商品图片URL（可选）
+                  </label>
+                  <input
+                    type="text"
+                    id="image"
+                    name="image"
+                    value={formData.image}
+                    onChange={handleImageChange}
+                    placeholder="https://example.com/image.jpg"
+                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.image ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:outline-none`}
+                  />
+                  {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
+                  
+                  {/* URL图片预览 */}
+                  {imagePreview && !imagePreviewUrls.includes(imagePreview) && (
+                    <div className="mt-2 relative h-40 w-40 border rounded-md overflow-hidden">
+                      <Image
+                        src={imagePreview}
+                        alt="商品图片预览"
+                        fill
+                        className="object-cover"
+                        onError={() => {
+                          setErrors(prev => ({ ...prev, image: '图片加载失败，请检查URL' }))
+                          setImagePreview(null)
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* 配送与售后 */}
+              <div>
+                <h2 className="text-xl font-medium mb-4">配送与售后</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="free_shipping"
+                      name="free_shipping"
+                      checked={formData.free_shipping}
+                      onChange={handleCheckboxChange}
+                      className="w-4 h-4 text-primary rounded focus:ring-primary"
+                    />
+                    <label htmlFor="free_shipping" className="ml-2 text-sm text-gray-700">
+                      免运费
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="returnable"
+                      name="returnable"
+                      checked={formData.returnable}
+                      onChange={handleCheckboxChange}
+                      className="w-4 h-4 text-primary rounded focus:ring-primary"
+                    />
+                    <label htmlFor="returnable" className="ml-2 text-sm text-gray-700">
+                      支持7天无理由退换
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="warranty"
+                      name="warranty"
+                      checked={formData.warranty}
+                      onChange={handleCheckboxChange}
+                      className="w-4 h-4 text-primary rounded focus:ring-primary"
+                    />
+                    <label htmlFor="warranty" className="ml-2 text-sm text-gray-700">
+                      提供保修服务
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex items-center justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => router.push('/admin/products')}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-600 disabled:opacity-70 flex items-center"
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    保存中...
+                  </>
+                ) : '保存商品'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 } 
