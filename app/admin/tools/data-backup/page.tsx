@@ -9,7 +9,7 @@ export default function DataBackupPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [selectedTables, setSelectedTables] = useState<string[]>([])
   const [availableTables, setAvailableTables] = useState<string[]>([])
-  const [message, setMessage] = useState<{ type: 'info' | 'success' | 'error', text: string } | null>(null)
+  const [message, setMessage] = useState<{ type: 'info' | 'success' | 'error' | 'warning', text: string } | null>(null)
   const [exportedData, setExportedData] = useState<string>('')
   const [importData, setImportData] = useState<string>('')
 
@@ -71,16 +71,43 @@ export default function DataBackupPage() {
       for (const table of selectedTables) {
         setMessage({ type: 'info', text: `正在导出表 ${table}...` })
         
-        // 获取表数据
-        const { data, error } = await supabase
-          .from(table)
-          .select('*')
-        
-        if (error) {
-          throw new Error(`导出表 ${table} 失败: ${error.message}`)
+        try {
+          // 获取表数据
+          const { data, error } = await supabase
+            .from(table)
+            .select('*')
+          
+          if (error) {
+            throw new Error(`导出表 ${table} 失败: ${error.message}`)
+          }
+          
+          exportData[table] = data || []
+        } catch (tableError: any) {
+          console.error(`导出表 ${table} 失败:`, tableError)
+          
+          // 尝试使用query_sql函数作为备用方法
+          try {
+            const { data: queryData, error: queryError } = await supabase.rpc('query_sql', {
+              sql: `SELECT * FROM ${table} LIMIT 1000`
+            })
+            
+            if (queryError) {
+              throw queryError
+            }
+            
+            if (Array.isArray(queryData)) {
+              exportData[table] = queryData
+              setMessage({ type: 'info', text: `使用备用方法导出表 ${table} 成功` })
+            } else {
+              exportData[table] = []
+              setMessage({ type: 'warning', text: `表 ${table} 可能为空或无法导出` })
+            }
+          } catch (backupError: any) {
+            console.error(`使用备用方法导出表 ${table} 失败:`, backupError)
+            exportData[table] = []
+            setMessage({ type: 'warning', text: `表 ${table} 无法导出: ${backupError.message}` })
+          }
         }
-        
-        exportData[table] = data
       }
       
       // 转换为JSON
@@ -203,6 +230,7 @@ export default function DataBackupPage() {
         <div className={`mb-6 p-4 rounded-md ${
           message.type === 'error' ? 'bg-red-50 text-red-700' : 
           message.type === 'success' ? 'bg-green-50 text-green-700' : 
+          message.type === 'warning' ? 'bg-yellow-50 text-yellow-700' : 
           'bg-blue-50 text-blue-700'
         }`}>
           {message.text}

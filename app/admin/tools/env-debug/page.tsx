@@ -19,6 +19,8 @@ export default function EnvDebugPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<ErrorWithMessage | null>(null)
   const [testProgress, setTestProgress] = useState<string[]>([])
+  const [hasIssues, setHasIssues] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   // 获取环境变量信息
   const clientEnvVars = {
@@ -34,81 +36,123 @@ export default function EnvDebugPage() {
     setTestProgress(prev => [...prev, message])
   }
 
-  // 测试Supabase连接
+  // 显示环境变量信息
   useEffect(() => {
-    const testSupabaseConnection = async () => {
+    const runCheck = async () => {
+      setTestProgress([])
+      addLog('开始环境变量诊断...')
+      
       try {
-        setIsLoading(true)
-        addLog('开始测试Supabase连接...')
-        addLog(`Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL || '未设置'}`)
+        // 验证Supabase环境变量
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         
-        // 验证URL格式
-        if (
-          !process.env.NEXT_PUBLIC_SUPABASE_URL || 
-          !process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith('https://') ||
-          !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('.supabase.co')
-        ) {
-          addLog('警告: Supabase URL格式可能不正确')
+        addLog('--- Supabase 配置 ---')
+        
+        // 检查URL是否存在
+        if (!supabaseUrl) {
+          addLog('错误: Supabase URL不存在')
+          setHasIssues(true)
         } else {
-          addLog('Supabase URL格式有效')
+          addLog(`Supabase URL: ${supabaseUrl.substring(0, 15)}...`)
+          
+          // 验证URL格式
+          if (!supabaseUrl.startsWith('https://')) {
+            addLog('错误: Supabase URL格式不正确，应以https://开头')
+            setHasIssues(true)
+          } else {
+            addLog('Supabase URL协议格式正确')
+          }
+          
+          // 检查是否包含supabase.co
+          if (!supabaseUrl.includes('.supabase.co')) {
+            addLog('警告: Supabase URL可能不正确，一般应包含.supabase.co')
+          } else {
+            addLog('Supabase URL域名格式正确')
+          }
         }
         
-        // 验证ANON_KEY格式 
-        if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-          addLog('警告: Supabase匿名密钥未设置')
-        } else if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length < 30) {
-          addLog('警告: Supabase匿名密钥长度异常')
+        // 检查密钥是否存在
+        if (!supabaseKey) {
+          addLog('错误: Supabase匿名密钥不存在')
+          setHasIssues(true)
         } else {
-          addLog('Supabase匿名密钥格式似乎有效')
+          addLog(`Supabase Key: ${supabaseKey.substring(0, 5)}...${supabaseKey.substring(supabaseKey.length - 5)}`)
+          
+          // 检查密钥长度
+          if (supabaseKey.length < 30) {
+            addLog('警告: Supabase密钥长度异常，通常应该更长')
+            setHasIssues(true)
+          } else {
+            addLog('Supabase密钥长度正常')
+          }
         }
-        
-        // 尝试创建连接
-        addLog('尝试创建Supabase客户端并测试连接...')
-        
-        // 尝试从Supabase获取一些数据
-        const { data, error } = await supabase
-          .from('products')
-          .select('count')
-          .limit(1)
-
-        if (error) {
-          addLog(`获取数据失败: ${error.message}`)
-          throw error
-        }
-
-        addLog('成功从Supabase获取数据!')
-        setServerData({ count: data?.length || 0 })
-      } catch (err) {
-        console.error('Supabase连接测试失败:', err)
-        addLog(`连接测试失败: ${err instanceof Error ? err.message : '未知错误'}`)
         
         // 尝试网络诊断
-        addLog('尝试诊断网络问题...')
+        addLog('--- 网络诊断 ---')
         
         try {
           // 检查是否可以访问Supabase域名
-          const pingUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://app.supabase.com'
+          const pingUrl = supabaseUrl || 'https://app.supabase.com'
+          addLog(`尝试连接: ${pingUrl}`)
+          
           const pingResponse = await fetch(pingUrl, { 
             method: 'HEAD',
-            mode: 'no-cors',
+            mode: 'no-cors', // 使用no-cors防止CORS错误
             cache: 'no-store'
           })
           
-          addLog(`Supabase域名连通性: ${pingResponse.ok ? '正常' : '异常'} (状态码: ${pingResponse.status})`)
-        } catch (pingErr) {
-          addLog(`无法连接到Supabase域名: ${pingErr instanceof Error ? pingErr.message : '未知错误'}`)
+          addLog(`Supabase服务器连通性: 正常`)
+        } catch (networkError: any) {
+          console.error('网络诊断错误:', networkError)
+          addLog(`网络错误: 无法连接到Supabase服务器 (${networkError.message})`)
+          setHasIssues(true)
         }
         
-        setError({
-          message: err instanceof Error ? err.message : '未知错误',
-          details: err instanceof Error && err.stack ? err.stack : undefined
-        })
-      } finally {
-        setIsLoading(false)
+        // 检查Supabase客户端创建是否成功
+        addLog('--- Supabase客户端测试 ---')
+        
+        try {
+          // 尝试简单的API调用
+          const { error } = await supabase.from('_fake_table_for_test').select('count').limit(1)
+          
+          // 我们期望这里会有错误(表不存在)，但错误类型很重要
+          if (error) {
+            if (error.code === 'PGRST116') {
+              // 这是PostgreSQL关系不存在的错误，表示连接成功但表不存在
+              addLog('Supabase客户端工作正常，可以连接到数据库')
+            } else if (error.code?.includes('auth')) {
+              addLog(`错误: 身份验证问题 - ${error.message}`)
+              setHasIssues(true)
+            } else {
+              addLog(`警告: API调用返回未知错误 - ${error.message}`)
+              setHasIssues(true)
+            }
+          }
+        } catch (apiError: any) {
+          console.error('API测试错误:', apiError)
+          addLog(`错误: Supabase客户端调用失败 - ${apiError.message}`)
+          setHasIssues(true)
+        }
+        
+        // 总结诊断结果
+        if (hasIssues) {
+          addLog('--- 诊断完成 ---')
+          addLog('检测到环境配置问题。请检查上述错误并修复。')
+        } else {
+          addLog('--- 诊断完成 ---')
+          addLog('环境变量配置正常。Supabase连接工作正常。')
+          setSuccess(true)
+        }
+        
+      } catch (error: any) {
+        console.error('环境变量检查失败:', error)
+        addLog(`错误: 诊断过程失败 - ${error.message}`)
+        setHasIssues(true)
       }
     }
-
-    testSupabaseConnection()
+    
+    runCheck()
   }, [])
 
   return (

@@ -29,64 +29,126 @@ export default function SystemLogsPage() {
   })
   const [modules, setModules] = useState<string[]>([])
   const [logsCreated, setLogsCreated] = useState(false)
+  const [hasLogTable, setHasLogTable] = useState(true)
 
   // 加载日志数据
   const fetchLogs = async () => {
-    setLoading(true)
-    setError(null)
-    
     try {
-      let query = supabase
-        .from('system_logs')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(100)
+      setLoading(true)
+      setError(null)
       
-      // 应用过滤器
-      if (filter.level !== 'all') {
-        query = query.eq('level', filter.level)
+      // 如果没有exec_sql功能，提示创建
+      if (!hasLogTable) {
+        setError('请先创建日志表')
+        setLoading(false)
+        return
       }
       
-      if (filter.module !== 'all') {
-        query = query.eq('module', filter.module)
+      // 构建SQL查询
+      const whereClause = []
+      
+      // 根据级别筛选
+      if (filter.level && filter.level !== 'all') {
+        whereClause.push(`level = '${filter.level}'`)
       }
       
+      // 根据模块筛选
+      if (filter.module && filter.module !== 'all') {
+        whereClause.push(`module = '${filter.module}'`)
+      }
+      
+      // 根据日期范围筛选
       if (filter.dateFrom) {
-        query = query.gte('timestamp', filter.dateFrom)
+        whereClause.push(`timestamp >= '${filter.dateFrom}'`)
       }
       
       if (filter.dateTo) {
-        query = query.lte('timestamp', filter.dateTo)
+        whereClause.push(`timestamp <= '${filter.dateTo}'`)
       }
       
-      if (filter.searchText) {
-        query = query.or(`action.ilike.%${filter.searchText}%,details.ilike.%${filter.searchText}%`)
+      // 构建完整查询
+      let sql = `
+        SELECT 
+          id, 
+          timestamp, 
+          level, 
+          module, 
+          action, 
+          user_id, 
+          details
+        FROM system_logs
+      `
+      
+      if (whereClause.length > 0) {
+        sql += ` WHERE ${whereClause.join(' AND ')}`
       }
       
-      const { data, error } = await query
+      sql += ` ORDER BY timestamp DESC LIMIT 100`
       
-      if (error) {
-        // 如果是表不存在的错误，创建日志表
-        if (error.code === '42P01') {
-          await createLogsTable()
-          // 添加一些示例日志
-          await addSampleLogs()
-          setLogsCreated(true)
-          return
+      console.log('执行查询:', sql)
+      
+      try {
+        // 先尝试使用query_sql函数
+        const { data, error: queryError } = await supabase.rpc('query_sql', { sql })
+        
+        if (queryError) {
+          console.error('使用query_sql查询失败:', queryError)
+          throw queryError
         }
-        throw error
+        
+        setLogs(data || [])
+        setLoading(false)
+        
+        // 收集唯一的模块名称
+        if (data && data.length > 0) {
+          const uniqueModules = Array.from(
+            new Set(data.map((log: any) => log.module as string))
+          ).filter(Boolean) as string[]
+          setModules(uniqueModules)
+        }
+      } catch (queryError) {
+        console.error('查询失败，尝试备用方法:', queryError)
+        
+        try {
+          // 直接查询表作为备用方法
+          let query = supabase
+            .from('system_logs')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(100)
+          
+          // 添加过滤条件
+          if (filter.level && filter.level !== 'all') {
+            query = query.eq('level', filter.level)
+          }
+          
+          if (filter.module && filter.module !== 'all') {
+            query = query.eq('module', filter.module)
+          }
+          
+          if (filter.dateFrom) {
+            query = query.gte('timestamp', filter.dateFrom)
+          }
+          
+          if (filter.dateTo) {
+            query = query.lte('timestamp', filter.dateTo)
+          }
+          
+          const { data, error } = await query
+          
+          if (error) {
+            throw error
+          }
+          
+          setLogs(data || [])
+        } catch (directError: any) {
+          console.error('直接查询也失败:', directError)
+          setError(`获取日志失败: ${directError.message}`)
+        }
       }
-      
-      setLogs(data || [])
-      
-      // 收集唯一的模块名称
-      if (data && data.length > 0) {
-        const uniqueModules = Array.from(new Set(data.map(log => log.module))).filter(Boolean)
-        setModules(uniqueModules)
-      }
-    } catch (err: any) {
-      console.error('获取日志失败:', err)
-      setError(`获取日志失败: ${err.message}`)
+    } catch (error: any) {
+      console.error('获取日志错误:', error)
+      setError(`获取日志失败: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -123,6 +185,7 @@ export default function SystemLogsPage() {
           throw error
         }
         
+        setHasLogTable(true)
         return true
       } catch (execSqlError: any) {
         console.error('使用exec_sql创建日志表失败:', execSqlError)
@@ -132,6 +195,7 @@ export default function SystemLogsPage() {
           // 这里可以添加备用方法，例如直接请求特定API端点
           // 或使用其他功能来创建表
           setError('创建日志表失败，需要先创建exec_sql函数')
+          setHasLogTable(false)
           return false
         } catch (backupMethodError: any) {
           throw backupMethodError
@@ -140,6 +204,7 @@ export default function SystemLogsPage() {
     } catch (err: any) {
       console.error('创建日志表失败:', err)
       setError(`创建日志表失败: ${err.message}`)
+      setHasLogTable(false)
       return false
     } finally {
       setLoading(false)
