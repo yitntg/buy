@@ -44,28 +44,76 @@ export async function POST(request: NextRequest) {
       console.log('检查create_table函数是否已存在')
       
       // 先检查exec_sql函数是否存在
-      const checkExecSQL = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': adminKey,
-          'Authorization': `Bearer ${adminKey}`
-        },
-        body: JSON.stringify({
-          sql: 'SELECT 1'  // 简单测试
+      try {
+        const checkExecSQL = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': adminKey,
+            'Authorization': `Bearer ${adminKey}`
+          },
+          body: JSON.stringify({
+            sql: 'SELECT 1'  // 简单测试
+          })
         })
-      })
-      
-      if (!checkExecSQL.ok) {
+        
+        if (!checkExecSQL.ok) {
+          // 尝试备用方法 - 直接使用supabase客户端
+          try {
+            const { error } = await supabaseAdmin.rpc('exec_sql', { sql: createFunctionSQL })
+            
+            if (!error) {
+              return NextResponse.json({
+                success: true,
+                message: 'create_table函数已成功创建'
+              })
+            }
+            
+            throw new Error('exec_sql调用失败')
+          } catch {
+            return NextResponse.json({ 
+              error: 'exec_sql函数不存在或有错误，请先创建该函数' 
+            }, { status: 400 })
+          }
+        }
+        
+        // 检查响应是否为JSON
+        let checkResult
+        try {
+          const responseClone = checkExecSQL.clone()
+          const responseText = await responseClone.text()
+          
+          if (responseText.trim()) {
+            try {
+              checkResult = JSON.parse(responseText)
+            } catch {
+              checkResult = { text: responseText }
+            }
+          }
+        } catch (parseError) {
+          console.log('解析响应失败，但继续执行:', parseError)
+        }
+        
+        console.log('exec_sql函数存在，继续创建table函数')
+      } catch (checkError) {
+        console.error('检查exec_sql函数失败:', checkError)
         return NextResponse.json({ 
-          error: 'exec_sql函数不存在，请先创建该函数' 
-        }, { status: 400 })
+          error: `检查exec_sql函数失败: ${checkError instanceof Error ? checkError.message : '未知错误'}` 
+        }, { status: 500 })
       }
       
       // 尝试使用exec_sql创建create_table函数
       const { error } = await supabaseAdmin.rpc('exec_sql', { sql: createFunctionSQL })
       
       if (error) {
+        // 如果函数已存在，视为成功
+        if (error.message.includes('already exists')) {
+          return NextResponse.json({
+            success: true,
+            message: 'create_table函数已存在'
+          })
+        }
+        
         throw new Error(`通过exec_sql创建失败: ${error.message}`)
       }
       
