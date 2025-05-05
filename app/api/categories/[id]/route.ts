@@ -1,6 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+// 确保请求的分类ID存在
+async function ensureCategoryExists(id: string) {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('id', id)
+      .single()
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return { exists: false, reason: 'not_found', error }
+      } else if (error.code === '42P01' || error.message.includes('does not exist')) {
+        return { exists: false, reason: 'table_not_exist', error }
+      }
+      return { exists: false, reason: 'error', error }
+    }
+    
+    return { exists: true, data }
+  } catch (error) {
+    console.error('检查分类ID存在性失败:', error)
+    return { exists: false, reason: 'exception', error }
+  }
+}
+
 // 获取单个分类
 export async function GET(
   request: NextRequest,
@@ -10,6 +35,28 @@ export async function GET(
     const id = params.id
     console.log(`获取分类ID: ${id}`)
     
+    // 检查分类是否存在
+    const check = await ensureCategoryExists(id)
+    if (!check.exists) {
+      if (check.reason === 'table_not_exist') {
+        return NextResponse.json(
+          { error: '分类表不存在，请初始化数据库', details: check.error.message, code: check.error.code },
+          { status: 404 }
+        )
+      } else if (check.reason === 'not_found') {
+        return NextResponse.json(
+          { error: '分类不存在', details: check.error.message, code: check.error.code },
+          { status: 404 }
+        )
+      }
+      
+      return NextResponse.json(
+        { error: '获取分类失败', details: check.error.message, code: check.error.code },
+        { status: 500 }
+      )
+    }
+    
+    // 获取完整分类信息
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -17,16 +64,9 @@ export async function GET(
       .single()
     
     if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json(
-          { error: '分类不存在' },
-          { status: 404 }
-        )
-      }
-      
-      console.error('获取分类失败:', error)
+      console.error('获取分类详情失败:', error)
       return NextResponse.json(
-        { error: '获取分类失败', details: error.message },
+        { error: '获取分类详情失败', details: error.message, code: error.code },
         { status: 500 }
       )
     }
@@ -35,7 +75,7 @@ export async function GET(
   } catch (error: any) {
     console.error('获取分类失败:', error)
     return NextResponse.json(
-      { error: `获取分类失败: ${error.message}` },
+      { error: `获取分类失败: ${error.message}`, stack: error.stack },
       { status: 500 }
     )
   }
@@ -60,23 +100,22 @@ export async function PUT(
     }
     
     // 检查分类是否存在
-    const { data: existingCategory, error: checkError } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('id', id)
-      .single()
-    
-    if (checkError) {
-      if (checkError.code === 'PGRST116') {
+    const check = await ensureCategoryExists(id)
+    if (!check.exists) {
+      if (check.reason === 'table_not_exist') {
         return NextResponse.json(
-          { error: '分类不存在' },
+          { error: '分类表不存在，请初始化数据库', details: check.error.message, code: check.error.code },
+          { status: 404 }
+        )
+      } else if (check.reason === 'not_found') {
+        return NextResponse.json(
+          { error: '分类不存在', details: check.error.message, code: check.error.code },
           { status: 404 }
         )
       }
       
-      console.error('检查分类失败:', checkError)
       return NextResponse.json(
-        { error: '检查分类失败', details: checkError.message },
+        { error: '更新分类失败', details: check.error.message, code: check.error.code },
         { status: 500 }
       )
     }
@@ -95,7 +134,7 @@ export async function PUT(
     if (error) {
       console.error('更新分类失败:', error)
       return NextResponse.json(
-        { error: '更新分类失败', details: error.message },
+        { error: '更新分类失败', details: error.message, code: error.code },
         { status: 500 }
       )
     }
@@ -105,7 +144,7 @@ export async function PUT(
   } catch (error: any) {
     console.error('更新分类失败:', error)
     return NextResponse.json(
-      { error: `更新分类失败: ${error.message}` },
+      { error: `更新分类失败: ${error.message}`, stack: error.stack },
       { status: 500 }
     )
   }
@@ -121,23 +160,22 @@ export async function DELETE(
     console.log(`删除分类ID: ${id}`)
     
     // 检查分类是否存在
-    const { data: existingCategory, error: checkError } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('id', id)
-      .single()
-    
-    if (checkError) {
-      if (checkError.code === 'PGRST116') {
+    const check = await ensureCategoryExists(id)
+    if (!check.exists) {
+      if (check.reason === 'table_not_exist') {
         return NextResponse.json(
-          { error: '分类不存在' },
+          { error: '分类表不存在，请初始化数据库', details: check.error.message, code: check.error.code },
+          { status: 404 }
+        )
+      } else if (check.reason === 'not_found') {
+        return NextResponse.json(
+          { error: '分类不存在', details: check.error.message, code: check.error.code },
           { status: 404 }
         )
       }
       
-      console.error('检查分类失败:', checkError)
       return NextResponse.json(
-        { error: '检查分类失败', details: checkError.message },
+        { error: '删除分类失败', details: check.error.message, code: check.error.code },
         { status: 500 }
       )
     }
@@ -151,7 +189,7 @@ export async function DELETE(
     if (error) {
       console.error('删除分类失败:', error)
       return NextResponse.json(
-        { error: '删除分类失败', details: error.message },
+        { error: '删除分类失败', details: error.message, code: error.code },
         { status: 500 }
       )
     }
@@ -161,7 +199,7 @@ export async function DELETE(
   } catch (error: any) {
     console.error('删除分类失败:', error)
     return NextResponse.json(
-      { error: `删除分类失败: ${error.message}` },
+      { error: `删除分类失败: ${error.message}`, stack: error.stack },
       { status: 500 }
     )
   }

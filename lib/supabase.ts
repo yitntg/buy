@@ -6,8 +6,10 @@ const supabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
 
 // 确认凭证
-console.log('Supabase URL:', supabaseUrl)
-console.log('API密钥存在:', !!supabaseKey)
+console.log('Supabase配置信息:')
+console.log('- URL:', supabaseUrl)
+console.log('- API密钥存在:', !!supabaseKey)
+console.log('- API密钥前10位:', supabaseKey.substring(0, 10) + '...')
 
 // 诊断URL和密钥
 let urlDiagnostic = '正常'
@@ -53,8 +55,7 @@ if (urlDiagnostic !== '正常' || keyDiagnostic !== '正常') {
   }
 }
 
-// 即使有错误信息，也创建客户端，以便应用程序不会崩溃
-// 但如果缺少有效凭据，API调用将失败
+// 创建增强型客户端
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
@@ -64,29 +65,53 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   global: {
     // 当API请求失败时添加更有用的错误信息
     fetch: (url, options) => {
+      // 添加请求时间戳
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] Supabase请求: ${url.toString().substring(0, 100)}...`);
+      
+      // 确保请求头存在
+      options.headers = options.headers || {};
+      
+      // 添加标准请求头
+      const headers = {
+        ...options.headers,
+        'X-Client-Info': 'supabase-js/2.0.0',
+        'Content-Type': 'application/json'
+      };
+      
+      // 确保包含apikey头
+      if (!headers['apikey'] && !headers['Authorization']) {
+        headers['apikey'] = supabaseKey;
+        headers['Authorization'] = `Bearer ${supabaseKey}`;
+      }
+      
       return fetch(url, {
         ...options,
-        headers: {
-          ...options?.headers,
-          'X-Client-Info': 'supabase-js/2.0.0',
-        },
+        headers,
       }).then(async (response) => {
+        // 记录请求结果
+        console.log(`[${timestamp}] Supabase响应状态: ${response.status} ${response.statusText}`);
+        
         if (!response.ok) {
-          const responseText = await response.text()
-          console.error(`Supabase 请求失败 (${response.status}): ${responseText}`)
+          const responseText = await response.text();
+          console.error(`Supabase 请求失败 (${response.status}): ${responseText}`);
+          
           // 添加一些常见错误的诊断提示
           if (response.status === 401) {
-            console.error('提示: 401错误通常表示密钥无效或过期。请检查Supabase ANON_KEY是否正确。')
+            console.error('提示: 401错误通常表示密钥无效或过期。请检查Supabase ANON_KEY是否正确。');
           } else if (response.status === 403) {
-            console.error('提示: 403错误通常表示权限问题。检查RLS策略是否限制了访问。')
+            console.error('提示: 403错误通常表示权限问题。检查RLS策略是否限制了访问。您可能需要在Supabase控制台中调整表的RLS设置。');
           } else if (response.status === 404) {
-            console.error('提示: 404错误表示资源不存在。检查表名或API路径是否正确。')
+            console.error('提示: 404错误表示资源不存在。检查表名或API路径是否正确。表可能尚未创建。');
           } else if (response.status === 500) {
-            console.error('提示: 500错误表示服务器内部错误。可能是Supabase实例问题或SQL语法错误。')
+            console.error('提示: 500错误表示服务器内部错误。可能是Supabase实例问题或SQL语法错误。');
           }
         }
-        return response
-      })
+        return response;
+      }).catch(err => {
+        console.error(`[${timestamp}] Supabase网络错误:`, err);
+        throw err;
+      });
     }
   }
 }) 

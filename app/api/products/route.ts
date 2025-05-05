@@ -2,6 +2,95 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types/products'
 
+// 检查产品表是否存在，如果不存在则创建
+async function ensureProductsTableExists() {
+  try {
+    // 先检查表是否存在
+    const { count, error: checkError } = await supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true })
+    
+    if (checkError && (checkError.code === 'PGRST116' || checkError.code === '42P01' || checkError.message.includes('does not exist'))) {
+      console.log('产品表不存在，尝试创建...')
+      
+      // 创建产品表
+      const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS products (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          description TEXT NOT NULL,
+          price DECIMAL(10,2) NOT NULL,
+          image VARCHAR(255) NOT NULL,
+          category INTEGER NOT NULL,
+          inventory INTEGER NOT NULL DEFAULT 0,
+          rating DECIMAL(3,1) NOT NULL DEFAULT 0,
+          reviews INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+      `
+      
+      const { error: createError } = await supabase.rpc('exec_sql', { query: createTableSQL })
+      
+      if (createError) {
+        console.error('创建产品表失败:', createError)
+        
+        // 尝试通过插入测试判断表是否存在
+        if (createError.message.includes('function') && createError.message.includes('does not exist')) {
+          console.log('exec_sql函数不存在，尝试使用其他方法初始化...')
+          
+          const { error: insertError } = await supabase
+            .from('products')
+            .insert([
+              {
+                name: '测试产品',
+                description: '测试产品，初始化用',
+                price: 0,
+                image: 'https://picsum.photos/id/1/500/500',
+                category: 1,
+                inventory: 0,
+                rating: 0,
+                reviews: 0
+              }
+            ])
+          
+          if (insertError && !insertError.message.includes('already exists')) {
+            console.error('尝试插入测试数据失败:', insertError)
+            throw new Error('无法确认产品表是否存在')
+          }
+        } else {
+          throw createError
+        }
+      }
+      
+      console.log('产品表创建成功')
+      
+      // 插入示例产品
+      const sampleProducts = [
+        { name: '智能手表', description: '高级智能手表，支持多种运动模式和健康监测功能', price: 1299, image: 'https://picsum.photos/id/1/500/500', category: 1, inventory: 50, rating: 4.8, reviews: 120 },
+        { name: '蓝牙耳机', description: '无线蓝牙耳机，支持降噪功能，续航时间长', price: 399, image: 'https://picsum.photos/id/3/500/500', category: 1, inventory: 200, rating: 4.5, reviews: 85 },
+        { name: '真皮沙发', description: '进口真皮沙发，舒适耐用，适合家庭使用', price: 4999, image: 'https://picsum.photos/id/20/500/500', category: 2, inventory: 10, rating: 4.9, reviews: 32 },
+        { name: '纯棉T恤', description: '100%纯棉材质，透气舒适，多色可选', price: 99, image: 'https://picsum.photos/id/25/500/500', category: 3, inventory: 500, rating: 4.3, reviews: 210 },
+        { name: '保湿面霜', description: '深层保湿面霜，适合干性肌肤，改善肌肤干燥问题', price: 159, image: 'https://picsum.photos/id/30/500/500', category: 4, inventory: 80, rating: 4.6, reviews: 65 }
+      ]
+      
+      const { error: insertError } = await supabase
+        .from('products')
+        .upsert(sampleProducts)
+      
+      if (insertError) {
+        console.error('插入示例产品失败:', insertError)
+      } else {
+        console.log('示例产品数据已插入')
+      }
+    }
+    
+    return true
+  } catch (error) {
+    console.error('检查/创建产品表失败:', error)
+    return false
+  }
+}
+
 // 获取商品列表
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -13,58 +102,82 @@ export async function GET(request: NextRequest) {
   
   console.log('获取商品列表，参数:', { page, limit, keyword, category, sortBy })
   
-  // 构建查询
-  let query = supabase.from('products').select('*', { count: 'exact' })
-  
-  // 关键词搜索
-  if (keyword) {
-    query = query.or(`name.ilike.%${keyword}%,description.ilike.%${keyword}%`)
-  }
-  
-  // 分类筛选
-  if (category) {
-    query = query.eq('category', parseInt(category))
-  }
-  
-  // 计算分页
-  const startIndex = (page - 1) * limit
-  
-  // 排序
-  switch (sortBy) {
-    case 'priceAsc':
-      query = query.order('price', { ascending: true })
-      break
-    case 'priceDesc':
-      query = query.order('price', { ascending: false })
-      break
-    case 'latest':
-      query = query.order('created_at', { ascending: false })
-      break
-    case 'relevance':
-    default:
-      query = query.order('id', { ascending: true })
-      break
-  }
-  
-  // 执行分页查询
-  const { data: products, error, count } = await query
-    .range(startIndex, startIndex + limit - 1)
-  
-  if (error) {
+  try {
+    // 确保产品表存在
+    await ensureProductsTableExists()
+    
+    // 构建查询
+    let query = supabase.from('products').select('*', { count: 'exact' })
+    
+    // 关键词搜索
+    if (keyword) {
+      query = query.or(`name.ilike.%${keyword}%,description.ilike.%${keyword}%`)
+    }
+    
+    // 分类筛选
+    if (category) {
+      query = query.eq('category', parseInt(category))
+    }
+    
+    // 计算分页
+    const startIndex = (page - 1) * limit
+    
+    // 排序
+    switch (sortBy) {
+      case 'priceAsc':
+        query = query.order('price', { ascending: true })
+        break
+      case 'priceDesc':
+        query = query.order('price', { ascending: false })
+        break
+      case 'latest':
+        query = query.order('created_at', { ascending: false })
+        break
+      case 'relevance':
+      default:
+        query = query.order('id', { ascending: true })
+        break
+    }
+    
+    // 执行分页查询
+    const { data: products, error, count } = await query
+      .range(startIndex, startIndex + limit - 1)
+    
+    if (error) {
+      console.error('获取商品列表失败:', error)
+      
+      if (error.code === 'PGRST116' || error.code === '42P01' || error.message.includes('does not exist')) {
+        return NextResponse.json(
+          { error: '产品表不存在，请初始化数据库', details: error.message, code: error.code },
+          { status: 404 }
+        )
+      }
+      
+      return NextResponse.json({ 
+        error: '获取商品列表失败', 
+        details: error.message, 
+        code: error.code 
+      }, { status: 500 })
+    }
+    
+    console.log(`成功获取${products?.length || 0}件商品，总数:${count || 0}`)
+    
+    // 返回结果
+    return NextResponse.json({
+      products: products || [],
+      total: count || 0,
+      page,
+      limit,
+      totalPages: count ? Math.ceil(count / limit) : 0
+    })
+  } catch (error: any) {
     console.error('获取商品列表失败:', error)
-    return NextResponse.json({ error: '获取商品列表失败', details: error.message }, { status: 500 })
+    return NextResponse.json({
+      error: '获取商品列表失败',
+      details: error.message,
+      stack: error.stack
+    }, { status: 500 })
   }
-  
-  console.log(`成功获取${products?.length || 0}件商品，总数:${count || 0}`)
-  
-  // 返回结果
-  return NextResponse.json({
-    products: products || [],
-    total: count || 0,
-    page,
-    limit,
-    totalPages: count ? Math.ceil(count / limit) : 0
-  })
 }
 
 // 新增商品
@@ -74,6 +187,9 @@ export async function POST(request: NextRequest) {
     const data = await request.json()
     
     console.log('收到商品创建请求数据:', data)
+    
+    // 确保产品表存在
+    await ensureProductsTableExists()
     
     // 创建新商品，使用默认值处理空字段
     const newProduct: Omit<Product, 'id'> = {
@@ -106,6 +222,19 @@ export async function POST(request: NextRequest) {
     
     if (error) {
       console.error('创建商品失败:', error)
+      
+      if (error.code === 'PGRST116' || error.code === '42P01' || error.message.includes('does not exist')) {
+        return NextResponse.json(
+          { error: '产品表不存在，请初始化数据库', details: error.message, code: error.code },
+          { status: 404 }
+        )
+      } else if (error.code === '23503') {
+        return NextResponse.json(
+          { error: '外键约束失败，请确认分类ID是否存在', details: error.message, code: error.code },
+          { status: 400 }
+        )
+      }
+      
       return NextResponse.json({ 
         error: '创建商品失败', 
         details: error.message,
