@@ -112,18 +112,19 @@ async function ensureProductsTableExists() {
 
 // 获取商品列表
 export async function GET(request: NextRequest) {
-  const url = new URL(request.url)
-  const page = parseInt(url.searchParams.get('page') || '1')
-  const limit = parseInt(url.searchParams.get('limit') || '10')
-  const keyword = url.searchParams.get('keyword') || ''
-  const category = url.searchParams.get('category')
-  const minPrice = url.searchParams.get('minPrice')
-  const maxPrice = url.searchParams.get('maxPrice')
-  const sortBy = url.searchParams.get('sortBy') || 'relevance'
-  
-  console.log('获取商品列表，参数:', { page, limit, keyword, category, minPrice, maxPrice, sortBy })
-  
   try {
+    // 注意：不要尝试读取request.body，这是导致错误的原因
+    const url = new URL(request.url)
+    const page = parseInt(url.searchParams.get('page') || '1')
+    const limit = parseInt(url.searchParams.get('limit') || '10')
+    const keyword = url.searchParams.get('keyword') || ''
+    const category = url.searchParams.get('category')
+    const minPrice = url.searchParams.get('minPrice')
+    const maxPrice = url.searchParams.get('maxPrice')
+    const sortBy = url.searchParams.get('sortBy') || 'relevance'
+    
+    console.log('获取商品列表，参数:', { page, limit, keyword, category, minPrice, maxPrice, sortBy })
+    
     // 确保产品表存在
     await ensureProductsTableExists()
     
