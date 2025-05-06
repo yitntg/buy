@@ -31,14 +31,14 @@ interface Pagination {
 export default function ProductsPage() {
   // 状态管理
   const [products, setProducts] = useState<Product[]>([])
-  const [pagination, setPagination] = useState<Pagination>({
-    total: 0,
-    totalPages: 0,
-    currentPage: 1,
-    limit: 12
-  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalProducts, setTotalProducts] = useState(0)
+  const [limit] = useState(12)
   
   // 筛选和搜索状态
   const [keyword, setKeyword] = useState('')
@@ -102,22 +102,36 @@ export default function ProductsPage() {
         params.append('sortBy', sortBy)
       }
       
-      params.append('page', pagination.currentPage.toString())
-      params.append('limit', pagination.limit.toString())
+      params.append('page', currentPage.toString())
+      params.append('limit', limit.toString())
       
       // 获取数据
-      const res = await fetch(`/api/products?${params.toString()}`)
+      const res = await fetch(`/api/products?${params.toString()}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
       
       if (!res.ok) {
         throw new Error('获取商品列表失败')
       }
       
       const data = await res.json()
-      setProducts(data.products)
-      setPagination(data.pagination)
+      
+      if (data && data.products) {
+        setProducts(data.products)
+        setTotalProducts(data.total || 0)
+        setTotalPages(data.totalPages || 1)
+      } else {
+        console.error('API返回的数据格式不正确', data)
+        setProducts([])
+        setTotalProducts(0)
+        setTotalPages(1)
+      }
     } catch (err) {
       console.error('获取商品列表出错:', err)
       setError('获取商品列表失败，请稍后重试')
+      setProducts([])
     } finally {
       setLoading(false)
     }
@@ -132,7 +146,7 @@ export default function ProductsPage() {
     selectedPriceRanges, 
     minRating, 
     sortBy, 
-    pagination.currentPage
+    currentPage
   ])
   
   // 处理分类选择
@@ -145,7 +159,7 @@ export default function ProductsPage() {
       }
     })
     // 重置到第一页
-    setPagination(prev => ({ ...prev, currentPage: 1 }))
+    setCurrentPage(1)
   }
   
   // 处理价格区间选择
@@ -158,26 +172,26 @@ export default function ProductsPage() {
       }
     })
     // 重置到第一页
-    setPagination(prev => ({ ...prev, currentPage: 1 }))
+    setCurrentPage(1)
   }
   
   // 处理评分选择
   const handleRatingChange = (rating: number) => {
     setMinRating(prev => prev === rating ? null : rating)
     // 重置到第一页
-    setPagination(prev => ({ ...prev, currentPage: 1 }))
+    setCurrentPage(1)
   }
   
   // 处理排序方式变化
   const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSortBy(event.target.value)
     // 重置到第一页
-    setPagination(prev => ({ ...prev, currentPage: 1 }))
+    setCurrentPage(1)
   }
   
   // 处理页码变化
   const handlePageChange = (page: number) => {
-    setPagination(prev => ({ ...prev, currentPage: page }))
+    setCurrentPage(page)
     window.scrollTo(0, 0)
   }
   
@@ -185,8 +199,18 @@ export default function ProductsPage() {
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault()
     // 重置到第一页
-    setPagination(prev => ({ ...prev, currentPage: 1 }))
+    setCurrentPage(1)
     fetchProducts()
+  }
+  
+  // 重置筛选条件
+  const resetFilters = () => {
+    setKeyword('')
+    setSelectedCategories([])
+    setSelectedPriceRanges([])
+    setMinRating(null)
+    setSortBy('recommend')
+    setCurrentPage(1)
   }
   
   return (
@@ -295,14 +319,7 @@ export default function ProductsPage() {
               
               <button 
                 className="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600"
-                onClick={() => {
-                  setKeyword('')
-                  setSelectedCategories([])
-                  setSelectedPriceRanges([])
-                  setMinRating(null)
-                  setSortBy('recommend')
-                  setPagination(prev => ({ ...prev, currentPage: 1 }))
-                }}
+                onClick={resetFilters}
               >
                 重置筛选
               </button>
@@ -313,7 +330,7 @@ export default function ProductsPage() {
               {/* 排序选项 */}
               <div className="bg-white rounded-lg shadow-md p-4 mb-6 flex justify-between items-center">
                 <div className="text-sm text-gray-500">
-                  共找到 <span className="text-primary font-medium">{pagination.total}</span> 件商品
+                  共找到 <span className="text-primary font-medium">{totalProducts}</span> 件商品
                 </div>
                 <div className="flex items-center">
                   <span className="text-sm text-gray-500 mr-2">排序：</span>
@@ -358,14 +375,7 @@ export default function ProductsPage() {
                   <h2 className="text-xl font-medium mb-4">未找到符合条件的商品</h2>
                   <p className="text-gray-500 mb-8">尝试调整筛选条件或搜索关键词</p>
                   <button 
-                    onClick={() => {
-                      setKeyword('')
-                      setSelectedCategories([])
-                      setSelectedPriceRanges([])
-                      setMinRating(null)
-                      setSortBy('recommend')
-                      setPagination(prev => ({ ...prev, currentPage: 1 }))
-                    }}
+                    onClick={resetFilters}
                     className="bg-primary text-white px-6 py-3 rounded-md hover:bg-blue-600 inline-block"
                   >
                     清除筛选
@@ -375,35 +385,35 @@ export default function ProductsPage() {
                 <>
                   {/* 商品网格 */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {products.map((product: Product) => (
+                    {products.map((product) => (
                       <ProductCard key={product.id} product={product} />
                     ))}
                   </div>
                   
                   {/* 分页 */}
-                  {pagination.totalPages > 1 && (
+                  {totalPages > 1 && (
                     <div className="mt-8 flex justify-center">
                       <nav className="flex items-center space-x-2">
                         <button 
-                          onClick={() => handlePageChange(pagination.currentPage - 1)}
-                          disabled={pagination.currentPage <= 1}
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage <= 1}
                           className="px-3 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                         >
                           上一页
                         </button>
                         
                         {/* 显示页码 */}
-                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                           let pageNumber;
                           // 显示当前页及其周围的页
-                          if (pagination.totalPages <= 5) {
+                          if (totalPages <= 5) {
                             pageNumber = i + 1;
-                          } else if (pagination.currentPage <= 3) {
+                          } else if (currentPage <= 3) {
                             pageNumber = i + 1;
-                          } else if (pagination.currentPage >= pagination.totalPages - 2) {
-                            pageNumber = pagination.totalPages - 4 + i;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNumber = totalPages - 4 + i;
                           } else {
-                            pageNumber = pagination.currentPage - 2 + i;
+                            pageNumber = currentPage - 2 + i;
                           }
                           
                           return (
@@ -411,7 +421,7 @@ export default function ProductsPage() {
                               key={pageNumber}
                               onClick={() => handlePageChange(pageNumber)}
                               className={`px-3 py-1 rounded ${
-                                pagination.currentPage === pageNumber
+                                currentPage === pageNumber
                                   ? 'bg-primary text-white'
                                   : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
                               }`}
@@ -422,23 +432,23 @@ export default function ProductsPage() {
                         })}
                         
                         {/* 显示省略号 */}
-                        {pagination.totalPages > 5 && pagination.currentPage < pagination.totalPages - 2 && (
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
                           <span className="px-3 py-1 text-gray-500">...</span>
                         )}
                         
                         {/* 显示最后一页 */}
-                        {pagination.totalPages > 5 && pagination.currentPage < pagination.totalPages - 2 && (
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
                           <button 
-                            onClick={() => handlePageChange(pagination.totalPages)}
+                            onClick={() => handlePageChange(totalPages)}
                             className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
                           >
-                            {pagination.totalPages}
+                            {totalPages}
                           </button>
                         )}
                         
                         <button 
-                          onClick={() => handlePageChange(pagination.currentPage + 1)}
-                          disabled={pagination.currentPage >= pagination.totalPages}
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage >= totalPages}
                           className="px-3 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                         >
                           下一页
