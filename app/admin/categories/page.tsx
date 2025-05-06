@@ -69,12 +69,16 @@ export default function CategoriesPage() {
     }
     
     try {
+      // 确保只发送名称和描述，不指定id
       const response = await fetch('/api/categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({ 
+          name, 
+          description 
+        }),
       })
       
       if (!response.ok) {

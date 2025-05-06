@@ -255,8 +255,6 @@ export default function NewProductPage() {
         free_shipping: formData.free_shipping,
         returnable: formData.returnable,
         warranty: formData.warranty,
-        rating: 0,
-        reviews: 0
       }
       
       console.log('正在提交商品数据:', productData)
