@@ -16,16 +16,31 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   // 管理菜单状态
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false)
+  // 分类菜单状态
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false)
   // 搜索关键词
   const [searchQuery, setSearchQuery] = useState('')
+
+  // 分类数据
+  const categories = [
+    { id: 1, name: '电子产品' },
+    { id: 2, name: '家居用品' },
+    { id: 3, name: '服装鞋帽' },
+    { id: 4, name: '美妆护肤' },
+    { id: 5, name: '食品饮料' },
+    { id: 6, name: '运动户外' },
+  ]
   
-  // 关闭用户菜单的处理函数
+  // 关闭菜单的处理函数
   const handleClickOutside = () => {
     if (isUserMenuOpen) {
       setIsUserMenuOpen(false)
     }
     if (isAdminMenuOpen) {
       setIsAdminMenuOpen(false)
+    }
+    if (isCategoryMenuOpen) {
+      setIsCategoryMenuOpen(false)
     }
   }
   
@@ -35,15 +50,18 @@ export default function Header() {
     return () => {
       document.removeEventListener('click', handleClickOutside)
     }
-  }, [isUserMenuOpen, isAdminMenuOpen])
+  }, [isUserMenuOpen, isAdminMenuOpen, isCategoryMenuOpen])
   
   // 用户菜单点击处理函数
   const handleUserMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation() // 阻止事件冒泡
     setIsUserMenuOpen(!isUserMenuOpen)
-    // 关闭管理菜单
+    // 关闭其他菜单
     if (isAdminMenuOpen) {
       setIsAdminMenuOpen(false)
+    }
+    if (isCategoryMenuOpen) {
+      setIsCategoryMenuOpen(false)
     }
   }
   
@@ -51,9 +69,25 @@ export default function Header() {
   const handleAdminMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation() // 阻止事件冒泡
     setIsAdminMenuOpen(!isAdminMenuOpen)
-    // 关闭用户菜单
+    // 关闭其他菜单
     if (isUserMenuOpen) {
       setIsUserMenuOpen(false)
+    }
+    if (isCategoryMenuOpen) {
+      setIsCategoryMenuOpen(false)
+    }
+  }
+
+  // 分类菜单点击处理函数
+  const handleCategoryMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // 阻止事件冒泡
+    setIsCategoryMenuOpen(!isCategoryMenuOpen)
+    // 关闭其他菜单
+    if (isUserMenuOpen) {
+      setIsUserMenuOpen(false)
+    }
+    if (isAdminMenuOpen) {
+      setIsAdminMenuOpen(false)
     }
   }
   
@@ -121,9 +155,36 @@ export default function Header() {
         </div>
         
         <nav className="flex items-center space-x-6">
-          <Link href="/products" className="text-gray-700 hover:text-primary">
-            商品分类
-          </Link>
+          <div className="relative">
+            <button
+              onClick={handleCategoryMenuClick}
+              className="text-gray-700 hover:text-primary flex items-center space-x-1"
+            >
+              <span>商品分类</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+            
+            {isCategoryMenuOpen && (
+              <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  所有商品
+                </Link>
+                <div className="border-t border-gray-100 my-1"></div>
+                {categories.map(category => (
+                  <Link 
+                    key={category.id}
+                    href={`/category/${category.id}`} 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
           <Link href="/cart" className="text-gray-700 hover:text-primary relative">
             购物车
             {itemsCount > 0 && (
