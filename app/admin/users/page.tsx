@@ -34,55 +34,47 @@ export default function AdminUsersPage() {
     fetchUsers()
   }, [currentPage, selectedRole, selectedStatus, searchQuery])
   
-  // 模拟获取用户数据
+  // 从API获取用户数据
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      // 在实际应用中，这里应该调用API获取用户数据
-      // 这里使用模拟数据
-      await new Promise(resolve => setTimeout(resolve, 800))
+      // 构建API参数
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: '10',
+        search: searchQuery
+      })
       
-      // 模拟用户数据
-      const mockUsers: User[] = Array.from({ length: 20 }, (_, i) => ({
-        id: `USR-${1000 + i}`,
-        username: `用户${i + 1}`,
-        email: `user${i + 1}@example.com`,
-        role: i < 2 ? 'admin' : 'user',
-        status: i % 10 === 0 ? 'banned' : i % 5 === 0 ? 'inactive' : 'active',
-        joinDate: new Date(Date.now() - i * 86400000 * 30).toISOString().split('T')[0],
-        lastLogin: i % 3 === 0 ? new Date(Date.now() - i * 86400000).toISOString().split('T')[0] : undefined,
-        avatar: `https://api.dicebear.com/6.x/avataaars/svg?seed=${i}`,
-        orders: Math.floor(Math.random() * 20),
-        totalSpent: Math.floor(Math.random() * 10000)
-      }))
-      
-      // 筛选用户
-      let filteredUsers = mockUsers
-      
-      // 根据角色筛选
+      // 添加角色筛选
       if (selectedRole !== 'all') {
-        filteredUsers = filteredUsers.filter(user => user.role === selectedRole)
+        params.append('role', selectedRole)
       }
       
-      // 根据状态筛选
+      // 添加状态筛选
       if (selectedStatus !== 'all') {
-        filteredUsers = filteredUsers.filter(user => user.status === selectedStatus)
+        params.append('status', selectedStatus)
       }
       
-      // 根据搜索词筛选
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        filteredUsers = filteredUsers.filter(user => 
-          user.username.toLowerCase().includes(query) || 
-          user.email.toLowerCase().includes(query) ||
-          user.id.toLowerCase().includes(query)
-        )
+      // 调用API获取用户数据
+      const response = await fetch(`/api/users?${params.toString()}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`获取用户失败: ${response.status}`)
       }
       
-      setUsers(filteredUsers)
-      setTotalPages(Math.ceil(filteredUsers.length / 10))
+      const data = await response.json()
+      setUsers(data.users || [])
+      setTotalPages(data.totalPages || 1)
     } catch (error) {
       console.error('获取用户失败:', error)
+      // 出错时显示空数据
+      setUsers([])
+      setTotalPages(1)
+      alert('获取用户数据失败，请刷新页面重试。')
     } finally {
       setLoading(false)
     }
@@ -115,21 +107,30 @@ export default function AdminUsersPage() {
     setIsProcessing(true)
     
     try {
-      // 在实际应用中，这里应该调用API更新用户状态
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // 模拟更新用户状态
-      const updatedUsers = users.map(user => {
-        if (selectedUsers.includes(user.id)) {
-          return { ...user, status }
-        }
-        return user
+      // 调用API批量更新用户状态
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ids: selectedUsers,
+          status: status
+        })
       })
       
-      setUsers(updatedUsers)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `更新用户状态失败: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      // 刷新用户列表
+      fetchUsers()
       setSelectedUsers([])
       
-      alert(`已成功将${selectedUsers.length}个用户状态更新为"${getStatusName(status)}"`)
+      alert(`已成功将${result.updated}个用户状态更新为"${getStatusName(status)}"`)
     } catch (error) {
       console.error('更新用户状态失败:', error)
       alert('更新用户状态失败，请重试')

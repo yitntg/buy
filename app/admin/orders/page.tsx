@@ -47,59 +47,42 @@ export default function AdminOrdersPage() {
     fetchOrders()
   }, [currentPage, selectedStatus, searchQuery])
   
-  // 模拟获取订单数据
+  // 从API获取订单数据
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      // 在实际应用中，这里应该调用API获取订单数据
-      // 这里使用模拟数据
-      await new Promise(resolve => setTimeout(resolve, 800))
+      // 构建API参数
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: '10',
+        search: searchQuery
+      })
       
-      // 模拟订单数据
-      const mockOrders: Order[] = Array.from({ length: 15 }, (_, i) => ({
-        id: `ORD-${10000 + i}`,
-        date: new Date(Date.now() - i * 86400000).toISOString().split('T')[0],
-        status: getRandomStatus(),
-        total: Math.floor(Math.random() * 10000) / 100 * 100 + 50,
-        items: Math.floor(Math.random() * 5) + 1,
-        customer: {
-          id: `USR-${1000 + i}`,
-          name: `客户 ${i + 1}`,
-          email: `customer${i + 1}@example.com`
-        },
-        payment: {
-          method: Math.random() > 0.5 ? '支付宝' : '微信支付',
-          status: Math.random() > 0.2 ? '已支付' : '待支付'
-        },
-        shipping: {
-          address: `中国某省某市某区某街道${i + 1}号`,
-          method: '快递',
-          trackingNumber: Math.random() > 0.3 ? `SF${1000000 + i}` : undefined
-        }
-      }))
-      
-      // 筛选订单
-      let filteredOrders = mockOrders
-      
-      // 根据状态筛选
+      // 添加状态筛选
       if (selectedStatus !== '全部') {
-        filteredOrders = filteredOrders.filter(order => order.status === selectedStatus)
+        params.append('status', selectedStatus)
       }
       
-      // 根据搜索词筛选（订单号或客户名称）
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        filteredOrders = filteredOrders.filter(order => 
-          order.id.toLowerCase().includes(query) || 
-          order.customer.name.toLowerCase().includes(query) ||
-          order.customer.email.toLowerCase().includes(query)
-        )
+      // 调用API获取订单数据
+      const response = await fetch(`/api/orders?${params.toString()}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`获取订单失败: ${response.status}`)
       }
       
-      setOrders(filteredOrders)
-      setTotalPages(Math.ceil(filteredOrders.length / 10))
+      const data = await response.json()
+      setOrders(data.orders || [])
+      setTotalPages(data.totalPages || 1)
     } catch (error) {
       console.error('获取订单失败:', error)
+      // 出错时显示空数据
+      setOrders([])
+      setTotalPages(1)
+      alert('获取订单数据失败，请刷新页面重试。')
     } finally {
       setLoading(false)
     }
@@ -132,21 +115,30 @@ export default function AdminOrdersPage() {
     setIsProcessing(true)
     
     try {
-      // 在实际应用中，这里应该调用API更新订单状态
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // 模拟更新订单状态
-      const updatedOrders = orders.map(order => {
-        if (selectedOrders.includes(order.id)) {
-          return { ...order, status }
-        }
-        return order
+      // 调用API批量更新订单状态
+      const response = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ids: selectedOrders,
+          status: status
+        })
       })
       
-      setOrders(updatedOrders)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `更新订单状态失败: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      // 刷新订单列表
+      fetchOrders()
       setSelectedOrders([])
       
-      alert(`已成功将${selectedOrders.length}个订单状态更新为"${status}"`)
+      alert(`已成功将${result.updated}个订单状态更新为"${status}"`)
     } catch (error) {
       console.error('更新订单状态失败:', error)
       alert('更新订单状态失败，请重试')
