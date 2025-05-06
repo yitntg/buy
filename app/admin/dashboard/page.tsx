@@ -23,6 +23,8 @@ export default function AdminDashboard() {
     lowStockProducts: []
   })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [dbStatus, setDbStatus] = useState<'connected' | 'error' | 'not_initialized'>('connected')
   
   // 检查用户是否已登录，如果未登录则重定向到登录页面
   useEffect(() => {
@@ -36,22 +38,45 @@ export default function AdminDashboard() {
   // 获取仪表盘数据
   const fetchDashboardData = async () => {
     setLoading(true)
+    setError(null)
     try {
       // 获取产品数量
       const productsRes = await fetch('/api/products?limit=1')
       const productsData = await productsRes.json()
       
+      // 检查是否返回了错误
+      if (productsData.error) {
+        if (productsData.error.includes('数据库') || productsData.code === '42P01') {
+          setDbStatus('not_initialized')
+          throw new Error('数据库表尚未初始化，请先初始化数据库')
+        } else {
+          throw new Error(productsData.error)
+        }
+      }
+      
       // 获取分类数量
       const categoriesRes = await fetch('/api/admin/categories')
       const categoriesData = await categoriesRes.json()
+      
+      if (categoriesData.error) {
+        throw new Error(categoriesData.error)
+      }
       
       // 获取最近评论
       const reviewsRes = await fetch('/api/admin/reviews/recent')
       const reviewsData = await reviewsRes.json()
       
+      if (reviewsData.error) {
+        throw new Error(reviewsData.error)
+      }
+      
       // 获取库存不足的产品
       const lowStockRes = await fetch('/api/admin/products/low-stock')
       const lowStockData = await lowStockRes.json()
+      
+      if (lowStockData.error) {
+        throw new Error(lowStockData.error)
+      }
       
       setStats({
         totalProducts: productsData.total || 0,
@@ -59,11 +84,30 @@ export default function AdminDashboard() {
         recentReviews: reviewsData.reviews || [],
         lowStockProducts: lowStockData.products || []
       })
-    } catch (error) {
+      
+      setDbStatus('connected')
+    } catch (error: any) {
       console.error('获取仪表盘数据失败:', error)
+      setError(error.message || '获取仪表盘数据失败')
+      
+      if (error.message?.includes('数据库') || error.message?.includes('表不存在')) {
+        setDbStatus('not_initialized')
+      } else {
+        setDbStatus('error')
+      }
     } finally {
       setLoading(false)
     }
+  }
+  
+  // 重试加载数据
+  const handleRetry = () => {
+    fetchDashboardData()
+  }
+  
+  // 导航到数据库初始化页面
+  const handleNavigateToDbSetup = () => {
+    router.push('/admin/tools/setup')
   }
   
   if (loading) {
@@ -73,6 +117,56 @@ export default function AdminDashboard() {
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
+      </div>
+    )
+  }
+  
+  // 显示数据库错误
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow">
+          <div className="container mx-auto px-4 py-6">
+            <h1 className="text-2xl font-bold">管理员仪表盘</h1>
+          </div>
+        </header>
+        
+        <main className="container mx-auto px-4 py-8">
+          <div className="bg-white p-6 rounded-lg shadow mb-8">
+            <div className="flex items-center text-amber-500 mb-4">
+              <svg className="h-8 w-8 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h2 className="text-xl font-semibold">数据加载失败</h2>
+            </div>
+            
+            <p className="text-gray-600 mb-6">{error}</p>
+            
+            {dbStatus === 'not_initialized' ? (
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={handleNavigateToDbSetup}
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+                >
+                  初始化数据库
+                </button>
+                <button 
+                  onClick={handleRetry}
+                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  重试加载
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleRetry}
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+              >
+                重试加载
+              </button>
+            )}
+          </div>
+        </main>
       </div>
     )
   }

@@ -227,29 +227,31 @@ export async function POST(request: NextRequest) {
       console.log('请求Content-Type:', contentType);
       
       if (contentType.includes('application/json')) {
-        // 直接获取请求的文本内容，而不是尝试解析JSON
+        // 直接获取请求的文本内容
         const bodyText = await clonedRequest.text();
-        console.log('请求体文本:', bodyText);
+        console.log('原始请求体文本:', bodyText.substring(0, 500)); // 只打印前500个字符
+        
         try {
           productData = JSON.parse(bodyText);
+          console.log('解析后的商品数据:', JSON.stringify(productData, null, 2));
         } catch (jsonError) {
           console.error('JSON解析失败:', jsonError);
           return NextResponse.json({
             error: '无效的JSON数据',
-            details: '请求体不是有效的JSON格式'
+            details: '请求体不是有效的JSON格式',
+            originalText: bodyText.substring(0, 100) // 包含错误文本的前100个字符
           }, { status: 400 });
         }
       } else {
         // 对于非JSON请求，尝试使用formData
-        console.log('尝试作为表单数据处理');
+        console.log('非JSON请求，尝试作为表单数据处理');
         const formData = await clonedRequest.formData();
         // 转换formData为普通对象
         formData.forEach((value, key) => {
           productData[key] = value;
         });
+        console.log('从表单解析的商品数据:', JSON.stringify(productData, null, 2));
       }
-      
-      console.log('解析后的商品数据:', JSON.stringify(productData, null, 2));
     } catch (parseError: any) {
       console.error('请求体解析失败:', parseError);
       return NextResponse.json({
@@ -320,6 +322,16 @@ export async function POST(request: NextRequest) {
 
     console.log('准备插入的商品数据:', JSON.stringify(newProduct, null, 2));
 
+    // 在插入数据库前记录完整的商品数据
+    console.log('准备插入的商品数据详情:');
+    console.log('- 名称:', typeof newProduct.name, newProduct.name);
+    console.log('- 价格:', typeof newProduct.price, newProduct.price);
+    console.log('- 分类:', typeof newProduct.category, newProduct.category);
+    console.log('- 库存:', typeof newProduct.inventory, newProduct.inventory);
+    console.log('- 图片URL:', typeof newProduct.image, newProduct.image.substring(0, 100));
+    console.log('- 可选字段数量:', 
+      Object.keys(newProduct).filter(key => !['name', 'description', 'price', 'image', 'category', 'inventory', 'rating', 'reviews'].includes(key)).length);
+
     // 插入数据库
     const { data: createdProduct, error } = await supabase
       .from('products')
@@ -329,7 +341,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('数据库插入失败:', error);
+      console.error('错误代码:', error.code);
+      console.error('错误详情:', error.message);
+      console.error('SQL错误:', error.details || 'None');
       
+      // 根据错误类型提供更详细的错误信息
       if (error.code === 'PGRST116' || error.code === '42P01' || error.message.includes('does not exist')) {
         return NextResponse.json(
           { error: '产品表不存在，请初始化数据库', details: error.message, code: error.code },
@@ -340,6 +356,22 @@ export async function POST(request: NextRequest) {
           { error: '外键约束失败，请确认分类ID是否存在', details: error.message, code: error.code },
           { status: 400 }
         );
+      } else if (error.code === '23502') {
+        // NOT NULL 约束错误
+        return NextResponse.json({
+          error: '缺少必填字段',
+          details: error.message,
+          code: error.code,
+          hint: '请确保提供了所有必填字段: 名称、价格、分类、库存'
+        }, { status: 400 });
+      } else if (error.code === '22P02') {
+        // 无效的输入语法
+        return NextResponse.json({
+          error: '数据格式错误',
+          details: error.message,
+          code: error.code,
+          hint: '请检查数字字段的格式是否正确'
+        }, { status: 400 });
       }
       
       return NextResponse.json({ 
