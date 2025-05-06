@@ -182,7 +182,7 @@ export default function NewProductPage() {
       const file = fileList[i]
       newImages.push(file)
       
-      // 创建预览URL
+      // 创建预览URL (注意：这只是临时URL，不能用于提交)
       const url = URL.createObjectURL(file)
       newImageUrls.push(url)
     }
@@ -196,10 +196,13 @@ export default function NewProductPage() {
       alert(`最多只能上传5张图片，已选择前${maxImages}张。`)
     }
     
-    // 如果是第一张图片且没有设置主图URL，则自动设置
+    // 对于实际提交，使用占位图片URL，因为我们无法直接上传文件
+    // 现阶段暂时使用默认图片
     if (imagePreviewUrls.length === 0 && newImageUrls.length > 0 && !formData.image) {
-      setFormData(prev => ({ ...prev, image: newImageUrls[0] }))
-      setImagePreview(newImageUrls[0])
+      // 使用默认图片URL代替本地图片预览URL
+      const defaultImageUrl = 'https://picsum.photos/id/1/500/500'
+      setFormData(prev => ({ ...prev, image: defaultImageUrl }))
+      setImagePreview(newImageUrls[0]) // 仍保留本地预览
     }
   }
   
@@ -270,16 +273,35 @@ export default function NewProductPage() {
     }
     
     try {
+      // 调试信息
+      console.log('准备提交商品数据，表单状态:', {
+        ...formData,
+        imagePreviewUrls,
+        hasLocalImages: images.length > 0
+      });
+      
       // 使用上传的图片或URL图片
       let imageUrl = formData.image
       
-      // 如果有上传的图片但没有设置URL，使用第一张上传的图片
+      // 添加更多调试信息
+      console.log('原始图片URL:', imageUrl);
+      console.log('本地预览图片数量:', imagePreviewUrls.length);
+      
+      // 如果有上传的图片但没有设置URL，使用默认图片
       if (!imageUrl && imagePreviewUrls.length > 0) {
-        imageUrl = imagePreviewUrls[0]
+        // 由于浏览器中的本地URL无法直接传递给服务器，使用默认图片
+        imageUrl = 'https://picsum.photos/id/1/500/500'
+        console.log('使用默认图片替代本地上传的图片:', imageUrl)
       }
       
       // 如果仍然没有图片，使用默认图片
       if (!imageUrl) {
+        imageUrl = 'https://picsum.photos/id/1/500/500'
+      }
+      
+      // 确保URL是真实的Web URL而不是本地blob
+      if (imageUrl.startsWith('blob:')) {
+        console.log('检测到本地blob URL，替换为默认图片URL')
         imageUrl = 'https://picsum.photos/id/1/500/500'
       }
       
