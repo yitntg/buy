@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { Product } from '@/types/products'
+
+// 定义Product接口
+interface Product {
+  id: number
+  name: string
+  description: string
+  price: number
+  image: string
+  category: number
+  inventory: number
+  rating: number
+  reviews: number
+  created_at?: string
+  brand?: string
+  model?: string
+  specifications?: string
+  free_shipping?: boolean
+  returnable?: boolean
+  warranty?: boolean
+}
 
 // 检查产品表是否存在，如果不存在则创建
 async function ensureProductsTableExists() {
