@@ -182,29 +182,40 @@ export async function GET(request: NextRequest) {
 
 // 新增商品
 export async function POST(request: NextRequest) {
-  let data; // 声明变量存储解析后的请求数据
-  
   try {
     // 解析请求体
-    data = await request.json();
-    
-    console.log('收到商品创建请求数据:', data);
-    
+    const data = await request.json();
+    console.log('收到商品创建请求数据:', JSON.stringify(data, null, 2));
+
     // 确保产品表存在
-    await ensureProductsTableExists();
-    
-    // 创建新商品，使用默认值处理空字段
+    const tableExists = await ensureProductsTableExists();
+    if (!tableExists) {
+      return NextResponse.json(
+        { error: '产品表初始化失败' },
+        { status: 500 }
+      );
+    }
+
+    // 验证必填字段
+    if (!data.name || !data.price) {
+      return NextResponse.json(
+        { error: '名称和价格是必填字段' },
+        { status: 400 }
+      );
+    }
+
+    // 创建新商品
     const newProduct: Omit<Product, 'id'> = {
       name: data.name.trim(),
-      description: data.description.trim() || '该商品暂无描述',
-      price: parseFloat(data.price || '0'),
-      image: data.image || 'https://picsum.photos/id/1/500/500', // 默认图片
+      description: data.description?.trim() || '该商品暂无描述',
+      price: parseFloat(data.price),
+      image: data.image || 'https://picsum.photos/id/1/500/500',
       category: parseInt(data.category || '1'),
       inventory: parseInt(data.inventory || '0'),
       rating: 0,
       reviews: 0
     };
-    
+
     // 添加其他可选字段
     if (data.brand) newProduct.brand = data.brand.trim();
     if (data.model) newProduct.model = data.model.trim();
@@ -212,18 +223,18 @@ export async function POST(request: NextRequest) {
     if (data.free_shipping !== undefined) newProduct.free_shipping = data.free_shipping;
     if (data.returnable !== undefined) newProduct.returnable = data.returnable;
     if (data.warranty !== undefined) newProduct.warranty = data.warranty;
-    
-    console.log('尝试插入商品数据:', newProduct);
-    
-    // 添加到数据库
+
+    console.log('准备插入的商品数据:', JSON.stringify(newProduct, null, 2));
+
+    // 插入数据库
     const { data: createdProduct, error } = await supabase
       .from('products')
       .insert(newProduct)
       .select()
       .single();
-    
+
     if (error) {
-      console.error('创建商品失败:', error);
+      console.error('数据库插入失败:', error);
       
       if (error.code === 'PGRST116' || error.code === '42P01' || error.message.includes('does not exist')) {
         return NextResponse.json(
@@ -241,13 +252,11 @@ export async function POST(request: NextRequest) {
         error: '创建商品失败', 
         details: error.message,
         code: error.code,
-        hint: error.hint || '可能是数据库结构与提交的数据不匹配'
+        hint: '可能是数据库结构与提交的数据不匹配'
       }, { status: 500 });
     }
     
     console.log('商品创建成功:', createdProduct);
-    
-    // 返回新创建的商品
     return NextResponse.json(createdProduct, { status: 201 });
   } catch (error: any) {
     console.error('创建商品失败:', error);
@@ -264,7 +273,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       error: '创建商品失败', 
       details: error instanceof Error ? error.message : '未知错误',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 });
   }
 } 
