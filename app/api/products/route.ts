@@ -182,11 +182,23 @@ export async function GET(request: NextRequest) {
 
 // 新增商品
 export async function POST(request: NextRequest) {
+  let requestBody: any = null;
+  
   try {
     // 解析请求体
-    const data = await request.json();
-    console.log('收到商品创建请求数据:', JSON.stringify(data, null, 2));
-
+    try {
+      requestBody = await request.json();
+      console.log('收到商品创建请求数据:', JSON.stringify(requestBody, null, 2));
+    } catch (parseError: any) {
+      console.error('解析请求体失败:', parseError);
+      return NextResponse.json({
+        error: '无效的请求数据',
+        details: parseError instanceof Error ? parseError.message : '无法解析JSON',
+      }, { status: 400 });
+    }
+    
+    const data = requestBody;
+    
     // 确保产品表存在
     const tableExists = await ensureProductsTableExists();
     if (!tableExists) {

@@ -270,23 +270,32 @@ export default function NewProductPage() {
       })
       
       if (!res.ok) {
-        // 使用克隆的响应对象来读取错误信息，避免重复读取请求体
-        const errorResponse = res.clone();
-        let errorData: any = {};
+        // 获取错误响应文本，而不是尝试将其解析为JSON
+        const errorText = await res.text();
+        let errorMessage = `创建商品失败，服务器返回错误：${res.status}`;
+        let errorDetails = '';
         
+        // 尝试解析错误文本为JSON
         try {
-          errorData = await errorResponse.json();
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+          errorDetails = errorData.details || '';
+          
+          console.error('API返回错误:', {
+            status: res.status,
+            statusText: res.statusText,
+            data: errorData
+          });
         } catch (e) {
-          console.error('解析错误响应失败:', e);
+          // 如果解析失败，使用原始错误文本
+          console.error('API返回错误:', {
+            status: res.status,
+            statusText: res.statusText,
+            text: errorText
+          });
         }
         
-        console.error('API返回错误:', {
-          status: res.status,
-          statusText: res.statusText,
-          data: errorData
-        });
-        
-        throw new Error(errorData.error || errorData.details || '创建商品失败，服务器返回错误：' + res.status);
+        throw new Error(errorMessage + (errorDetails ? `: ${errorDetails}` : ''));
       }
       
       const createdProduct = await res.json()
