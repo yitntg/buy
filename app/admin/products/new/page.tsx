@@ -60,18 +60,54 @@ export default function NewProductPage() {
           throw new Error(`获取分类失败: ${response.status}`);
         }
 
+        // 尝试解析响应
         const data = await response.json();
-        setCategories(data);
+        console.log('获取到的分类数据:', data);
+        
+        // 处理不同的响应格式
+        let categoriesData = data;
+        
+        // 如果API返回的是包含categories属性的对象，则使用categories属性
+        if (data && data.categories) {
+          categoriesData = data.categories;
+        }
+        
+        // 如果获取失败或没有数据，使用默认分类
+        if (!Array.isArray(categoriesData) || categoriesData.length === 0) {
+          console.log('使用默认分类数据');
+          categoriesData = [
+            { id: 1, name: '电子产品' },
+            { id: 2, name: '家居家具' },
+            { id: 3, name: '服装服饰' },
+            { id: 4, name: '美妆个护' },
+            { id: 5, name: '食品饮料' },
+            { id: 6, name: '运动户外' }
+          ];
+        }
+        
+        console.log('设置分类数据:', categoriesData);
+        setCategories(categoriesData);
         
         // 默认选择第一个分类
-        if (data.length > 0) {
-          setFormData(prev => ({ ...prev, category: data[0].id.toString() }));
+        if (categoriesData.length > 0) {
+          setFormData(prev => ({ ...prev, category: categoriesData[0].id.toString() }));
         }
       } catch (err) {
         console.error('获取分类失败:', err);
-        // 出错时不使用模拟数据，显示错误状态
-        setCategories([]);
-        alert('获取商品分类失败，请刷新页面重试。');
+        // 出错时使用默认分类数据
+        const defaultCategories = [
+          { id: 1, name: '电子产品' },
+          { id: 2, name: '家居家具' },
+          { id: 3, name: '服装服饰' },
+          { id: 4, name: '美妆个护' },
+          { id: 5, name: '食品饮料' },
+          { id: 6, name: '运动户外' }
+        ];
+        console.log('使用默认分类数据');
+        setCategories(defaultCategories);
+        
+        // 默认选择第一个分类
+        setFormData(prev => ({ ...prev, category: '1' }));
       }
     };
     

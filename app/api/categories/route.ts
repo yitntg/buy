@@ -80,6 +80,7 @@ async function ensureCategoriesTableExists() {
 // 获取所有分类
 export async function GET(request: NextRequest) {
   try {
+    // 注意：不要尝试读取request.body，这是导致错误的原因
     console.log('正在获取分类数据...')
     
     // 确保分类表存在
