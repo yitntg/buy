@@ -204,12 +204,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 确保description和image字段不为null
+    const description = data.description?.trim() || '该商品暂无描述';
+    const image = data.image || 'https://picsum.photos/id/1/500/500';
+
     // 创建新商品
     const newProduct: Omit<Product, 'id'> = {
       name: data.name.trim(),
-      description: data.description?.trim() || '该商品暂无描述',
+      description: description,  // 确保不为null
       price: parseFloat(data.price),
-      image: data.image || 'https://picsum.photos/id/1/500/500',
+      image: image,  // 确保不为null
       category: parseInt(data.category || '1'),
       inventory: parseInt(data.inventory || '0'),
       rating: 0,
