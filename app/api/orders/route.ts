@@ -153,6 +153,14 @@ async function ensureOrdersTableExists() {
   }
 }
 
+// 订单明细项接口
+interface OrderItem {
+  product_id: number
+  product_name: string
+  quantity: number
+  price: number
+}
+
 // 获取订单列表
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -312,7 +320,7 @@ export async function POST(request: NextRequest) {
     
     // 如果有订单明细，插入订单明细
     if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
-      const orderItems = orderData.items.map(item => ({
+      const orderItems = orderData.items.map((item: OrderItem) => ({
         order_id: createdOrder.id,
         product_id: item.product_id,
         product_name: item.product_name,
