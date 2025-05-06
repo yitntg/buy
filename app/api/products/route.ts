@@ -98,9 +98,11 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(url.searchParams.get('limit') || '10')
   const keyword = url.searchParams.get('keyword') || ''
   const category = url.searchParams.get('category')
+  const minPrice = url.searchParams.get('minPrice')
+  const maxPrice = url.searchParams.get('maxPrice')
   const sortBy = url.searchParams.get('sortBy') || 'relevance'
   
-  console.log('获取商品列表，参数:', { page, limit, keyword, category, sortBy })
+  console.log('获取商品列表，参数:', { page, limit, keyword, category, minPrice, maxPrice, sortBy })
   
   try {
     // 确保产品表存在
@@ -117,6 +119,15 @@ export async function GET(request: NextRequest) {
     // 分类筛选
     if (category) {
       query = query.eq('category', parseInt(category))
+    }
+    
+    // 价格范围筛选
+    if (minPrice) {
+      query = query.gte('price', parseFloat(minPrice))
+    }
+    
+    if (maxPrice) {
+      query = query.lte('price', parseFloat(maxPrice))
     }
     
     // 计算分页
@@ -185,16 +196,19 @@ export async function POST(request: NextRequest) {
   try {
     console.log('接收到商品创建请求');
     
+    // 克隆请求以避免Body已被读取的错误
+    const clonedRequest = request.clone();
+    
     // 使用formData()解析请求，而不是json()
     let productData: any = {};
     try {
       // 尝试直接从请求头中获取内容类型
-      const contentType = request.headers.get('content-type') || '';
+      const contentType = clonedRequest.headers.get('content-type') || '';
       console.log('请求Content-Type:', contentType);
       
       if (contentType.includes('application/json')) {
         // 直接获取请求的文本内容，而不是尝试解析JSON
-        const bodyText = await request.text();
+        const bodyText = await clonedRequest.text();
         console.log('请求体文本:', bodyText);
         try {
           productData = JSON.parse(bodyText);
@@ -208,7 +222,7 @@ export async function POST(request: NextRequest) {
       } else {
         // 对于非JSON请求，尝试使用formData
         console.log('尝试作为表单数据处理');
-        const formData = await request.formData();
+        const formData = await clonedRequest.formData();
         // 转换formData为普通对象
         formData.forEach((value, key) => {
           productData[key] = value;
