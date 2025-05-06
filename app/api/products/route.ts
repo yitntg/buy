@@ -183,19 +183,44 @@ export async function GET(request: NextRequest) {
 // 新增商品
 export async function POST(request: NextRequest) {
   try {
-    // 创建请求副本以避免直接修改原始请求
-    const requestClone = request.clone();
+    console.log('接收到商品创建请求');
     
-    // 解析请求体
-    let data: any;
+    // 使用formData()解析请求，而不是json()
+    let productData: any = {};
     try {
-      data = await requestClone.json();
-      console.log('收到商品创建请求数据:', JSON.stringify(data, null, 2));
+      // 尝试直接从请求头中获取内容类型
+      const contentType = request.headers.get('content-type') || '';
+      console.log('请求Content-Type:', contentType);
+      
+      if (contentType.includes('application/json')) {
+        // 直接获取请求的文本内容，而不是尝试解析JSON
+        const bodyText = await request.text();
+        console.log('请求体文本:', bodyText);
+        try {
+          productData = JSON.parse(bodyText);
+        } catch (jsonError) {
+          console.error('JSON解析失败:', jsonError);
+          return NextResponse.json({
+            error: '无效的JSON数据',
+            details: '请求体不是有效的JSON格式'
+          }, { status: 400 });
+        }
+      } else {
+        // 对于非JSON请求，尝试使用formData
+        console.log('尝试作为表单数据处理');
+        const formData = await request.formData();
+        // 转换formData为普通对象
+        formData.forEach((value, key) => {
+          productData[key] = value;
+        });
+      }
+      
+      console.log('解析后的商品数据:', JSON.stringify(productData, null, 2));
     } catch (parseError: any) {
-      console.error('解析请求体失败:', parseError);
+      console.error('请求体解析失败:', parseError);
       return NextResponse.json({
-        error: '无效的请求数据',
-        details: parseError instanceof Error ? parseError.message : '无法解析JSON',
+        error: '无法解析请求数据',
+        details: parseError instanceof Error ? parseError.message : '未知解析错误'
       }, { status: 400 });
     }
     
@@ -209,7 +234,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证必填字段
-    if (!data.name || !data.price) {
+    if (!productData.name || !productData.price) {
       return NextResponse.json(
         { error: '名称和价格是必填字段' },
         { status: 400 }
@@ -217,28 +242,36 @@ export async function POST(request: NextRequest) {
     }
 
     // 确保description和image字段不为null
-    const description = data.description?.trim() || '该商品暂无描述';
-    const image = data.image || 'https://picsum.photos/id/1/500/500';
+    const description = typeof productData.description === 'string' ? productData.description.trim() : '该商品暂无描述';
+    const image = productData.image || 'https://picsum.photos/id/1/500/500';
 
     // 创建新商品
     const newProduct: Omit<Product, 'id'> = {
-      name: data.name.trim(),
-      description: description,  // 确保不为null
-      price: parseFloat(data.price),
-      image: image,  // 确保不为null
-      category: parseInt(data.category || '1'),
-      inventory: parseInt(data.inventory || '0'),
+      name: typeof productData.name === 'string' ? productData.name.trim() : String(productData.name),
+      description: description,
+      price: typeof productData.price === 'number' ? productData.price : parseFloat(String(productData.price)),
+      image: image,
+      category: typeof productData.category === 'number' ? productData.category : parseInt(String(productData.category || '1')),
+      inventory: typeof productData.inventory === 'number' ? productData.inventory : parseInt(String(productData.inventory || '0')),
       rating: 0,
       reviews: 0
     };
 
     // 添加其他可选字段
-    if (data.brand) newProduct.brand = data.brand.trim();
-    if (data.model) newProduct.model = data.model.trim();
-    if (data.specifications) newProduct.specifications = data.specifications.trim();
-    if (data.free_shipping !== undefined) newProduct.free_shipping = data.free_shipping;
-    if (data.returnable !== undefined) newProduct.returnable = data.returnable;
-    if (data.warranty !== undefined) newProduct.warranty = data.warranty;
+    if (productData.brand) newProduct.brand = typeof productData.brand === 'string' ? productData.brand.trim() : String(productData.brand);
+    if (productData.model) newProduct.model = typeof productData.model === 'string' ? productData.model.trim() : String(productData.model);
+    if (productData.specifications) newProduct.specifications = typeof productData.specifications === 'string' ? productData.specifications.trim() : String(productData.specifications);
+    
+    // 处理布尔值
+    if (productData.free_shipping !== undefined) {
+      newProduct.free_shipping = productData.free_shipping === true || productData.free_shipping === 'true';
+    }
+    if (productData.returnable !== undefined) {
+      newProduct.returnable = productData.returnable === true || productData.returnable === 'true';
+    }
+    if (productData.warranty !== undefined) {
+      newProduct.warranty = productData.warranty === true || productData.warranty === 'true';
+    }
 
     console.log('准备插入的商品数据:', JSON.stringify(newProduct, null, 2));
 
@@ -277,18 +310,10 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('创建商品失败:', error);
     
-    // 如果是JSON解析错误，提供更详细的错误信息
-    if (error instanceof SyntaxError && error.message.includes('JSON')) {
-      return NextResponse.json({ 
-        error: '创建商品失败', 
-        details: '无效的JSON数据',
-        message: error.message
-      }, { status: 400 });
-    }
-    
     return NextResponse.json({ 
       error: '创建商品失败', 
       details: error instanceof Error ? error.message : '未知错误',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 } 

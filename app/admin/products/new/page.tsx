@@ -260,77 +260,108 @@ export default function NewProductPage() {
       console.log('正在提交商品数据:', productData)
       
       // 发送API请求
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(productData),
-        cache: 'no-store'
-      })
-      
-      if (!res.ok) {
-        // 获取错误响应文本，而不是尝试将其解析为JSON
-        const errorText = await res.text();
-        let errorMessage = `创建商品失败，服务器返回错误：${res.status}`;
-        let errorDetails = '';
+      try {
+        // 使用更可靠的fetch请求方式
+        const response = await fetch('/api/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(productData),
+          cache: 'no-store'
+        })
         
-        // 尝试解析错误文本为JSON
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
-          errorDetails = errorData.details || '';
+        // 先获取响应文本
+        const responseText = await response.text()
+        
+        if (!response.ok) {
+          // 尝试解析错误响应
+          let errorMessage = `创建商品失败，服务器返回错误：${response.status}`
+          let errorData = null
           
-          console.error('API返回错误:', {
-            status: res.status,
-            statusText: res.statusText,
-            data: errorData
-          });
-        } catch (e) {
-          // 如果解析失败，使用原始错误文本
-          console.error('API返回错误:', {
-            status: res.status,
-            statusText: res.statusText,
-            text: errorText
-          });
+          try {
+            // 尝试将响应文本解析为JSON
+            if (responseText) {
+              errorData = JSON.parse(responseText)
+              console.error('API返回错误:', {
+                status: response.status,
+                statusText: response.statusText,
+                data: errorData
+              })
+              
+              if (errorData.error) {
+                errorMessage = errorData.error
+                if (errorData.details) {
+                  errorMessage += `: ${errorData.details}`
+                }
+              }
+            }
+          } catch (parseError) {
+            console.error('解析错误响应失败:', parseError)
+            console.error('原始响应文本:', responseText)
+          }
+          
+          throw new Error(errorMessage)
         }
         
-        throw new Error(errorMessage + (errorDetails ? `: ${errorDetails}` : ''));
-      }
-      
-      const createdProduct = await res.json()
-      console.log('商品创建成功:', createdProduct)
-      
-      // 创建成功
-      setSubmitSuccess(true)
-      
-      // 2秒后重置表单或跳转
-      setTimeout(() => {
-        if (confirm('商品添加成功！是否继续添加新商品？')) {
-          // 重置表单
-          setFormData({
-            name: '',
-            description: '',
-            price: '',
-            category: categories.length > 0 ? categories[0].id.toString() : '',
-            inventory: '10',
-            image: '',
-            brand: '',
-            model: '',
-            specifications: '',
-            free_shipping: false,
-            returnable: false,
-            warranty: false
-          })
-          setImages([])
-          setImagePreviewUrls([])
-          setImagePreview(null)
-          setSubmitSuccess(false)
-        } else {
-          // 跳转到商品列表
-          router.push('/admin/products')
+        // 解析成功响应
+        let createdProduct = null
+        try {
+          if (responseText) {
+            createdProduct = JSON.parse(responseText)
+            console.log('商品创建成功:', createdProduct)
+          }
+        } catch (parseError) {
+          console.error('解析成功响应失败:', parseError)
+          throw new Error('解析服务器响应失败')
         }
-      }, 2000)
+        
+        // 创建成功
+        setSubmitSuccess(true)
+        
+        // 2秒后重置表单或跳转
+        setTimeout(() => {
+          if (confirm('商品添加成功！是否继续添加新商品？')) {
+            // 重置表单
+            setFormData({
+              name: '',
+              description: '',
+              price: '',
+              category: categories.length > 0 ? categories[0].id.toString() : '',
+              inventory: '10',
+              image: '',
+              brand: '',
+              model: '',
+              specifications: '',
+              free_shipping: false,
+              returnable: false,
+              warranty: false
+            })
+            setImages([])
+            setImagePreviewUrls([])
+            setImagePreview(null)
+            setSubmitSuccess(false)
+          } else {
+            // 跳转到商品列表
+            router.push('/admin/products')
+          }
+        }, 2000)
+      } catch (err: any) {
+        console.error('保存商品失败:', err)
+        
+        // 显示具体错误信息
+        const errorMessage = err.message || '保存商品失败，请重试'
+        alert(errorMessage)
+        
+        // 在控制台记录更多调试信息
+        if (err instanceof Error) {
+          console.error('错误详情:', err)
+        }
+        
+        setSubmitSuccess(false)
+      } finally {
+        setIsLoading(false)
+      }
     } catch (err: any) {
       console.error('保存商品失败:', err)
       
@@ -344,8 +375,6 @@ export default function NewProductPage() {
       }
       
       setSubmitSuccess(false)
-    } finally {
-      setIsLoading(false)
     }
   }
   
