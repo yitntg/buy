@@ -121,8 +121,21 @@ export async function GET(request: NextRequest) {
 // 创建新分类
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json()
-    console.log('创建分类请求数据:', data)
+    // 克隆请求以避免Body has already been read错误
+    const clonedRequest = request.clone();
+    
+    let data;
+    try {
+      // 使用clonedRequest读取请求体
+      data = await clonedRequest.json();
+      console.log('创建分类请求数据:', data);
+    } catch (parseError) {
+      console.error('解析请求数据失败:', parseError);
+      return NextResponse.json(
+        { error: '无法解析请求数据', details: parseError instanceof Error ? parseError.message : '解析错误' },
+        { status: 400 }
+      );
+    }
     
     // 确保分类表存在
     await ensureCategoriesTableExists()
