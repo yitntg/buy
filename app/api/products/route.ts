@@ -268,9 +268,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证必填字段
-    if (!productData.name || !productData.price) {
+    if (!productData.name || !productData.price || productData.category === undefined || productData.inventory === undefined) {
+      const missingFields = [];
+      
+      if (!productData.name) missingFields.push('名称');
+      if (!productData.price) missingFields.push('价格');
+      if (productData.category === undefined) missingFields.push('分类');
+      if (productData.inventory === undefined) missingFields.push('库存');
+      
       return NextResponse.json(
-        { error: '名称和价格是必填字段' },
+        { 
+          error: '请填写所有必填字段', 
+          details: `缺少以下必填字段: ${missingFields.join(', ')}`,
+          missingFields
+        },
         { status: 400 }
       );
     }

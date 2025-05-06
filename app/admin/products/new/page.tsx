@@ -253,9 +253,15 @@ export default function NewProductPage() {
     // 表单验证
     const validationErrors: Record<string, string> = {}
     
+    // 必填字段验证
     if (!formData.name.trim()) validationErrors.name = '商品名称不能为空'
     if (!formData.price || parseFloat(formData.price) <= 0) validationErrors.price = '请输入有效价格'
     if (!formData.category) validationErrors.category = '请选择商品分类'
+    
+    // 添加库存验证
+    if (formData.inventory === '' || parseInt(formData.inventory) < 0) {
+      validationErrors.inventory = '库存数量不能为空且不能为负数'
+    }
     
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
@@ -478,7 +484,7 @@ export default function NewProductPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      商品名称
+                      商品名称 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -493,7 +499,7 @@ export default function NewProductPage() {
                   
                   <div>
                     <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                      商品分类
+                      商品分类 <span className="text-red-500">*</span>
                     </label>
                     <select
                       id="category"
@@ -514,7 +520,7 @@ export default function NewProductPage() {
                   
                   <div>
                     <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                      价格 (¥)
+                      价格 (¥) <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -531,7 +537,7 @@ export default function NewProductPage() {
                   
                   <div>
                     <label htmlFor="inventory" className="block text-sm font-medium text-gray-700">
-                      库存数量
+                      库存数量 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
