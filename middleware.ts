@@ -12,6 +12,6 @@ export function middleware(request: NextRequest) {
 
 // 配置匹配路径
 export const config = {
-  // 匹配所有API请求，但不包括静态资源
-  matcher: '/(api/.*)'
+  // 只匹配API路由
+  matcher: '/api/:path*'
 } 
