@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import ProductCard from '../components/ProductCard'
+import { useTheme } from '../context/ThemeContext'
 
 // 定义商品类型接口
 interface Product {
@@ -65,6 +66,9 @@ export default function ProductsPage() {
     { id: '500-1000', name: '¥500 - ¥1000' },
     { id: '1000-999999', name: '¥1000以上' }
   ]
+  
+  // 获取主题设置
+  const { theme } = useTheme()
   
   // 获取产品数据
   const fetchProducts = async () => {
@@ -383,14 +387,76 @@ export default function ProductsPage() {
                 </div>
               ) : (
                 <>
-                  {/* 商品网格 - 改为瀑布流布局 */}
-                  <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 [column-fill:_balance]" style={{columnGap: '1.5rem'}}>
-                    {products.map((product) => (
-                      <div key={product.id} className="break-inside-avoid-column mb-6 w-full inline-block">
-                        <ProductCard product={product} />
-                      </div>
-                    ))}
-                  </div>
+                  {/* 商品展示 - 根据主题设置选择布局 */}
+                  {theme.productLayout === 'waterfall' ? (
+                    // 瀑布流布局
+                    <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 [column-fill:_balance]" style={{columnGap: '1.5rem'}}>
+                      {products.map((product) => (
+                        <div key={product.id} className="break-inside-avoid-column mb-6 w-full inline-block">
+                          <ProductCard product={product} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : theme.productLayout === 'list' ? (
+                    // 列表布局
+                    <div className="space-y-4">
+                      {products.map((product) => (
+                        <div key={product.id} className="w-full">
+                          <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 w-full">
+                            <div className="flex flex-col md:flex-row">
+                              <div className="md:w-1/4 relative" style={{height: '200px'}}>
+                                <img 
+                                  src={product.image} 
+                                  alt={product.name}
+                                  className="object-cover w-full h-full"
+                                />
+                              </div>
+                              <div className="p-4 md:w-3/4 flex flex-col justify-between">
+                                <div>
+                                  <h3 className="font-medium text-lg mb-2 hover:text-primary transition-colors">
+                                    <Link href={`/product/${product.id}`}>
+                                      {product.name}
+                                    </Link>
+                                  </h3>
+                                  <p className="text-gray-600 text-sm mb-4">{product.description}</p>
+                                  {product.rating !== undefined && (
+                                    <div className="mb-2 flex items-center">
+                                      <div className="flex text-yellow-400">
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                          <span key={i} className={i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}>
+                                            ★
+                                          </span>
+                                        ))}
+                                      </div>
+                                      <span className="text-xs text-gray-500 ml-1">
+                                        {product.rating?.toFixed(1)} ({product.reviews || 0}评价)
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center justify-between mt-4">
+                                  <span className="text-primary font-bold">{product.price.toLocaleString('zh-CN', {style: 'currency', currency: 'CNY'})}</span>
+                                  <Link 
+                                    href={`/product/${product.id}`}
+                                    className="bg-primary text-white px-4 py-2 rounded-md text-sm hover:bg-blue-600"
+                                  >
+                                    查看详情
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    // 默认网格布局
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {products.map((product) => (
+                        <ProductCard key={product.id} product={product} />
+                      ))}
+                    </div>
+                  )}
                   
                   {/* 分页组件，完全重写为更直观的分页控件 */}
                   {totalPages > 1 && (

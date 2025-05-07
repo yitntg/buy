@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { CartProvider } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,9 +21,11 @@ export default function RootLayout({
     <html lang="zh">
       <body className={inter.className}>
         <AuthProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
+          <ThemeProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

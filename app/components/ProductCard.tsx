@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '../context/CartContext'
+import { useTheme } from '../context/ThemeContext'
 import { useState } from 'react'
 
 // 定义商品类型接口
@@ -24,6 +25,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart()
+  const { theme } = useTheme()
   const [isAdding, setIsAdding] = useState(false)
   
   // 格式化价格显示
@@ -61,8 +63,17 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   }
 
+  // 根据主题设置动态构建样式
+  const cardClasses = [
+    "bg-white rounded-lg overflow-hidden",
+    "transition-all duration-200",
+    theme.cardHoverShadow ? "hover:shadow-lg shadow-md" : "",
+    theme.cardHoverTransform ? "hover:-translate-y-1" : "",
+    "w-full"
+  ].filter(Boolean).join(" ");
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow transform hover:-translate-y-1 duration-200 w-full">
+    <div className={cardClasses}>
       <Link href={`/product/${product.id}`}>
         <div className="relative" style={{ height: `${Math.floor(Math.random() * 40) + 150}px` }}>
           <Image

@@ -5,6 +5,7 @@ import { useAuth } from '@/app/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { useTheme } from '../../context/ThemeContext'
 
 export default function AdminSettings() {
   const { user, isAuthenticated } = useAuth()
@@ -20,6 +21,40 @@ export default function AdminSettings() {
     allowGuestCheckout: true,
     enableReviews: true
   })
+  const [formData, setFormData] = useState({
+    // 基础设置
+    siteName: '现代电商',
+    siteDescription: '购买您喜欢的产品',
+    contactEmail: 'support@example.com',
+    phoneNumber: '400-123-4567',
+    
+    // 支付设置
+    enableCashOnDelivery: true,
+    enableCreditCard: true,
+    enableAlipay: true,
+    enableWechatPay: true,
+    
+    // 邮件设置
+    smtpHost: 'smtp.example.com',
+    smtpPort: '587',
+    smtpUser: 'noreply@example.com',
+    smtpPassword: '',
+    emailFromName: '现代电商',
+    
+    // 布局设置
+    carouselCount: '3',
+    featuredCount: '4',
+    productLayout: 'waterfall',
+    productsPerPage: '12',
+    primaryColor: '#3B82F6',
+    secondaryColor: '#10B981',
+    stickyHeader: true,
+    showCategoriesMenu: true,
+    cardHoverShadow: true,
+    cardHoverTransform: true,
+    cardBorderRadius: '8'
+  })
+  const { theme, updateTheme } = useTheme()
   
   // 检查用户是否已登录并且是管理员
   useEffect(() => {
@@ -103,6 +138,110 @@ export default function AdminSettings() {
     }
   }
   
+  // 处理表单输入变化
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: val
+    }))
+  }
+
+  // 处理保存按钮点击
+  const handleSave = async () => {
+    setLoading(true)
+    setStatusMessage({})
+    
+    try {
+      // 模拟保存到API的请求
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // 保存成功
+      setStatusMessage({
+        success: true,
+        message: '设置保存成功！'
+      })
+    } catch (err) {
+      console.error('保存设置失败:', err)
+      setStatusMessage({
+        success: false,
+        message: '保存设置失败，请重试'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  // 处理布局设置的保存
+  const handleLayoutSettingsSave = async () => {
+    setLoading(true)
+    setStatusMessage({})
+    
+    try {
+      // 从表单数据中提取主题相关设置
+      const themeSettings = {
+        primaryColor: formData.primaryColor,
+        secondaryColor: formData.secondaryColor,
+        productLayout: formData.productLayout as 'grid' | 'waterfall' | 'list',
+        productsPerPage: parseInt(formData.productsPerPage),
+        stickyHeader: formData.stickyHeader,
+        showCategoriesMenu: formData.showCategoriesMenu,
+        cardHoverShadow: formData.cardHoverShadow,
+        cardHoverTransform: formData.cardHoverTransform,
+        cardBorderRadius: parseInt(formData.cardBorderRadius),
+        carouselCount: parseInt(formData.carouselCount),
+        featuredCount: parseInt(formData.featuredCount)
+      };
+      
+      // 更新主题
+      updateTheme(themeSettings);
+      
+      // 保存成功消息
+      setStatusMessage({
+        success: true,
+        message: '布局设置已保存并应用！'
+      });
+      
+      // 也可以同时保存到服务器
+      // await fetch('/api/theme-settings', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   },
+      //   body: JSON.stringify(themeSettings)
+      // });
+    } catch (err) {
+      console.error('保存布局设置失败:', err);
+      setStatusMessage({
+        success: false,
+        message: '保存布局设置失败，请重试'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // 初始化表单数据
+  useEffect(() => {
+    // 如果有主题数据，用它来初始化表单
+    setFormData(prev => ({
+      ...prev,
+      primaryColor: theme.primaryColor,
+      secondaryColor: theme.secondaryColor,
+      productLayout: theme.productLayout,
+      productsPerPage: theme.productsPerPage.toString(),
+      stickyHeader: theme.stickyHeader,
+      showCategoriesMenu: theme.showCategoriesMenu,
+      cardHoverShadow: theme.cardHoverShadow,
+      cardHoverTransform: theme.cardHoverTransform,
+      cardBorderRadius: theme.cardBorderRadius.toString(),
+      carouselCount: theme.carouselCount.toString(),
+      featuredCount: theme.featuredCount.toString()
+    }));
+  }, [theme]);
+  
   if (!isAuthenticated || user?.role !== 'admin') {
     return null // 未授权时返回空
   }
@@ -117,48 +256,50 @@ export default function AdminSettings() {
       
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         {/* 选项卡切换 */}
-        <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
-          <div className="flex border-b">
-            <button
-              onClick={() => setActiveTab('general')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'general' 
-                ? 'border-b-2 border-primary text-primary' 
-                : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              基本设置
-            </button>
-            <button
-              onClick={() => setActiveTab('payment')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'payment' 
-                ? 'border-b-2 border-primary text-primary' 
-                : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              支付设置
-            </button>
-            <button
-              onClick={() => setActiveTab('notifications')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'notifications' 
-                ? 'border-b-2 border-primary text-primary' 
-                : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              通知设置
-            </button>
-            <button
-              onClick={() => setActiveTab('advanced')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'advanced' 
-                ? 'border-b-2 border-primary text-primary' 
-                : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              高级设置
-            </button>
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="mb-6 border-b">
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setActiveTab('general')}
+                className={`pb-3 px-1 ${
+                  activeTab === 'general'
+                    ? 'text-primary border-b-2 border-primary font-medium'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                基本设置
+              </button>
+              <button
+                onClick={() => setActiveTab('payment')}
+                className={`pb-3 px-1 ${
+                  activeTab === 'payment'
+                    ? 'text-primary border-b-2 border-primary font-medium'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                支付设置
+              </button>
+              <button
+                onClick={() => setActiveTab('email')}
+                className={`pb-3 px-1 ${
+                  activeTab === 'email'
+                    ? 'text-primary border-b-2 border-primary font-medium'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                邮件设置
+              </button>
+              <button
+                onClick={() => setActiveTab('layout')}
+                className={`pb-3 px-1 ${
+                  activeTab === 'layout'
+                    ? 'text-primary border-b-2 border-primary font-medium'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                布局设置
+              </button>
+            </div>
           </div>
         </div>
 
@@ -387,11 +528,11 @@ export default function AdminSettings() {
           </div>
         )}
 
-        {/* 通知设置 */}
-        {activeTab === 'notifications' && (
+        {/* 邮件设置 */}
+        {activeTab === 'email' && (
           <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">通知设置</h2>
+              <h2 className="text-xl font-bold mb-4">邮件设置</h2>
               
               <div className="space-y-6">
                 <div className="border p-4 rounded-lg">
@@ -503,7 +644,7 @@ export default function AdminSettings() {
                     disabled={loading}
                     className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                   >
-                    {loading ? '保存中...' : '保存通知设置'}
+                    {loading ? '保存中...' : '保存邮件设置'}
                   </button>
                 </div>
               </div>
@@ -511,123 +652,288 @@ export default function AdminSettings() {
           </div>
         )}
 
-        {/* 高级设置 */}
-        {activeTab === 'advanced' && (
+        {/* 布局设置 */}
+        {activeTab === 'layout' && (
           <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">高级设置</h2>
+              <h2 className="text-xl font-bold mb-4">布局设置</h2>
               
-              <div className="space-y-4">
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
+              <div className="space-y-6">
+                {/* 首页布局 */}
+                <div>
+                  <h3 className="text-lg font-medium mb-3">首页布局</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        轮播图数量
+                      </label>
+                      <select
+                        name="carouselCount"
+                        value={formData.carouselCount || '3'}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                      >
+                        {[3, 4, 5, 6].map(num => (
+                          <option key={num} value={num}>{num}</option>
+                        ))}
+                      </select>
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-yellow-700">
-                        注意：以下设置可能会影响系统运行。除非您明确了解这些设置的作用，否则请谨慎修改。
-                      </p>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        特色商品数量
+                      </label>
+                      <select
+                        name="featuredCount"
+                        value={formData.featuredCount || '4'}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                      >
+                        {[4, 6, 8, 12].map(num => (
+                          <option key={num} value={num}>{num}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
-
+                
+                {/* 商品列表布局 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    缓存时间 (秒)
-                  </label>
-                  <input
-                    type="number"
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
-                    defaultValue="3600"
-                  />
+                  <h3 className="text-lg font-medium mb-3">商品列表布局</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        商品展示样式
+                      </label>
+                      <div className="mt-2 space-y-3">
+                        <div className="flex items-center">
+                          <input
+                            id="layout-grid"
+                            name="productLayout"
+                            type="radio"
+                            value="grid"
+                            checked={formData.productLayout === 'grid'}
+                            onChange={handleChange}
+                            className="h-4 w-4 text-primary focus:ring-primary"
+                          />
+                          <label htmlFor="layout-grid" className="ml-3 block text-sm font-medium text-gray-700">
+                            网格布局
+                          </label>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <input
+                            id="layout-waterfall"
+                            name="productLayout"
+                            type="radio"
+                            value="waterfall"
+                            checked={formData.productLayout === 'waterfall'}
+                            onChange={handleChange}
+                            className="h-4 w-4 text-primary focus:ring-primary"
+                          />
+                          <label htmlFor="layout-waterfall" className="ml-3 block text-sm font-medium text-gray-700">
+                            瀑布流布局
+                          </label>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <input
+                            id="layout-list"
+                            name="productLayout"
+                            type="radio"
+                            value="list"
+                            checked={formData.productLayout === 'list'}
+                            onChange={handleChange}
+                            className="h-4 w-4 text-primary focus:ring-primary"
+                          />
+                          <label htmlFor="layout-list" className="ml-3 block text-sm font-medium text-gray-700">
+                            列表布局
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        每页商品数量
+                      </label>
+                      <select
+                        name="productsPerPage"
+                        value={formData.productsPerPage || '12'}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                      >
+                        {[8, 12, 16, 20, 24, 32].map(num => (
+                          <option key={num} value={num}>{num}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
                 
+                {/* 主题颜色设置 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    上传文件大小限制 (MB)
-                  </label>
-                  <input
-                    type="number"
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
-                    defaultValue="5"
-                  />
+                  <h3 className="text-lg font-medium mb-3">主题颜色</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        主色调
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          name="primaryColor"
+                          value={formData.primaryColor || '#3B82F6'}
+                          onChange={handleChange}
+                          className="h-8 w-10 border-0 p-0"
+                        />
+                        <input
+                          type="text"
+                          name="primaryColorText"
+                          value={formData.primaryColor || '#3B82F6'}
+                          onChange={(e) => {
+                            setFormData(prev => ({ ...prev, primaryColor: e.target.value }));
+                          }}
+                          className="w-28 border border-gray-300 rounded-md shadow-sm py-1 px-2 focus:outline-none focus:ring-primary focus:border-primary text-sm"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        辅助色调
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          name="secondaryColor"
+                          value={formData.secondaryColor || '#10B981'}
+                          onChange={handleChange}
+                          className="h-8 w-10 border-0 p-0"
+                        />
+                        <input
+                          type="text"
+                          name="secondaryColorText"
+                          value={formData.secondaryColor || '#10B981'}
+                          onChange={(e) => {
+                            setFormData(prev => ({ ...prev, secondaryColor: e.target.value }));
+                          }}
+                          className="w-28 border border-gray-300 rounded-md shadow-sm py-1 px-2 focus:outline-none focus:ring-primary focus:border-primary text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
+                {/* 导航栏设置 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    会话超时时间 (分钟)
-                  </label>
-                  <input
-                    type="number"
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
-                    defaultValue="30"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    日志级别
-                  </label>
-                  <select
-                    className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
-                    defaultValue="info"
-                  >
-                    <option value="debug">Debug (调试)</option>
-                    <option value="info">Info (信息)</option>
-                    <option value="warn">Warn (警告)</option>
-                    <option value="error">Error (错误)</option>
-                  </select>
-                </div>
-                
-                <div className="pt-6">
-                  <h3 className="text-lg font-medium mb-3">系统维护</h3>
-                  
-                  <div className="space-y-4">
+                  <h3 className="text-lg font-medium mb-3">导航栏设置</h3>
+                  <div className="space-y-3">
                     <div className="flex items-center">
                       <input
+                        id="sticky-header"
+                        name="stickyHeader"
                         type="checkbox"
-                        id="maintenanceMode"
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                        checked={formData.stickyHeader}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, stickyHeader: e.target.checked }))
+                        }}
+                        className="h-4 w-4 text-primary focus:ring-primary"
                       />
-                      <label htmlFor="maintenanceMode" className="ml-2 block text-sm text-gray-700">
-                        启用维护模式（所有非管理员访问将看到维护页面）
+                      <label htmlFor="sticky-header" className="ml-3 block text-sm font-medium text-gray-700">
+                        固定导航栏在顶部
                       </label>
                     </div>
                     
-                    <div className="space-x-4">
-                      <Link 
-                        href="/admin/tools"
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                      >
-                        开发工具
-                      </Link>
-                      
-                      <button
-                        onClick={handleInitializeSystem}
-                        disabled={loading}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                      >
-                        初始化系统
-                      </button>
-                      
-                      <button
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                      >
-                        清理缓存
-                      </button>
+                    <div className="flex items-center">
+                      <input
+                        id="show-categories-menu"
+                        name="showCategoriesMenu"
+                        type="checkbox"
+                        checked={formData.showCategoriesMenu}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, showCategoriesMenu: e.target.checked }))
+                        }}
+                        className="h-4 w-4 text-primary focus:ring-primary"
+                      />
+                      <label htmlFor="show-categories-menu" className="ml-3 block text-sm font-medium text-gray-700">
+                        显示分类菜单下拉框
+                      </label>
                     </div>
                   </div>
                 </div>
                 
-                <div className="pt-4">
+                {/* 商品卡片设置 */}
+                <div>
+                  <h3 className="text-lg font-medium mb-3">商品卡片设置</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        卡片特效
+                      </label>
+                      <div className="space-y-3">
+                        <div className="flex items-center">
+                          <input
+                            id="card-hover-shadow"
+                            name="cardHoverShadow"
+                            type="checkbox"
+                            checked={formData.cardHoverShadow}
+                            onChange={(e) => {
+                              setFormData(prev => ({ ...prev, cardHoverShadow: e.target.checked }))
+                            }}
+                            className="h-4 w-4 text-primary focus:ring-primary"
+                          />
+                          <label htmlFor="card-hover-shadow" className="ml-3 block text-sm font-medium text-gray-700">
+                            悬停阴影效果
+                          </label>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <input
+                            id="card-hover-transform"
+                            name="cardHoverTransform"
+                            type="checkbox"
+                            checked={formData.cardHoverTransform}
+                            onChange={(e) => {
+                              setFormData(prev => ({ ...prev, cardHoverTransform: e.target.checked }))
+                            }}
+                            className="h-4 w-4 text-primary focus:ring-primary"
+                          />
+                          <label htmlFor="card-hover-transform" className="ml-3 block text-sm font-medium text-gray-700">
+                            悬停上移效果
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        卡片圆角大小
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="range"
+                          name="cardBorderRadius"
+                          min="0"
+                          max="16"
+                          value={formData.cardBorderRadius || '8'}
+                          onChange={handleChange}
+                          className="w-32"
+                        />
+                        <span className="text-sm text-gray-500">{formData.cardBorderRadius || '8'}px</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
                   <button
-                    onClick={saveSystemSettings}
+                    type="button"
+                    onClick={handleLayoutSettingsSave}
                     disabled={loading}
                     className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                   >
-                    {loading ? '保存中...' : '保存高级设置'}
+                    {loading ? '保存中...' : '保存布局设置'}
                   </button>
                 </div>
               </div>
