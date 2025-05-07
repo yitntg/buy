@@ -536,7 +536,7 @@ export default function AdminSettings() {
               
               <div className="space-y-6">
                 <div className="border p-4 rounded-lg">
-                  <h3 className="text-lg font-medium mb-3">邮件通知</h3>
+                  <h3 className="text-lg font-medium mb-3">邮件设置</h3>
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -585,54 +585,6 @@ export default function AdminSettings() {
                       />
                       <label htmlFor="enableEmailNotifications" className="ml-2 block text-sm text-gray-700">
                         启用邮件通知
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border p-4 rounded-lg">
-                  <h3 className="text-lg font-medium mb-3">通知事件</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="notifyNewOrder"
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                        defaultChecked
-                      />
-                      <label htmlFor="notifyNewOrder" className="ml-2 block text-sm text-gray-700">
-                        新订单通知
-                      </label>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="notifyLowStock"
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                        defaultChecked
-                      />
-                      <label htmlFor="notifyLowStock" className="ml-2 block text-sm text-gray-700">
-                        库存不足通知
-                      </label>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="notifyNewReview"
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                      />
-                      <label htmlFor="notifyNewReview" className="ml-2 block text-sm text-gray-700">
-                        新评论通知
-                      </label>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="notifyNewUser"
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                      />
-                      <label htmlFor="notifyNewUser" className="ml-2 block text-sm text-gray-700">
-                        新用户注册通知
                       </label>
                     </div>
                   </div>
