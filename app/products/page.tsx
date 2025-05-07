@@ -222,295 +222,303 @@ export default function ProductsPage() {
       <Header />
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl font-bold mb-6">全部商品</h1>
-          
-          {/* 搜索栏 */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-            <form onSubmit={handleSearch} className="flex">
-              <input
-                type="text"
-                placeholder="搜索商品..."
-                className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-              />
-              <button 
-                type="submit"
-                className="bg-primary text-white px-6 py-2 rounded-r-md hover:bg-blue-600"
-              >
-                搜索
-              </button>
-            </form>
-          </div>
-          
-          {/* 新的水平筛选栏 */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* 分类筛选下拉菜单 */}
-              <div className="relative inline-block text-left">
-                <button 
-                  type="button" 
-                  className="inline-flex justify-center items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
-                  onClick={() => {
-                    const elem = document.getElementById('category-dropdown');
-                    if (elem) elem.classList.toggle('hidden');
-                  }}
-                >
-                  分类
-                  <svg className="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                <div id="category-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
-                  <div className="py-1 p-2" role="none">
-                    {categories.map(category => (
-                      <div key={category.id} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
-                        <input 
-                          type="checkbox" 
-                          id={`category-${category.id}`}
-                          checked={selectedCategories.includes(category.id)}
-                          onChange={() => handleCategoryChange(category.id)}
-                          className="h-4 w-4 text-primary rounded"
-                        />
-                        <label 
-                          htmlFor={`category-${category.id}`}
-                          className="ml-2 text-sm text-gray-700 block w-full cursor-pointer"
-                        >
-                          {category.name}
-                        </label>
+          <div className="mb-8">
+            {/* 商品页标题栏 - 左侧标题，右侧搜索*/}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <h1 className="text-2xl font-bold flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                全部商品
+                <span className="ml-3 text-sm font-normal text-gray-500">({totalProducts}件)</span>
+              </h1>
+              
+              {/* 搜索栏 - 集成在标题行 */}
+              <div className="w-full md:w-auto md:min-w-[300px]">
+                <form onSubmit={handleSearch} className="flex">
+                  <input
+                    type="text"
+                    placeholder="搜索商品..."
+                    className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                  />
+                  <button 
+                    type="submit"
+                    className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-blue-600"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </button>
+                </form>
+              </div>
+            </div>
+            
+            {/* 高级筛选栏 - 合并筛选和布局控制 */}
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* 筛选按钮组 - 左侧 */}
+                  <div className="flex space-x-2">
+                    {/* 分类筛选下拉菜单 */}
+                    <div className="relative inline-block text-left">
+                      <button 
+                        type="button" 
+                        className="inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                        onClick={() => {
+                          const elem = document.getElementById('category-dropdown');
+                          if (elem) elem.classList.toggle('hidden');
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                        分类
+                      </button>
+                      <div id="category-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
+                        <div className="py-1 p-2" role="none">
+                          {categories.map(category => (
+                            <div key={category.id} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
+                              <input 
+                                type="checkbox" 
+                                id={`category-${category.id}`}
+                                checked={selectedCategories.includes(category.id)}
+                                onChange={() => handleCategoryChange(category.id)}
+                                className="h-4 w-4 text-primary rounded"
+                              />
+                              <label 
+                                htmlFor={`category-${category.id}`}
+                                className="ml-2 text-sm text-gray-700 block w-full cursor-pointer"
+                              >
+                                {category.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
+                    </div>
+                    
+                    {/* 价格筛选下拉菜单 */}
+                    <div className="relative inline-block text-left">
+                      <button 
+                        type="button" 
+                        className="inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                        onClick={() => {
+                          const elem = document.getElementById('price-dropdown');
+                          if (elem) elem.classList.toggle('hidden');
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        价格
+                      </button>
+                      <div id="price-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
+                        <div className="py-1 p-2" role="none">
+                          {priceRanges.map(range => (
+                            <div key={range.id} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
+                              <input 
+                                type="checkbox" 
+                                id={`price-${range.id}`}
+                                checked={selectedPriceRanges.includes(range.id)}
+                                onChange={() => handlePriceRangeChange(range.id)}
+                                className="h-4 w-4 text-primary rounded"
+                              />
+                              <label 
+                                htmlFor={`price-${range.id}`}
+                                className="ml-2 text-sm text-gray-700 block w-full cursor-pointer"
+                              >
+                                {range.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 评分筛选下拉菜单 */}
+                    <div className="relative inline-block text-left">
+                      <button 
+                        type="button" 
+                        className="inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                        onClick={() => {
+                          const elem = document.getElementById('rating-dropdown');
+                          if (elem) elem.classList.toggle('hidden');
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        评分
+                      </button>
+                      <div id="rating-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
+                        <div className="py-1 p-2" role="none">
+                          {[4, 3, 2, 1].map(rating => (
+                            <div key={rating} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
+                              <input 
+                                type="checkbox" 
+                                id={`rating-${rating}`}
+                                checked={minRating === rating}
+                                onChange={() => handleRatingChange(rating)}
+                                className="h-4 w-4 text-primary rounded"
+                              />
+                              <label 
+                                htmlFor={`rating-${rating}`}
+                                className="ml-2 text-sm text-gray-700 flex items-center cursor-pointer w-full"
+                              >
+                                {rating}星及以上
+                                <span className="ml-1 text-yellow-400">{'★'.repeat(rating)}</span>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 排序选项 */}
+                  <div className="relative inline-block">
+                    <select 
+                      className="rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                      value={sortBy}
+                      onChange={handleSortChange}
+                    >
+                      <option value="recommend">推荐</option>
+                      <option value="newest">最新</option>
+                      <option value="price-asc">价格由低到高</option>
+                      <option value="price-desc">价格由高到低</option>
+                      <option value="rating">评分</option>
+                    </select>
+                  </div>
+                  
+                  {/* 每页显示数量 */}
+                  <div className="hidden md:flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">每页:</span>
+                    <select 
+                      className="border border-gray-300 rounded px-2 py-1.5 text-xs"
+                      value={limit.toString()}
+                      onChange={(e) => {
+                        const newLimit = parseInt(e.target.value);
+                        alert(`实际应用中这里会设置每页显示${newLimit}项并重新加载数据`);
+                      }}
+                    >
+                      <option value="12">12</option>
+                      <option value="24">24</option>
+                      <option value="36">36</option>
+                      <option value="48">48</option>
+                    </select>
                   </div>
                 </div>
-              </div>
-              
-              {/* 价格筛选下拉菜单 */}
-              <div className="relative inline-block text-left">
-                <button 
-                  type="button" 
-                  className="inline-flex justify-center items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
-                  onClick={() => {
-                    const elem = document.getElementById('price-dropdown');
-                    if (elem) elem.classList.toggle('hidden');
-                  }}
-                >
-                  价格区间
-                  <svg className="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                <div id="price-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
-                  <div className="py-1 p-2" role="none">
-                    {priceRanges.map(range => (
-                      <div key={range.id} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
-                        <input 
-                          type="checkbox" 
-                          id={`price-${range.id}`}
-                          checked={selectedPriceRanges.includes(range.id)}
-                          onChange={() => handlePriceRangeChange(range.id)}
-                          className="h-4 w-4 text-primary rounded"
-                        />
-                        <label 
-                          htmlFor={`price-${range.id}`}
-                          className="ml-2 text-sm text-gray-700 block w-full cursor-pointer"
-                        >
-                          {range.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                
+                {/* 布局切换按钮组 - 右侧 */}
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => updateTheme({ productLayout: 'grid' })}
+                    className={`p-1.5 rounded-md ${theme.productLayout === 'grid' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                    title="网格布局"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => updateTheme({ productLayout: 'waterfall' })}
+                    className={`p-1.5 rounded-md ${theme.productLayout === 'waterfall' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                    title="瀑布流布局"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => updateTheme({ productLayout: 'list' })}
+                    className={`p-1.5 rounded-md ${theme.productLayout === 'list' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                    title="列表布局"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => updateTheme({ productLayout: 'compact' })}
+                    className={`p-1.5 rounded-md ${theme.productLayout === 'compact' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                    title="紧凑布局"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 8h16M4 10h16M4 12h16M4 14h16M4 16h16M4 18h16" />
+                    </svg>
+                  </button>
                 </div>
-              </div>
-              
-              {/* 评分筛选下拉菜单 */}
-              <div className="relative inline-block text-left">
-                <button 
-                  type="button" 
-                  className="inline-flex justify-center items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
-                  onClick={() => {
-                    const elem = document.getElementById('rating-dropdown');
-                    if (elem) elem.classList.toggle('hidden');
-                  }}
-                >
-                  评分
-                  <svg className="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                <div id="rating-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
-                  <div className="py-1 p-2" role="none">
-                    {[4, 3, 2, 1].map(rating => (
-                      <div key={rating} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
-                        <input 
-                          type="checkbox" 
-                          id={`rating-${rating}`}
-                          checked={minRating === rating}
-                          onChange={() => handleRatingChange(rating)}
-                          className="h-4 w-4 text-primary rounded"
-                        />
-                        <label 
-                          htmlFor={`rating-${rating}`}
-                          className="ml-2 text-sm text-gray-700 flex items-center cursor-pointer w-full"
-                        >
-                          {rating}星及以上
-                          <span className="ml-1 text-yellow-400">{'★'.repeat(rating)}</span>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* 排序选项 */}
-              <div className="relative inline-block text-left">
-                <select 
-                  className="rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={sortBy}
-                  onChange={handleSortChange}
-                >
-                  <option value="recommend">推荐</option>
-                  <option value="newest">最新</option>
-                  <option value="price-asc">价格由低到高</option>
-                  <option value="price-desc">价格由高到低</option>
-                  <option value="rating">评分</option>
-                </select>
               </div>
               
               {/* 已选择的筛选条件标签 */}
-              <div className="flex flex-wrap gap-2 mt-4 w-full">
-                {selectedCategories.length > 0 && selectedCategories.map(catId => {
-                  const category = categories.find(c => c.id === catId);
-                  return category ? (
-                    <span key={category.id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                      {category.name}
+              {(selectedCategories.length > 0 || selectedPriceRanges.length > 0 || minRating) && (
+                <div className="flex flex-wrap gap-2 mt-3 border-t pt-3 border-gray-100">
+                  {selectedCategories.length > 0 && selectedCategories.map(catId => {
+                    const category = categories.find(c => c.id === catId);
+                    return category ? (
+                      <span key={category.id} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {category.name}
+                        <button
+                          type="button"
+                          className="ml-1 inline-flex text-blue-500 hover:text-blue-700 focus:outline-none"
+                          onClick={() => handleCategoryChange(category.id)}
+                        >
+                          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                  
+                  {selectedPriceRanges.length > 0 && selectedPriceRanges.map(rangeId => {
+                    const range = priceRanges.find(r => r.id === rangeId);
+                    return range ? (
+                      <span key={range.id} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {range.name}
+                        <button
+                          type="button"
+                          className="ml-1 inline-flex text-green-500 hover:text-green-700 focus:outline-none"
+                          onClick={() => handlePriceRangeChange(range.id)}
+                        >
+                          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                  
+                  {minRating && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      {minRating}星及以上
                       <button
                         type="button"
-                        className="ml-1 inline-flex text-blue-500 hover:text-blue-700 focus:outline-none"
-                        onClick={() => handleCategoryChange(category.id)}
+                        className="ml-1 inline-flex text-yellow-500 hover:text-yellow-700 focus:outline-none"
+                        onClick={() => handleRatingChange(minRating)}
                       >
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                         </svg>
                       </button>
                     </span>
-                  ) : null;
-                })}
-                
-                {selectedPriceRanges.length > 0 && selectedPriceRanges.map(rangeId => {
-                  const range = priceRanges.find(r => r.id === rangeId);
-                  return range ? (
-                    <span key={range.id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      {range.name}
-                      <button
-                        type="button"
-                        className="ml-1 inline-flex text-green-500 hover:text-green-700 focus:outline-none"
-                        onClick={() => handlePriceRangeChange(range.id)}
-                      >
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </span>
-                  ) : null;
-                })}
-                
-                {minRating && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                    {minRating}星及以上
-                    <button
-                      type="button"
-                      className="ml-1 inline-flex text-yellow-500 hover:text-yellow-700 focus:outline-none"
-                      onClick={() => handleRatingChange(minRating)}
-                    >
-                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </span>
-                )}
-                
-                {(selectedCategories.length > 0 || selectedPriceRanges.length > 0 || minRating) && (
+                  )}
+                  
                   <button
                     onClick={resetFilters}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
+                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
                   >
                     清除全部
                   </button>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* 商品统计和排列方式 */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-6 flex flex-wrap justify-between items-center">
-            <div className="text-sm text-gray-500">
-              共找到 <span className="text-primary font-medium">{totalProducts}</span> 件商品
-            </div>
-            
-            {/* 添加布局切换按钮和每页显示数量选择器 */}
-            <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2">
-                <span className="text-sm text-gray-500">每页显示：</span>
-                <select 
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
-                  value={limit.toString()}
-                  onChange={(e) => {
-                    const newLimit = parseInt(e.target.value);
-                    // 在实际应用中，这里需要设置状态并重新获取数据
-                    // 由于当前代码中limit是常量，所以这里只是示意
-                    alert(`实际应用中这里会设置每页显示${newLimit}项并重新加载数据`);
-                  }}
-                >
-                  <option value="12">12</option>
-                  <option value="24">24</option>
-                  <option value="36">36</option>
-                  <option value="48">48</option>
-                </select>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <button 
-                  onClick={() => updateTheme({ productLayout: 'grid' })}
-                  className={`p-2 rounded-md ${theme.productLayout === 'grid' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                  title="网格布局"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                </button>
-                <button 
-                  onClick={() => updateTheme({ productLayout: 'waterfall' })}
-                  className={`p-2 rounded-md ${theme.productLayout === 'waterfall' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                  title="瀑布流布局"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                  </svg>
-                </button>
-                <button 
-                  onClick={() => updateTheme({ productLayout: 'list' })}
-                  className={`p-2 rounded-md ${theme.productLayout === 'list' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                  title="列表布局"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                  </svg>
-                </button>
-                <button 
-                  onClick={() => updateTheme({ productLayout: 'compact' })}
-                  className={`p-2 rounded-md ${theme.productLayout === 'compact' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                  title="紧凑布局"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 8h16M4 10h16M4 12h16M4 14h16M4 16h16M4 18h16" />
-                  </svg>
-                </button>
-              </div>
+                </div>
+              )}
             </div>
           </div>
           
@@ -550,128 +558,130 @@ export default function ProductsPage() {
           ) : (
             <>
               {/* 商品展示 - 根据主题设置选择布局 */}
-              {theme.productLayout === 'waterfall' ? (
-                // 瀑布流布局
-                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 [column-fill:_balance]" style={{columnGap: '1.5rem'}}>
-                  {products.map((product) => (
-                    <div key={product.id} className="break-inside-avoid-column mb-6 w-full inline-block transform transition duration-300 hover:scale-[1.02]">
-                      <ProductCard product={product} />
-                    </div>
-                  ))}
-                </div>
-              ) : theme.productLayout === 'list' ? (
-                // 列表布局
-                <div className="space-y-4">
-                  {products.map((product) => (
-                    <div key={product.id} className="w-full">
-                      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 w-full">
-                        <div className="flex flex-col md:flex-row">
-                          <div className="md:w-1/4 relative" style={{height: '200px'}}>
+              <div className="transition-all duration-500">
+                {theme.productLayout === 'waterfall' ? (
+                  // 瀑布流布局
+                  <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 [column-fill:_balance]" style={{columnGap: '1.5rem'}}>
+                    {products.map((product) => (
+                      <div key={product.id} className="break-inside-avoid-column mb-6 w-full inline-block transform transition duration-300 hover:scale-[1.02]">
+                        <ProductCard product={product} />
+                      </div>
+                    ))}
+                  </div>
+                ) : theme.productLayout === 'list' ? (
+                  // 列表布局
+                  <div className="space-y-4">
+                    {products.map((product) => (
+                      <div key={product.id} className="w-full">
+                        <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 w-full">
+                          <div className="flex flex-col md:flex-row">
+                            <div className="md:w-1/4 relative" style={{height: '200px'}}>
+                              <img 
+                                src={product.image} 
+                                alt={product.name}
+                                className="object-cover w-full h-full"
+                              />
+                            </div>
+                            <div className="p-4 md:w-3/4 flex flex-col justify-between">
+                              <div>
+                                <h3 className="font-medium text-lg mb-2 hover:text-primary transition-colors">
+                                  <Link href={`/product/${product.id}`}>
+                                    {product.name}
+                                  </Link>
+                                </h3>
+                                <p className="text-gray-600 text-sm mb-4">{product.description}</p>
+                                {product.rating !== undefined && (
+                                  <div className="mb-2 flex items-center">
+                                    <div className="flex text-yellow-400">
+                                      {Array.from({ length: 5 }).map((_, i) => (
+                                        <span key={i} className={i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}>
+                                          ★
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      {product.rating?.toFixed(1)} ({product.reviews || 0}评价)
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between mt-4">
+                                <span className="text-primary font-bold">{product.price.toLocaleString('zh-CN', {style: 'currency', currency: 'CNY'})}</span>
+                                <Link 
+                                  href={`/product/${product.id}`}
+                                  className="bg-primary text-white px-4 py-2 rounded-md text-sm hover:bg-blue-600"
+                                >
+                                  查看详情
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : theme.productLayout === 'compact' ? (
+                  // 紧凑网格布局
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {products.map((product) => (
+                      <div key={product.id} className="transform transition duration-300 hover:scale-[1.05]">
+                        <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md">
+                          <div className="relative pb-[100%]">
                             <img 
                               src={product.image} 
                               alt={product.name}
-                              className="object-cover w-full h-full"
+                              className="absolute inset-0 w-full h-full object-cover"
                             />
+                            {product.inventory <= 0 && (
+                              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                <span className="text-white text-xs font-medium px-2 py-1 rounded">已售罄</span>
+                              </div>
+                            )}
                           </div>
-                          <div className="p-4 md:w-3/4 flex flex-col justify-between">
-                            <div>
-                              <h3 className="font-medium text-lg mb-2 hover:text-primary transition-colors">
-                                <Link href={`/product/${product.id}`}>
-                                  {product.name}
-                                </Link>
-                              </h3>
-                              <p className="text-gray-600 text-sm mb-4">{product.description}</p>
-                              {product.rating !== undefined && (
-                                <div className="mb-2 flex items-center">
-                                  <div className="flex text-yellow-400">
-                                    {Array.from({ length: 5 }).map((_, i) => (
-                                      <span key={i} className={i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}>
-                                        ★
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <span className="text-xs text-gray-500 ml-1">
-                                    {product.rating?.toFixed(1)} ({product.reviews || 0}评价)
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between mt-4">
-                              <span className="text-primary font-bold">{product.price.toLocaleString('zh-CN', {style: 'currency', currency: 'CNY'})}</span>
-                              <Link 
-                                href={`/product/${product.id}`}
-                                className="bg-primary text-white px-4 py-2 rounded-md text-sm hover:bg-blue-600"
-                              >
-                                查看详情
-                              </Link>
+                          <div className="p-2">
+                            <h3 className="text-sm font-medium line-clamp-1 mb-1">{product.name}</h3>
+                            <div className="flex justify-between items-center">
+                              <span className="text-primary text-sm font-bold">¥{product.price}</span>
+                              <div className="flex text-yellow-400 text-xs">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <span key={i} className={i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : theme.productLayout === 'compact' ? (
-                // 紧凑网格布局
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {products.map((product) => (
-                    <div key={product.id} className="transform transition duration-300 hover:scale-[1.05]">
-                      <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md">
-                        <div className="relative pb-[100%]">
-                          <img 
-                            src={product.image} 
-                            alt={product.name}
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                          {product.inventory <= 0 && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                              <span className="text-white text-xs font-medium px-2 py-1 rounded">已售罄</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-2">
-                          <h3 className="text-sm font-medium line-clamp-1 mb-1">{product.name}</h3>
-                          <div className="flex justify-between items-center">
-                            <span className="text-primary text-sm font-bold">¥{product.price}</span>
-                            <div className="flex text-yellow-400 text-xs">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <span key={i} className={i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}>★</span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
+                    ))}
+                  </div>
+                ) : (
+                  // 默认网格布局
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {products.map((product) => (
+                      <div key={product.id} className="transform transition duration-300 hover:scale-[1.03]">
+                        <ProductCard product={product} />
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                // 默认网格布局
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {products.map((product) => (
-                    <div key={product.id} className="transform transition duration-300 hover:scale-[1.03]">
-                      <ProductCard product={product} />
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
               
               {/* 添加悬浮"返回顶部"按钮 */}
-              <div className="fixed bottom-10 right-10 z-50">
+              <div className="fixed bottom-10 right-6 z-50">
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="bg-primary text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors focus:outline-none"
+                  className="bg-primary bg-opacity-80 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors focus:outline-none"
                   aria-label="返回顶部"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                   </svg>
                 </button>
               </div>
 
-              {/* 分页组件，完全重写为更直观的分页控件 */}
+              {/* 分页组件美化 */}
               {totalPages > 1 && (
                 <div className="mt-8 flex justify-center">
-                  <nav className="inline-flex rounded-md shadow">
+                  <nav className="inline-flex rounded-md shadow-sm">
                     {/* 上一页按钮 */}
                     <button
                       onClick={() => handlePageChange(currentPage > 1 ? currentPage - 1 : 1)}
