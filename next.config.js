@@ -1,8 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    serverComponentsExternalPackages: ['postgres']
+  },
   images: {
-    domains: ['placehold.co', 'via.placeholder.com', 'picsum.photos'],
+    domains: ['picsum.photos', 'pzjhupjfojvlbthnsgqt.supabase.co'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
 }
 

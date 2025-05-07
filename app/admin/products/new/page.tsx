@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { uploadImageToSupabase } from '@/lib/image-upload'
+import { uploadImageToLocalServer } from '@/lib/local-upload'
 
 // 检查是否在浏览器环境
 const isBrowser = typeof window !== 'undefined';
@@ -206,42 +207,48 @@ export default function NewProductPage() {
       alert(`最多只能上传5张图片，已选择前${maxImages}张。`)
     }
     
-    // 后台尝试上传到Supabase（不阻塞用户体验）
+    // 后台尝试上传（不阻塞用户体验）
     try {
-      // 异步上传到Supabase
+      // 异步上传到服务器
       for (let i = 0; i < newImages.length; i++) {
         try {
-          // 尝试上传到Supabase
-          const publicUrl = await uploadImageToSupabase(newImages[i])
+          // 首先尝试本地上传
+          let serverUrl;
+          try {
+            serverUrl = await uploadImageToLocalServer(newImages[i]);
+            console.log(`图片 ${i+1} 成功上传到本地服务器: ${serverUrl}`);
+          } catch (localError) {
+            console.error(`本地上传失败，尝试Supabase备选方案:`, localError);
+            // 本地上传失败，尝试Supabase
+            serverUrl = await uploadImageToSupabase(newImages[i]);
+          }
           
-          // 如果上传成功，替换本地URL（用户不会注意到变化）
-          if (publicUrl && publicUrl !== newImageUrls[i] && !publicUrl.includes('picsum.photos')) {
-            console.log(`图片 ${i+1} 成功上传到Supabase: ${publicUrl}`)
-            
+          // 如果任一方式上传成功，替换本地URL
+          if (serverUrl && serverUrl !== newImageUrls[i] && !serverUrl.includes('picsum.photos')) {
             // 替换URL数组中的URL
-            const updatedUrls = [...imagePreviewUrls]
-            const index = updatedUrls.indexOf(newImageUrls[i])
+            const updatedUrls = [...imagePreviewUrls];
+            const index = updatedUrls.indexOf(newImageUrls[i]);
             if (index !== -1) {
-              updatedUrls[index] = publicUrl
-              setImagePreviewUrls(updatedUrls)
+              updatedUrls[index] = serverUrl;
+              setImagePreviewUrls(updatedUrls);
               
               // 如果这个URL是主图，也更新主图
               if (formData.image === newImageUrls[i]) {
-                setFormData(prev => ({ ...prev, image: publicUrl }))
-                setImagePreview(publicUrl)
+                setFormData(prev => ({ ...prev, image: serverUrl }));
+                setImagePreview(serverUrl);
               }
             }
           }
         } catch (error) {
           // 上传失败也没关系，继续使用本地预览
-          console.error(`上传图片 ${i+1} 到Supabase失败:`, error)
+          console.error(`上传图片 ${i+1} 失败:`, error);
         }
       }
     } catch (error) {
       // 忽略错误，继续使用本地预览
-      console.error('Supabase上传过程中出错:', error)
+      console.error('图片上传过程中出错:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
   
@@ -297,42 +304,48 @@ export default function NewProductPage() {
       alert(`最多只能上传5张图片，已处理前${remainingSlots}张。`)
     }
     
-    // 后台尝试上传到Supabase（不阻塞用户体验）
+    // 后台尝试上传到服务器（不阻塞用户体验）
     try {
-      // 异步上传到Supabase
+      // 异步上传
       for (let i = 0; i < newImages.length; i++) {
         try {
-          // 尝试上传到Supabase
-          const publicUrl = await uploadImageToSupabase(newImages[i])
+          // 首先尝试本地上传
+          let serverUrl;
+          try {
+            serverUrl = await uploadImageToLocalServer(newImages[i]);
+            console.log(`拖放图片 ${i+1} 成功上传到本地服务器: ${serverUrl}`);
+          } catch (localError) {
+            console.error(`本地上传失败，尝试Supabase备选方案:`, localError);
+            // 本地上传失败，尝试Supabase
+            serverUrl = await uploadImageToSupabase(newImages[i]);
+          }
           
-          // 如果上传成功，替换本地URL（用户不会注意到变化）
-          if (publicUrl && publicUrl !== newImageUrls[i] && !publicUrl.includes('picsum.photos')) {
-            console.log(`拖放图片 ${i+1} 成功上传到Supabase: ${publicUrl}`)
-            
+          // 如果任一方式上传成功，替换本地URL
+          if (serverUrl && serverUrl !== newImageUrls[i] && !serverUrl.includes('picsum.photos')) {        
             // 替换URL数组中的URL
-            const updatedUrls = [...imagePreviewUrls]
-            const index = updatedUrls.indexOf(newImageUrls[i])
+            const updatedUrls = [...imagePreviewUrls];
+            const index = updatedUrls.indexOf(newImageUrls[i]);
             if (index !== -1) {
-              updatedUrls[index] = publicUrl
-              setImagePreviewUrls(updatedUrls)
+              updatedUrls[index] = serverUrl;
+              setImagePreviewUrls(updatedUrls);
               
               // 如果这个URL是主图，也更新主图
               if (formData.image === newImageUrls[i]) {
-                setFormData(prev => ({ ...prev, image: publicUrl }))
-                setImagePreview(publicUrl)
+                setFormData(prev => ({ ...prev, image: serverUrl }));
+                setImagePreview(serverUrl);
               }
             }
           }
         } catch (error) {
           // 上传失败也没关系，继续使用本地预览
-          console.error(`上传图片 ${i+1} 到Supabase失败:`, error)
+          console.error(`上传图片 ${i+1} 失败:`, error);
         }
       }
     } catch (error) {
       // 忽略错误，继续使用本地预览
-      console.error('Supabase上传过程中出错:', error)
+      console.error('图片上传过程中出错:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
   
@@ -424,33 +437,40 @@ export default function NewProductPage() {
       
       // 检查是否为本地blob URL
       if (imageUrl && imageUrl.startsWith('blob:')) {
-        console.log('检测到本地blob URL，将尝试上传到Supabase')
+        console.log('检测到本地blob URL，将尝试上传到服务器');
         
         // 找到对应的图片文件
-        const blobIndex = imagePreviewUrls.indexOf(imageUrl)
+        const blobIndex = imagePreviewUrls.indexOf(imageUrl);
         if (blobIndex !== -1 && blobIndex < images.length) {
           try {
-            setIsLoading(true)
-            // 尝试最后一次上传到Supabase
-            const publicUrl = await uploadImageToSupabase(images[blobIndex])
+            setIsLoading(true);
+            // 首先尝试本地上传
+            let serverUrl;
+            try {
+              serverUrl = await uploadImageToLocalServer(images[blobIndex]);
+              console.log('成功上传主图到本地服务器:', serverUrl);
+            } catch (localError) {
+              console.error('本地上传失败，尝试Supabase备选方案:', localError);
+              // 本地上传失败，尝试Supabase
+              serverUrl = await uploadImageToSupabase(images[blobIndex]);
+            }
             
-            if (publicUrl && !publicUrl.includes('picsum.photos')) {
-              console.log('成功上传主图到Supabase:', publicUrl)
-              imageUrl = publicUrl
+            if (serverUrl && !serverUrl.includes('picsum.photos')) {
+              imageUrl = serverUrl;
             } else {
-              console.log('使用Supabase提供的默认图片URL')
-              imageUrl = publicUrl
+              console.log('使用提供的默认图片URL');
+              imageUrl = serverUrl;
             }
           } catch (error) {
-            console.error('上传主图到Supabase失败:', error)
+            console.error('上传主图失败:', error);
             // 如果上传失败，使用默认图片
-            imageUrl = 'https://picsum.photos/id/1/500/500'
+            imageUrl = 'https://picsum.photos/id/1/500/500';
           } finally {
-            setIsLoading(false)
+            setIsLoading(false);
           }
         } else {
-          console.log('无法找到对应的图片文件，使用默认图片')
-          imageUrl = 'https://picsum.photos/id/1/500/500'
+          console.log('无法找到对应的图片文件，使用默认图片');
+          imageUrl = 'https://picsum.photos/id/1/500/500';
         }
       }
       
