@@ -62,9 +62,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow transform hover:-translate-y-1 duration-200 w-full">
       <Link href={`/product/${product.id}`}>
-        <div className="relative h-48">
+        <div className="relative" style={{ height: `${Math.floor(Math.random() * 40) + 150}px` }}>
           <Image
             src={product.image}
             alt={product.name}

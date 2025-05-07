@@ -383,10 +383,12 @@ export default function ProductsPage() {
                 </div>
               ) : (
                 <>
-                  {/* 商品网格 */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {/* 商品网格 - 改为瀑布流布局 */}
+                  <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 [column-fill:_balance]" style={{columnGap: '1.5rem'}}>
                     {products.map((product) => (
-                      <ProductCard key={product.id} product={product} />
+                      <div key={product.id} className="break-inside-avoid-column mb-6 w-full inline-block">
+                        <ProductCard product={product} />
+                      </div>
                     ))}
                   </div>
                   
