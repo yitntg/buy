@@ -24,6 +24,31 @@ export default function AdminLayout({
     }
   }, [isAuthenticated, router, user])
   
+  // 添加 useEffect 来初始化存储桶
+  useEffect(() => {
+    // 初始化存储桶
+    const initStorage = async () => {
+      try {
+        const response = await fetch('/api/storage/init', {
+          method: 'GET',
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('初始化存储失败:', errorData);
+        } else {
+          console.log('存储初始化成功');
+        }
+      } catch (error) {
+        console.error('请求初始化存储时出错:', error);
+      }
+    };
+    
+    initStorage();
+  }, []);
+  
   // 菜单项
   const menuItems = [
     { id: 'dashboard', name: '控制面板', icon: 'dashboard', path: '/admin' },

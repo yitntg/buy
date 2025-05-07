@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { uploadImageToSupabase } from '@/lib/image-upload'
 
 // 检查是否在浏览器环境
 const isBrowser = typeof window !== 'undefined';
@@ -162,48 +163,134 @@ export default function NewProductPage() {
   }
   
   // 处理图片上传
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isBrowser) return;
     
     const fileList = e.target.files
     
     if (!fileList) return
     
-    const newImages: File[] = []
-    const newImageUrls: string[] = []
+    // 显示上传中状态
+    setIsLoading(true)
     
-    // 限制最多上传5张图片
-    const maxImages = 5
-    const totalImages = images.length + fileList.length
-    const imagesToProcess = totalImages > maxImages ? maxImages - images.length : fileList.length
-    
-    // 处理选择的图片
-    for (let i = 0; i < imagesToProcess; i++) {
-      const file = fileList[i]
-      newImages.push(file)
+    try {
+      const newImages: File[] = []
+      const newImageUrls: string[] = []
       
-      // 创建预览URL (注意：这只是临时URL，不能用于提交)
-      const url = URL.createObjectURL(file)
-      newImageUrls.push(url)
+      // 限制最多上传5张图片
+      const maxImages = 5
+      const totalImages = images.length + fileList.length
+      const imagesToProcess = totalImages > maxImages ? maxImages - images.length : fileList.length
+      
+      // 处理选择的图片
+      for (let i = 0; i < imagesToProcess; i++) {
+        const file = fileList[i]
+        newImages.push(file)
+        
+        try {
+          // 上传到 Supabase Storage 并获取永久URL
+          const publicUrl = await uploadImageToSupabase(file)
+          newImageUrls.push(publicUrl)
+          
+          // 如果是第一张图片且没有设置主图，则设为主图
+          if (i === 0 && !formData.image) {
+            setFormData(prev => ({ ...prev, image: publicUrl }))
+            setImagePreview(publicUrl)
+          }
+        } catch (error) {
+          console.error(`上传图片 ${file.name} 失败:`, error)
+          // 创建临时预览URL (注意：这只是临时URL，上传失败时的备用)
+          const tempUrl = URL.createObjectURL(file)
+          newImageUrls.push(tempUrl)
+        }
+      }
+      
+      // 更新状态
+      setImages(prev => [...prev, ...newImages])
+      setImagePreviewUrls(prev => [...prev, ...newImageUrls])
+      
+      // 如果超过5张图片，显示提示
+      if (totalImages > maxImages) {
+        alert(`最多只能上传5张图片，已选择前${maxImages}张。`)
+      }
+    } catch (error) {
+      console.error('处理图片上传失败:', error)
+      alert('上传图片时出错，请重试')
+    } finally {
+      setIsLoading(false)
     }
+  }
+  
+  // 拖放图片上传
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
     
-    // 更新状态
-    setImages(prev => [...prev, ...newImages])
-    setImagePreviewUrls(prev => [...prev, ...newImageUrls])
+    if (!isBrowser) return
     
-    // 如果超过5张图片，显示提示
-    if (totalImages > maxImages) {
-      alert(`最多只能上传5张图片，已选择前${maxImages}张。`)
+    // 获取拖放的文件
+    const droppedFiles = e.dataTransfer.files
+    
+    if (!droppedFiles || droppedFiles.length === 0) return
+    
+    // 显示上传中状态
+    setIsLoading(true)
+    
+    try {
+      const newImages: File[] = []
+      const newImageUrls: string[] = []
+      
+      // 限制最多上传5张图片
+      const maxImages = 5
+      const remainingSlots = maxImages - images.length
+      const filesToProcess = Math.min(remainingSlots, droppedFiles.length)
+      
+      for (let i = 0; i < filesToProcess; i++) {
+        const file = droppedFiles[i]
+        
+        // 只接受图片文件
+        if (!file.type.startsWith('image/')) {
+          continue
+        }
+        
+        newImages.push(file)
+        
+        try {
+          // 上传到 Supabase Storage 并获取永久URL
+          const publicUrl = await uploadImageToSupabase(file)
+          newImageUrls.push(publicUrl)
+          
+          // 如果是第一张图片且没有设置主图，则设为主图
+          if (i === 0 && !formData.image) {
+            setFormData(prev => ({ ...prev, image: publicUrl }))
+            setImagePreview(publicUrl)
+          }
+        } catch (error) {
+          console.error(`上传图片 ${file.name} 失败:`, error)
+          // 创建临时预览URL (注意：这只是临时URL，上传失败时的备用)
+          const tempUrl = URL.createObjectURL(file)
+          newImageUrls.push(tempUrl)
+        }
+      }
+      
+      // 更新状态
+      setImages(prev => [...prev, ...newImages])
+      setImagePreviewUrls(prev => [...prev, ...newImageUrls])
+      
+      // 如果超过剩余插槽，显示提示
+      if (droppedFiles.length > remainingSlots) {
+        alert(`最多只能上传5张图片，已处理前${remainingSlots}张。`)
+      }
+    } catch (error) {
+      console.error('处理拖放图片失败:', error)
+      alert('上传图片时出错，请重试')
+    } finally {
+      setIsLoading(false)
     }
-    
-    // 对于实际提交，使用占位图片URL，因为我们无法直接上传文件
-    // 现阶段暂时使用默认图片
-    if (imagePreviewUrls.length === 0 && newImageUrls.length > 0 && !formData.image) {
-      // 使用默认图片URL代替本地图片预览URL
-      const defaultImageUrl = 'https://picsum.photos/id/1/500/500'
-      setFormData(prev => ({ ...prev, image: defaultImageUrl }))
-      setImagePreview(newImageUrls[0]) // 仍保留本地预览
-    }
+  }
+  
+  // 防止默认拖放行为
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
   }
   
   // 移除图片
@@ -639,104 +726,83 @@ export default function NewProductPage() {
               </div>
               
               {/* 商品图片部分 */}
-              <div>
-                <h2 className="text-xl font-medium mb-4">商品图片</h2>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  商品图片 <span className="text-red-500">*</span>
+                </label>
                 
-                {/* 图片上传区域 */}
+                {/* 拖放上传区域 */}
                 <div 
-                  className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault()
-                    if (e.dataTransfer.files.length > 0) {
-                      const fileList = e.dataTransfer.files
-                      const changeEvent = {
-                        target: { files: fileList }
-                      } as unknown as React.ChangeEvent<HTMLInputElement>
-                      handleImageUpload(changeEvent)
-                    }
-                  }}
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 text-center cursor-pointer hover:bg-gray-50 transition"
+                  onClick={handleSelectImageClick}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
                 >
-                  <div className="space-y-2">
-                    <div className="text-4xl text-gray-400">📸</div>
-                    <p className="text-gray-500">点击上传或拖拽图片至此处</p>
-                    <p className="text-xs text-gray-400">支持 JPG, PNG 格式，最多可上传 5 张图片</p>
-                    <input
-                      type="file"
-                      id="images"
-                      ref={fileInputRef}
-                      accept="image/jpeg, image/png"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSelectImageClick}
-                      className="mt-2 inline-flex items-center px-4 py-2 border border-primary text-primary rounded-full hover:bg-blue-50 focus:outline-none"
-                    >
-                      选择图片
-                    </button>
-                  </div>
+                  {isLoading ? (
+                    <div className="text-center">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-2"></div>
+                      <p>正在上传图片...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      <p className="mt-1 text-sm text-gray-600">
+                        点击选择或拖放图片至此处上传
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        支持 JPG, PNG, GIF 格式，最大 5MB（最多5张）
+                      </p>
+                    </>
+                  )}
+                  
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    ref={fileInputRef}
+                  />
                 </div>
                 
                 {/* 图片预览区域 */}
                 {imagePreviewUrls.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-5 gap-4 mt-4">
                     {imagePreviewUrls.map((url, index) => (
-                      <div key={index} className="relative group">
-                        <div className="relative h-24 w-full rounded-md overflow-hidden border border-gray-200">
-                          <Image 
-                            src={url}
-                            alt={`Preview ${index}`}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
+                      <div key={index} className="relative">
+                        <img 
+                          src={url} 
+                          alt={`上传预览 ${index+1}`} 
+                          className={`h-24 w-24 object-cover rounded border ${url === formData.image ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, image: url }))
+                            setImagePreview(url)
+                          }}
+                        />
                         <button
                           type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 transform translate-x-1/2 -translate-y-1/2"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeImage(index)
+                          }}
                         >
-                          ×
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
                         </button>
+                        {url === formData.image && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-white text-xs text-center py-0.5">
+                            主图
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 )}
-                
-                {/* URL输入区域 */}
-                <div className="mt-4">
-                  <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-                    商品图片URL（可选）
-                  </label>
-                  <input
-                    type="text"
-                    id="image"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleImageChange}
-                    placeholder="https://example.com/image.jpg"
-                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.image ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:outline-none`}
-                  />
-                  {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
-                  
-                  {/* URL图片预览 */}
-                  {imagePreview && !imagePreviewUrls.includes(imagePreview) && (
-                    <div className="mt-2 relative h-40 w-40 border rounded-md overflow-hidden">
-                      <Image
-                        src={imagePreview}
-                        alt="商品图片预览"
-                        fill
-                        className="object-cover"
-                        onError={() => {
-                          setErrors(prev => ({ ...prev, image: '图片加载失败，请检查URL' }))
-                          setImagePreview(null)
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+                {errors.image && <p className="text-red-500 text-xs italic">{errors.image}</p>}
               </div>
               
               {/* 配送与售后 */}
