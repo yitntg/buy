@@ -96,14 +96,29 @@ export default function ProductCard({ product }: ProductCardProps) {
     "w-full"
   ].filter(Boolean).join(" ");
 
+  // 显示评级星星
+  const renderStars = () => {
+    if (!product.rating) return null;
+    
+    return (
+      <div className="flex text-yellow-400 text-xs">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span key={i} className={i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}>
+            ★
+          </span>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div 
       className={cardClasses}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link href={`/product/${product.id}`}>
-        <div className="relative" style={{ height: "200px" }}>
+      <div className="h-full flex flex-col">
+        <Link href={`/product/${product.id}`} className="block relative aspect-square">
           <Image
             src={product.image}
             alt={product.name}
@@ -115,7 +130,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           
           {isHovered && (
             <div className="absolute top-2 right-2 flex space-x-2">
-              {/* 收藏按钮 */}
               <button 
                 onClick={handleToggleLike} 
                 className="bg-white p-1.5 rounded-full shadow-sm hover:bg-gray-100 transition-colors"
@@ -146,54 +160,48 @@ export default function ProductCard({ product }: ProductCardProps) {
               限时优惠
             </div>
           )}
-        </div>
-      </Link>
-      <div className="p-3">
-        <div className="flex items-center justify-between mb-1">
-          <Link href={`/product/${product.id}`} className="flex-1">
-            <h3 className="font-medium text-base hover:text-primary transition-colors line-clamp-1">
-              {product.name}
-            </h3>
-          </Link>
-        </div>
+        </Link>
         
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-primary font-bold">{formatPrice(product.price)}</span>
-            {product.rating !== undefined && (
-              <div className="flex items-center text-xs">
-                <div className="flex text-yellow-400 mr-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} className={i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}>
-                      ★
-                    </span>
-                  ))}
-                </div>
-                <span className="text-gray-500">
+        {/* 紧凑的卡片底部信息 */}
+        <div className="p-2 flex-1 flex flex-col">
+          <div className="flex items-center justify-between">
+            <Link href={`/product/${product.id}`} className="flex-1">
+              <h3 className="font-medium text-sm hover:text-primary transition-colors line-clamp-1">
+                {product.name}
+              </h3>
+            </Link>
+            
+            {/* 加入购物车按钮 */}
+            <button 
+              className="ml-2 bg-primary text-white p-1.5 rounded-full hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center flex-shrink-0"
+              onClick={handleAddToCart}
+              disabled={isAdding || (product.inventory !== undefined && product.inventory <= 0)}
+              aria-label="加入购物车"
+            >
+              {isAdding ? (
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              )}
+            </button>
+          </div>
+          
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-primary font-bold text-sm">{formatPrice(product.price)}</span>
+            {product.rating && (
+              <div className="flex items-center">
+                {renderStars()}
+                <span className="text-xs text-gray-500 ml-1">
                   ({product.reviews || 0})
                 </span>
               </div>
             )}
           </div>
-          
-          {/* 加入购物车按钮 */}
-          <button 
-            className="bg-primary text-white p-1.5 rounded-full hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center"
-            onClick={handleAddToCart}
-            disabled={isAdding || (product.inventory !== undefined && product.inventory <= 0)}
-            aria-label="加入购物车"
-          >
-            {isAdding ? (
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            )}
-          </button>
         </div>
       </div>
     </div>
