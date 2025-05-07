@@ -16,8 +16,6 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   // 管理菜单状态
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false)
-  // 分类菜单状态
-  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false)
   // 搜索关键词
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -39,9 +37,6 @@ export default function Header() {
     if (isAdminMenuOpen) {
       setIsAdminMenuOpen(false)
     }
-    if (isCategoryMenuOpen) {
-      setIsCategoryMenuOpen(false)
-    }
   }
   
   // 添加全局点击事件监听器
@@ -50,7 +45,7 @@ export default function Header() {
     return () => {
       document.removeEventListener('click', handleClickOutside)
     }
-  }, [isUserMenuOpen, isAdminMenuOpen, isCategoryMenuOpen])
+  }, [isUserMenuOpen, isAdminMenuOpen])
   
   // 用户菜单点击处理函数
   const handleUserMenuClick = (e: React.MouseEvent) => {
@@ -59,9 +54,6 @@ export default function Header() {
     // 关闭其他菜单
     if (isAdminMenuOpen) {
       setIsAdminMenuOpen(false)
-    }
-    if (isCategoryMenuOpen) {
-      setIsCategoryMenuOpen(false)
     }
   }
   
@@ -72,22 +64,6 @@ export default function Header() {
     // 关闭其他菜单
     if (isUserMenuOpen) {
       setIsUserMenuOpen(false)
-    }
-    if (isCategoryMenuOpen) {
-      setIsCategoryMenuOpen(false)
-    }
-  }
-
-  // 分类菜单点击处理函数
-  const handleCategoryMenuClick = (e: React.MouseEvent) => {
-    e.stopPropagation() // 阻止事件冒泡
-    setIsCategoryMenuOpen(!isCategoryMenuOpen)
-    // 关闭其他菜单
-    if (isUserMenuOpen) {
-      setIsUserMenuOpen(false)
-    }
-    if (isAdminMenuOpen) {
-      setIsAdminMenuOpen(false)
     }
   }
   
@@ -155,25 +131,12 @@ export default function Header() {
         </div>
         
         <nav className="flex items-center space-x-6">
-          <div className="relative">
-            <button
-              onClick={handleCategoryMenuClick}
-              className="text-gray-700 hover:text-primary flex items-center space-x-1"
-            >
-              <span>商品分类</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-            
-            {isCategoryMenuOpen && (
-              <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  所有商品
-                </Link>
-              </div>
-            )}
-          </div>
+          <Link 
+            href="/products" 
+            className="text-gray-700 hover:text-primary"
+          >
+            商品分类
+          </Link>
 
           <Link href="/cart" className="text-gray-700 hover:text-primary relative">
             购物车
