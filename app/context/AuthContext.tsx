@@ -18,8 +18,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
+  login: (email: string, password: string, useDefaultAvatar?: boolean) => Promise<void>;
+  register: (userData: any, useDefaultAvatar?: boolean) => Promise<void>;
   logout: () => void;
   error: string | null;
 }
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   
   // 登录方法
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, useDefaultAvatar = false) => {
     setIsLoading(true);
     setError(null);
     
@@ -66,9 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // 这里模拟API响应 - 为了测试方便，任何邮箱和密码组合都可以登录
-      // 50%的概率不提供头像，以展示文字头像功能
-      const showDefaultAvatar = Math.random() > 0.5;
-      
       const userData: User = {
         id: '1',
         username: '测试用户',
@@ -78,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: 'admin' // 为测试方便，默认所有用户都是管理员
       };
       
-      // 只有50%的概率添加头像
-      if (showDefaultAvatar) {
+      // 只有明确指定使用默认头像时才添加avatar字段
+      if (useDefaultAvatar) {
         userData.avatar = 'https://picsum.photos/id/64/200/200';
       }
       
@@ -96,16 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   
   // 注册方法
-  const register = async (userData: any) => {
+  const register = async (userData: any, useDefaultAvatar = false) => {
     setIsLoading(true);
     setError(null);
     
     try {
       // 在实际应用中，这里应该调用API进行注册
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 50%的概率不提供头像，以展示文字头像功能
-      const showDefaultAvatar = Math.random() > 0.5;
       
       // 这里模拟API响应
       const newUser: User = {
@@ -117,8 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: 'user' // 新注册用户默认为普通用户角色
       };
       
-      // 只有50%的概率添加头像
-      if (showDefaultAvatar) {
+      // 只有明确指定使用默认头像时才添加avatar字段
+      if (useDefaultAvatar) {
         newUser.avatar = 'https://picsum.photos/id/64/200/200';
       }
       
