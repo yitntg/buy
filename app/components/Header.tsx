@@ -171,16 +171,6 @@ export default function Header() {
                 <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   所有商品
                 </Link>
-                <div className="border-t border-gray-100 my-1"></div>
-                {categories.map(category => (
-                  <Link 
-                    key={category.id}
-                    href={`/category/${category.id}`} 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    {category.name}
-                  </Link>
-                ))}
               </div>
             )}
           </div>
