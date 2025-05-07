@@ -447,40 +447,70 @@ export default function ProductsPage() {
               共找到 <span className="text-primary font-medium">{totalProducts}</span> 件商品
             </div>
             
-            {/* 添加布局切换按钮 */}
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => updateTheme({ productLayout: 'grid' })}
-                className={`p-2 rounded-md ${theme.productLayout === 'grid' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                title="网格布局"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              </button>
-              <button 
-                onClick={() => updateTheme({ productLayout: 'waterfall' })}
-                className={`p-2 rounded-md ${theme.productLayout === 'waterfall' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                title="瀑布流布局"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                </svg>
-              </button>
-              <button 
-                onClick={() => updateTheme({ productLayout: 'list' })}
-                className={`p-2 rounded-md ${theme.productLayout === 'list' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                title="列表布局"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-              </button>
+            {/* 添加布局切换按钮和每页显示数量选择器 */}
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-2">
+                <span className="text-sm text-gray-500">每页显示：</span>
+                <select 
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  value={limit.toString()}
+                  onChange={(e) => {
+                    const newLimit = parseInt(e.target.value);
+                    // 在实际应用中，这里需要设置状态并重新获取数据
+                    // 由于当前代码中limit是常量，所以这里只是示意
+                    alert(`实际应用中这里会设置每页显示${newLimit}项并重新加载数据`);
+                  }}
+                >
+                  <option value="12">12</option>
+                  <option value="24">24</option>
+                  <option value="36">36</option>
+                  <option value="48">48</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => updateTheme({ productLayout: 'grid' })}
+                  className={`p-2 rounded-md ${theme.productLayout === 'grid' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                  title="网格布局"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                </button>
+                <button 
+                  onClick={() => updateTheme({ productLayout: 'waterfall' })}
+                  className={`p-2 rounded-md ${theme.productLayout === 'waterfall' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                  title="瀑布流布局"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                  </svg>
+                </button>
+                <button 
+                  onClick={() => updateTheme({ productLayout: 'list' })}
+                  className={`p-2 rounded-md ${theme.productLayout === 'list' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                  title="列表布局"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                </button>
+                <button 
+                  onClick={() => updateTheme({ productLayout: 'compact' })}
+                  className={`p-2 rounded-md ${theme.productLayout === 'compact' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                  title="紧凑布局"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 8h16M4 10h16M4 12h16M4 14h16M4 16h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
           
@@ -524,7 +554,7 @@ export default function ProductsPage() {
                 // 瀑布流布局
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 [column-fill:_balance]" style={{columnGap: '1.5rem'}}>
                   {products.map((product) => (
-                    <div key={product.id} className="break-inside-avoid-column mb-6 w-full inline-block">
+                    <div key={product.id} className="break-inside-avoid-column mb-6 w-full inline-block transform transition duration-300 hover:scale-[1.02]">
                       <ProductCard product={product} />
                     </div>
                   ))}
@@ -581,15 +611,63 @@ export default function ProductsPage() {
                     </div>
                   ))}
                 </div>
+              ) : theme.productLayout === 'compact' ? (
+                // 紧凑网格布局
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {products.map((product) => (
+                    <div key={product.id} className="transform transition duration-300 hover:scale-[1.05]">
+                      <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md">
+                        <div className="relative pb-[100%]">
+                          <img 
+                            src={product.image} 
+                            alt={product.name}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          {product.inventory <= 0 && (
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                              <span className="text-white text-xs font-medium px-2 py-1 rounded">已售罄</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-2">
+                          <h3 className="text-sm font-medium line-clamp-1 mb-1">{product.name}</h3>
+                          <div className="flex justify-between items-center">
+                            <span className="text-primary text-sm font-bold">¥{product.price}</span>
+                            <div className="flex text-yellow-400 text-xs">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <span key={i} className={i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 // 默认网格布局
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <div key={product.id} className="transform transition duration-300 hover:scale-[1.03]">
+                      <ProductCard product={product} />
+                    </div>
                   ))}
                 </div>
               )}
               
+              {/* 添加悬浮"返回顶部"按钮 */}
+              <div className="fixed bottom-10 right-10 z-50">
+                <button
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="bg-primary text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors focus:outline-none"
+                  aria-label="返回顶部"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                </button>
+              </div>
+
               {/* 分页组件，完全重写为更直观的分页控件 */}
               {totalPages > 1 && (
                 <div className="mt-8 flex justify-center">
