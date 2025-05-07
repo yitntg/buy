@@ -1,119 +1,111 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
-import type { ThemePreset } from '../context/ThemeContext'
 
 interface PreviewProps {
   onApply?: () => void;
 }
 
 export default function ThemePreview({ onApply }: PreviewProps) {
-  const { theme, setPreset } = useTheme()
+  const { theme, loadPreset, presets } = useTheme()
+  const [currentPresetName, setCurrentPresetName] = useState<string>('')
   
-  const presets: ThemePreset[] = [
-    'default', 'dark', 'light', 'colorful', 'minimal', 'elegant'
-  ]
+  // 预设名称列表
+  const presetNames = presets.map(p => p.name)
+  
+  // 初始化当前主题名称
+  useEffect(() => {
+    // 尝试从预设中找到匹配当前主题的预设
+    const matchingPreset = presets.find(p => 
+      p.theme.primaryColor === theme.primaryColor && 
+      p.theme.productLayout === theme.productLayout
+    )
+    
+    setCurrentPresetName(matchingPreset?.name || '自定义主题')
+  }, [theme, presets])
   
   // 小型预览卡片样式
-  const getPreviewCardStyle = (preset: ThemePreset) => {
-    // 获取预设的主要样式
-    const presetStyles = {
-      default: {
-        background: '#FFFFFF',
-        primary: '#3B82F6',
-        text: '#111827',
-      },
-      dark: {
-        background: '#1F2937',
-        primary: '#3B82F6',
-        text: '#F3F4F6',
-      },
-      light: {
-        background: '#F9FAFB',
-        primary: '#60A5FA',
-        text: '#1F2937',
-      },
-      colorful: {
-        background: '#FFFFFF',
-        primary: '#8B5CF6',
-        text: '#111827',
-      },
-      minimal: {
-        background: '#F9FAFB',
-        primary: '#4B5563',
-        text: '#111827',
-      },
-      elegant: {
-        background: '#FFFFFF', 
-        primary: '#4F46E5',
-        text: '#111827',
-      },
-      custom: {
-        background: theme.backgroundColor,
-        primary: theme.primaryColor,
-        text: theme.textColor,
+  const getPreviewCardStyle = (presetName: string) => {
+    // 查找对应的预设
+    const preset = presets.find(p => p.name === presetName)
+    
+    if (!preset) {
+      return {
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E5E7EB',
+        borderRadius: '8px',
+        color: '#111827',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
       }
     }
     
-    const style = presetStyles[preset]
+    const { theme: presetTheme } = preset
     
     return {
-      backgroundColor: style.background,
-      border: `1px solid ${style.background === '#FFFFFF' ? '#E5E7EB' : style.background}`,
-      borderRadius: preset === 'minimal' ? '0px' : '8px',
-      color: style.text,
-      boxShadow: preset === 'minimal' ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+      backgroundColor: presetTheme.backgroundColor,
+      border: `1px solid ${presetTheme.backgroundColor === '#FFFFFF' ? '#E5E7EB' : presetTheme.backgroundColor}`,
+      borderRadius: `${presetTheme.cardBorderRadius}px`,
+      color: presetTheme.textColor,
+      boxShadow: presetTheme.cardHoverShadow ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
     }
   }
   
   // 预设中的按钮样式
-  const getButtonStyle = (preset: ThemePreset) => {
-    const presetStyles = {
-      default: { background: '#3B82F6' },
-      dark: { background: '#3B82F6' },
-      light: { background: '#60A5FA' },
-      colorful: { background: '#8B5CF6' },
-      minimal: { background: '#4B5563' },
-      elegant: { background: '#4F46E5' },
-      custom: { background: theme.primaryColor }
+  const getButtonStyle = (presetName: string) => {
+    const preset = presets.find(p => p.name === presetName)
+    
+    if (!preset) {
+      return {
+        backgroundColor: '#3B82F6',
+        borderRadius: '4px',
+      }
     }
     
     return {
-      backgroundColor: presetStyles[preset].background,
-      borderRadius: preset === 'minimal' ? '0px' : '4px',
+      backgroundColor: preset.theme.primaryColor,
+      borderRadius: `${preset.theme.cardBorderRadius / 2}px`,
     }
   }
 
   // 处理应用主题
-  const handleApplyPreset = (preset: ThemePreset) => {
-    setPreset(preset)
+  const handleApplyPreset = (presetName: string) => {
+    loadPreset(presetName)
+    setCurrentPresetName(presetName)
+    
     if (onApply) {
       onApply()
     }
+  }
+
+  // 获取显示名称
+  const getDisplayName = (presetName: string) => {
+    const displayNames: Record<string, string> = {
+      '经典电商': '经典电商',
+      '暗色模式': '暗色模式',
+      '简约风格': '简约风格',
+      '活力设计': '活力设计'
+    }
+    
+    return displayNames[presetName] || presetName
   }
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">主题预览</h3>
       
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {presets.map(preset => (
-          <div key={preset} className="flex flex-col items-center">
+          <div key={preset.name} className="flex flex-col items-center">
             {/* 预览卡片 */}
             <div
-              style={getPreviewCardStyle(preset)}
+              style={getPreviewCardStyle(preset.name)}
               className="w-full h-36 p-3 flex flex-col justify-between cursor-pointer transition duration-200 hover:opacity-90"
-              onClick={() => handleApplyPreset(preset)}
+              onClick={() => handleApplyPreset(preset.name)}
             >
               <div>
                 <div className="font-medium" style={{ fontSize: '0.75rem' }}>
-                  {preset === 'default' && '默认主题'}
-                  {preset === 'dark' && '暗色主题'}
-                  {preset === 'light' && '亮色主题'}
-                  {preset === 'colorful' && '多彩主题'}
-                  {preset === 'minimal' && '极简主题'}
-                  {preset === 'elegant' && '优雅主题'}
+                  {getDisplayName(preset.name)}
                 </div>
                 <div style={{ fontSize: '0.6rem' }}>预览样式</div>
               </div>
@@ -122,7 +114,7 @@ export default function ThemePreview({ onApply }: PreviewProps) {
                 <div style={{ fontSize: '0.6rem' }}>¥199.00</div>
                 <button
                   className="text-white text-xs px-2 py-1"
-                  style={getButtonStyle(preset)}
+                  style={getButtonStyle(preset.name)}
                 >
                   购买
                 </button>
@@ -131,12 +123,7 @@ export default function ThemePreview({ onApply }: PreviewProps) {
             
             {/* 主题名称 */}
             <div className="mt-2 text-xs text-center">
-              {preset === 'default' && '默认主题'}
-              {preset === 'dark' && '暗色主题'}
-              {preset === 'light' && '亮色主题'}
-              {preset === 'colorful' && '多彩主题'}
-              {preset === 'minimal' && '极简主题'}
-              {preset === 'elegant' && '优雅主题'}
+              {getDisplayName(preset.name)}
             </div>
           </div>
         ))}
@@ -144,15 +131,9 @@ export default function ThemePreview({ onApply }: PreviewProps) {
       
       <div className="border-t pt-3 mt-4">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">当前主题: {
-            theme.currentPreset === 'default' ? '默认主题' :
-            theme.currentPreset === 'dark' ? '暗色主题' :
-            theme.currentPreset === 'light' ? '亮色主题' :
-            theme.currentPreset === 'colorful' ? '多彩主题' :
-            theme.currentPreset === 'minimal' ? '极简主题' :
-            theme.currentPreset === 'elegant' ? '优雅主题' :
-            '自定义主题'
-          }</div>
+          <div className="text-sm text-gray-500">
+            当前主题: {currentPresetName}
+          </div>
         </div>
       </div>
     </div>
