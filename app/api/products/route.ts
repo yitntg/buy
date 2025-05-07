@@ -224,9 +224,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       products: products || [],
       total: totalProducts,
-      page,
-      limit,
-      totalPages,
+      page: page,
+      limit: limit,
+      totalPages: totalPages,
       hasMore: page < totalPages,
       sort: sortBy
     })

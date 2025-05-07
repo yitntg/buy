@@ -407,43 +407,76 @@ export default function ProductsPage() {
                           上一页
                         </button>
                         
-                        {/* 页码按钮 - 显示逻辑更清晰 */}
-                        {Array.from({ length: totalPages }, (_, i) => i + 1)
-                          .filter(pageNum => {
-                            // 显示第一页、最后一页，以及当前页附近的页
-                            return (
-                              pageNum === 1 ||
-                              pageNum === totalPages ||
-                              (pageNum >= currentPage - 1 && pageNum <= currentPage + 1) ||
-                              (currentPage <= 3 && pageNum <= 4) ||
-                              (currentPage >= totalPages - 2 && pageNum >= totalPages - 3)
-                            );
-                          })
-                          .map((pageNum, i, filteredPages) => {
-                            // 如果当前页和前一页相差超过1，插入省略号
-                            const previousPage = i > 0 ? filteredPages[i - 1] : null;
-                            
-                            return (
-                              <div key={pageNum} className="flex items-center">
-                                {previousPage && pageNum - previousPage > 1 && (
-                                  <span className="px-3 py-2 border-t border-b border-gray-300 bg-white text-gray-500">
-                                    ...
-                                  </span>
-                                )}
-                                
-                                <button
-                                  onClick={() => handlePageChange(pageNum)}
-                                  className={`px-4 py-2 text-sm font-medium border-t border-b border-gray-300 ${
-                                    currentPage === pageNum
-                                      ? 'bg-primary text-white'
-                                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                                  }`}
-                                >
-                                  {pageNum}
-                                </button>
-                              </div>
-                            );
-                          })}
+                        {/* 页码按钮 - 逻辑完全重写 */}
+                        <div className="flex">
+                          {/* 始终显示第一页 */}
+                          <button
+                            onClick={() => handlePageChange(1)}
+                            className={`px-4 py-2 text-sm font-medium border-t border-b border-l border-gray-300 ${
+                              currentPage === 1
+                                ? 'bg-primary text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            1
+                          </button>
+                          
+                          {/* 如果不在第一页附近，显示省略号 */}
+                          {currentPage > 3 && (
+                            <span className="px-3 py-2 border-t border-b border-l border-gray-300 bg-white text-gray-500">
+                              ...
+                            </span>
+                          )}
+                          
+                          {/* 显示当前页码的前后页 */}
+                          {Array.from({ length: totalPages })
+                            .map((_, i) => i + 1)
+                            .filter(page => {
+                              // 不显示第一页和最后一页(已单独处理)
+                              if (page === 1 || page === totalPages) return false;
+                              
+                              // 显示当前页及其前后一页
+                              return Math.abs(currentPage - page) <= 1 ||
+                                   // 如果当前页靠近开始，多显示几页
+                                   (currentPage <= 3 && page <= 4) ||
+                                   // 如果当前页靠近结束，多显示几页
+                                   (currentPage >= totalPages - 2 && page >= totalPages - 3);
+                            })
+                            .map(page => (
+                              <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`px-4 py-2 text-sm font-medium border-t border-b border-l border-gray-300 ${
+                                  currentPage === page
+                                    ? 'bg-primary text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ))}
+                          
+                          {/* 如果不在最后页附近，显示省略号 */}
+                          {currentPage < totalPages - 2 && (
+                            <span className="px-3 py-2 border-t border-b border-l border-gray-300 bg-white text-gray-500">
+                              ...
+                            </span>
+                          )}
+                          
+                          {/* 始终显示最后一页 */}
+                          {totalPages > 1 && (
+                            <button
+                              onClick={() => handlePageChange(totalPages)}
+                              className={`px-4 py-2 text-sm font-medium border-t border-b border-l border-gray-300 ${
+                                currentPage === totalPages
+                                  ? 'bg-primary text-white'
+                                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {totalPages}
+                            </button>
+                          )}
+                        </div>
                         
                         {/* 下一页按钮 */}
                         <button
