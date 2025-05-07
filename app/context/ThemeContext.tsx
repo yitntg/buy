@@ -34,7 +34,7 @@ interface ThemeSettings {
   backgroundColor: string
   
   // 布局设置
-  productLayout: 'grid' | 'waterfall' | 'list'
+  productLayout: LayoutMode
   productsPerPage: number
   gridColumns: {
     sm: number; // 移动端
@@ -159,7 +159,7 @@ const builtInPresets = [
     name: '经典电商',
     theme: {
       ...defaultTheme,
-      productLayout: 'grid',
+      productLayout: 'grid' as LayoutMode,
       primaryColor: '#3B82F6',
       secondaryColor: '#10B981',
     }
@@ -172,7 +172,7 @@ const builtInPresets = [
       secondaryColor: '#8B5CF6',
       textColor: '#F9FAFB',
       backgroundColor: '#111827',
-      themeMode: 'dark',
+      themeMode: 'dark' as 'light' | 'dark' | 'auto',
       cardBorderRadius: 4,
     }
   },
@@ -195,8 +195,8 @@ const builtInPresets = [
       primaryColor: '#F59E0B',
       secondaryColor: '#EF4444',
       cardBorderRadius: 16,
-      animationSpeed: 'fast',
-      productLayout: 'waterfall',
+      animationSpeed: 'fast' as 'slow' | 'normal' | 'fast',
+      productLayout: 'waterfall' as LayoutMode,
     }
   }
 ]
