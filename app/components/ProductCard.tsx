@@ -27,6 +27,14 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart()
   const { theme } = useTheme()
   const [isAdding, setIsAdding] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const [isLiked, setIsLiked] = useState(false)
+  const [isFadeIn, setIsFadeIn] = useState(false)
+  
+  // 组件加载后执行渐入动画
+  useState(() => {
+    setTimeout(() => setIsFadeIn(true), 50);
+  });
   
   // 格式化价格显示
   const formatPrice = (price: number) => {
@@ -62,30 +70,93 @@ export default function ProductCard({ product }: ProductCardProps) {
       setIsAdding(false)
     }
   }
+  
+  // 处理收藏商品
+  const handleToggleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsLiked(!isLiked);
+  };
+  
+  // 快速查看商品
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // 这里可以实现快速查看功能，如弹出模态框
+    alert(`快速查看: ${product.name}`);
+  };
 
   // 根据主题设置动态构建样式
   const cardClasses = [
     "bg-white rounded-lg overflow-hidden",
-    "transition-all duration-200",
+    "transition-all duration-300",
+    isFadeIn ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
     theme.cardHoverShadow ? "hover:shadow-lg shadow-md" : "",
     theme.cardHoverTransform ? "hover:-translate-y-1" : "",
     "w-full"
   ].filter(Boolean).join(" ");
 
   return (
-    <div className={cardClasses}>
+    <div 
+      className={cardClasses}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <Link href={`/product/${product.id}`}>
         <div className="relative" style={{ height: `${Math.floor(Math.random() * 40) + 150}px` }}>
           <Image
             src={product.image}
             alt={product.name}
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-500 ease-in-out"
+            style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           />
+          
+          {/* 快速操作按钮 */}
+          <div className={`absolute top-2 right-2 transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+            <button 
+              onClick={handleToggleLike} 
+              className="bg-white p-1.5 rounded-full shadow-sm hover:bg-gray-100 transition-colors"
+              aria-label={isLiked ? "从收藏中移除" : "添加到收藏"}
+            >
+              {isLiked ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              )}
+            </button>
+          </div>
+          
+          {/* 快速查看按钮 */}
+          <div 
+            className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 transition-opacity duration-300 ${
+              isHovered ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={(e) => e.preventDefault()}
+          >
+            <button
+              onClick={handleQuickView}
+              className="bg-white text-gray-800 px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:bg-gray-100"
+            >
+              快速查看
+            </button>
+          </div>
+          
           {product.inventory !== undefined && product.inventory <= 0 && (
             <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
               <span className="text-white font-medium px-2 py-1 rounded">已售罄</span>
+            </div>
+          )}
+          
+          {/* 打折标签示例 */}
+          {product.id % 3 === 0 && (
+            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+              限时优惠
             </div>
           )}
         </div>

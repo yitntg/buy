@@ -454,6 +454,15 @@ export default function ProductsPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 8h16M4 10h16M4 12h16M4 14h16M4 16h16M4 18h16" />
                     </svg>
                   </button>
+                  <button 
+                    onClick={() => updateTheme({ productLayout: 'magazine' })}
+                    className={`p-1.5 rounded-md ${theme.productLayout === 'magazine' ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                    title="杂志风格"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                  </button>
                 </div>
               </div>
               
@@ -567,6 +576,69 @@ export default function ProductsPage() {
                         <ProductCard product={product} />
                       </div>
                     ))}
+                  </div>
+                ) : theme.productLayout === 'magazine' ? (
+                  // 杂志风格布局
+                  <div className="grid grid-cols-12 gap-4 auto-rows-auto">
+                    {products.map((product, index) => {
+                      // 创建不同尺寸的卡片，形成杂志风格
+                      let colSpan = "col-span-3"; // 默认尺寸
+                      let rowSpan = "";
+                      
+                      // 第一个产品占据更大空间
+                      if (index === 0) {
+                        colSpan = "col-span-6";
+                        rowSpan = "row-span-2";
+                      }
+                      // 特别突出某些产品
+                      else if (index % 7 === 3) {
+                        colSpan = "col-span-6";
+                      }
+                      else if (index % 5 === 0) {
+                        colSpan = "col-span-4";
+                      }
+                      
+                      // 在小屏幕上修正布局
+                      const responsiveClass = `${colSpan} sm:${colSpan} ${rowSpan}`;
+                      
+                      return (
+                        <div key={product.id} className={`${responsiveClass}`}>
+                          <div className="h-full transform transition duration-300 hover:scale-[1.02]">
+                            <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg h-full flex flex-col">
+                              <div className="relative flex-grow" style={{minHeight: '180px'}}>
+                                <img 
+                                  src={product.image} 
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                {index === 0 && (
+                                  <div className="absolute top-2 left-2 bg-primary text-white px-2 py-1 rounded text-xs font-medium">
+                                    特别推荐
+                                  </div>
+                                )}
+                              </div>
+                              <div className="p-4">
+                                <h3 className="font-medium text-lg mb-2 hover:text-primary transition-colors line-clamp-1">
+                                  <Link href={`/product/${product.id}`}>
+                                    {product.name}
+                                  </Link>
+                                </h3>
+                                <p className="text-gray-600 text-sm line-clamp-2">{product.description}</p>
+                                <div className="mt-auto pt-2 flex items-center justify-between">
+                                  <span className="text-primary font-bold">¥{product.price}</span>
+                                  <Link 
+                                    href={`/product/${product.id}`}
+                                    className="text-sm text-primary font-medium hover:underline"
+                                  >
+                                    查看详情
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : theme.productLayout === 'list' ? (
                   // 列表布局
