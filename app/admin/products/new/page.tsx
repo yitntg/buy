@@ -954,12 +954,21 @@ export default function NewProductPage() {
                             setImagePreview(url)
                           }}
                         >
-                          <Image 
-                            src={url} 
-                            alt={`Preview ${index}`}
-                            fill
-                            className="object-cover"
-                          />
+                          {url.startsWith('blob:') || !url.includes('supabase.co') ? (
+                            <Image 
+                              src={url} 
+                              alt={`预览 ${index}`}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            // 对于Supabase URL，使用直接img标签而非Next.js的Image组件
+                            <img 
+                              src={url} 
+                              alt={`预览 ${index}`}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
                           {url === formData.image && (
                             <div className="absolute bottom-0 left-0 right-0 bg-primary text-white text-xs text-center py-0.5">
                               主图
@@ -997,16 +1006,29 @@ export default function NewProductPage() {
                   {/* URL图片预览 */}
                   {imagePreview && !imagePreviewUrls.includes(imagePreview) && (
                     <div className="mt-2 relative h-40 w-40 border rounded-md overflow-hidden">
-                      <Image
-                        src={imagePreview}
-                        alt="商品图片预览"
-                        fill
-                        className="object-cover"
-                        onError={() => {
-                          setErrors(prev => ({ ...prev, image: '图片加载失败，请检查URL' }))
-                          setImagePreview(null)
-                        }}
-                      />
+                      {!imagePreview.includes('supabase.co') ? (
+                        <Image
+                          src={imagePreview}
+                          alt="商品图片预览"
+                          fill
+                          className="object-cover"
+                          onError={() => {
+                            setErrors(prev => ({ ...prev, image: '图片加载失败，请检查URL' }))
+                            setImagePreview(null)
+                          }}
+                        />
+                      ) : (
+                        // 使用普通img标签显示Supabase图片
+                        <img
+                          src={imagePreview}
+                          alt="商品图片预览"
+                          className="w-full h-full object-cover"
+                          onError={() => {
+                            setErrors(prev => ({ ...prev, image: '图片加载失败，请检查URL' }))
+                            setImagePreview(null)
+                          }}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

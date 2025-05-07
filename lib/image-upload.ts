@@ -28,54 +28,10 @@ export async function uploadImageToSupabase(
       console.error('缺少Supabase API密钥，这可能导致权限错误');
       throw new Error('Supabase API密钥未配置');
     }
-    
+
+    // 直接尝试上传文件，不检查存储桶状态
     try {
-      // 尝试创建存储桶（如果不存在）
-      try {
-        // 检查存储桶是否存在
-        console.log(`检查存储桶是否存在: ${bucket}`);
-        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-        
-        if (listError) {
-          console.error('获取存储桶列表失败:', listError);
-          if (listError.message.includes('Unauthorized') || listError.message.includes('权限')) {
-            throw new Error(`Supabase权限错误: ${listError.message}`);
-          }
-          // 继续尝试创建，即使获取失败
-        } else {
-          const bucketExists = buckets?.some(b => b.name === bucket);
-          console.log(`存储桶"${bucket}"存在状态: ${bucketExists}`);
-          
-          if (!bucketExists) {
-            // 尝试创建存储桶
-            console.log(`尝试创建存储桶: ${bucket}`);
-            const { error: createError } = await supabase.storage.createBucket(bucket, {
-              public: true, // 允许公开访问
-              fileSizeLimit: 5 * 1024 * 1024, // 5MB 限制
-            });
-            
-            if (createError) {
-              console.error('创建存储桶失败:', createError);
-              if (createError.message.includes('Unauthorized') || createError.message.includes('权限')) {
-                throw new Error(`创建存储桶权限错误: ${createError.message}`);
-              }
-              // 尝试继续上传，即使创建存储桶失败
-            } else {
-              console.log(`成功创建存储桶: ${bucket}`);
-            }
-          }
-        }
-      } catch (bucketError: any) {
-        if (bucketError.message.includes('权限错误') || bucketError.message.includes('Unauthorized')) {
-          console.error('存储桶权限错误:', bucketError);
-          throw bucketError; // 重新抛出权限错误，不继续尝试上传
-        }
-        console.error('处理存储桶时出错，但将尝试继续上传:', bucketError);
-        // 尝试继续上传，即使检查/创建存储桶失败
-      }
-      
-      // 上传文件
-      console.log(`开始上传文件: ${fileName}`);
+      console.log(`直接上传文件: ${fileName} 到 ${bucket} 存储桶`);
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file, {
@@ -84,20 +40,25 @@ export async function uploadImageToSupabase(
         });
         
       if (error) {
-        console.error('上传图片错误:', error);
+        // 如果错误是因为存储桶不存在
+        if (error.message.includes('Bucket not found')) {
+          console.error('存储桶不存在，需要在Supabase控制台手动创建:', error);
+          throw new Error(`存储桶 ${bucket} 不存在，请在Supabase控制台中创建`);
+        }
+        
         // 检查是否为权限错误
         if (error.message.includes('Unauthorized') || error.message.includes('permission') || error.message.includes('权限')) {
+          console.error('上传图片权限错误:', error);
           throw new Error(`上传权限错误: ${error.message}`);
         }
-        // 返回默认图片
-        console.log('使用默认图片URL作为回退');
+        
+        // 其他错误
+        console.error('上传图片错误:', error);
         return DEFAULT_IMAGE_URL;
       }
       
       if (!data) {
         console.error('上传成功但未返回数据');
-        // 返回默认图片
-        console.log('使用默认图片URL作为回退');
         return DEFAULT_IMAGE_URL;
       }
       
@@ -121,19 +82,20 @@ export async function uploadImageToSupabase(
           return publicUrl;
         } catch (buildError) {
           console.error('构建URL失败:', buildError);
-          // 返回默认图片
-          console.log('使用默认图片URL作为回退');
           return DEFAULT_IMAGE_URL;
         }
       }
     } catch (uploadError: any) {
+      if (uploadError.message.includes('存储桶') && uploadError.message.includes('不存在')) {
+        throw uploadError; // 传递存储桶不存在错误
+      }
+      
       if (uploadError.message.includes('权限错误') || uploadError.message.includes('Unauthorized')) {
         console.error('Supabase权限错误:', uploadError);
         throw uploadError; // 重新抛出权限错误
       }
+      
       console.error('执行上传操作失败:', uploadError);
-      // 返回默认图片
-      console.log('使用默认图片URL作为回退');
       return DEFAULT_IMAGE_URL;
     }
   } catch (error: any) {
@@ -141,9 +103,13 @@ export async function uploadImageToSupabase(
       console.error('Supabase访问被拒绝:', error);
       throw error; // 向上抛出权限错误以便调用者处理
     }
+    
+    if (error.message.includes('存储桶') && error.message.includes('不存在')) {
+      console.error('存储桶错误:', error);
+      throw error; // 向上抛出存储桶错误
+    }
+    
     console.error('上传图片失败:', error);
-    // 返回默认图片
-    console.log('使用默认图片URL作为回退');
     return DEFAULT_IMAGE_URL;
   }
 } 
