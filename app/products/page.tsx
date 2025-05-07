@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -35,11 +35,11 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   
-  // 分页状态
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalProducts, setTotalProducts] = useState(0)
-  const [limit] = useState(12)
+  // 无限滚动状态
+  const [hasMore, setHasMore] = useState(true)
+  const [page, setPage] = useState(1)
+  const observer = useRef<IntersectionObserver | null>(null)
+  const loadingRef = useRef<HTMLDivElement>(null)
   
   // 筛选和搜索状态
   const [keyword, setKeyword] = useState('')
@@ -47,6 +47,7 @@ export default function ProductsPage() {
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([])
   const [minRating, setMinRating] = useState<number | null>(null)
   const [sortBy, setSortBy] = useState('recommend')
+  const [limit] = useState(12)
   
   // 分类数据
   const categories = [
@@ -71,8 +72,10 @@ export default function ProductsPage() {
   const { theme, updateTheme } = useTheme()
   
   // 获取产品数据
-  const fetchProducts = async () => {
-    setLoading(true)
+  const fetchProducts = async (pageNumber = 1, append = false) => {
+    if (pageNumber === 1) {
+      setLoading(true)
+    }
     setError('')
     
     try {
@@ -106,7 +109,7 @@ export default function ProductsPage() {
         params.append('sortBy', sortBy)
       }
       
-      params.append('page', currentPage.toString())
+      params.append('page', pageNumber.toString())
       params.append('limit', limit.toString())
       
       // 获取数据
@@ -123,35 +126,65 @@ export default function ProductsPage() {
       const data = await res.json()
       
       if (data && data.products) {
-        setProducts(data.products)
-        setTotalProducts(data.total || 0)
-        setTotalPages(data.totalPages || 1)
+        // 无限滚动模式下，将新数据追加到现有数据
+        if (append) {
+          setProducts(prev => [...prev, ...data.products])
+        } else {
+          setProducts(data.products)
+        }
+        
+        // 判断是否还有更多数据
+        setHasMore(data.products.length === limit && pageNumber < (data.totalPages || 1))
       } else {
         console.error('API返回的数据格式不正确', data)
-        setProducts([])
-        setTotalProducts(0)
-        setTotalPages(1)
+        setProducts(append ? products : [])
+        setHasMore(false)
       }
     } catch (err) {
       console.error('获取商品列表出错:', err)
       setError('获取商品列表失败，请稍后重试')
-      setProducts([])
+      if (!append) {
+        setProducts([])
+      }
+      setHasMore(false)
     } finally {
       setLoading(false)
     }
   }
+
+  // 监听滚动加载更多
+  const lastProductRef = useCallback((node: HTMLDivElement) => {
+    if (loading) return;
+    
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        // 当最后一个商品元素可见时，加载更多商品
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore]);
   
-  // 首次加载和筛选条件变化时获取数据
+  // 初始加载和页码变化时获取数据
   useEffect(() => {
-    fetchProducts()
+    fetchProducts(page, page > 1);
+  }, [page]);
+  
+  // 筛选条件变化时重置页码并重新获取数据
+  useEffect(() => {
+    setProducts([]);
+    setPage(1);
+    setHasMore(true);
   }, [
     keyword, 
     selectedCategories, 
     selectedPriceRanges, 
     minRating, 
-    sortBy, 
-    currentPage
-  ])
+    sortBy
+  ]);
   
   // 处理分类选择
   const handleCategoryChange = (categoryId: number) => {
@@ -163,7 +196,7 @@ export default function ProductsPage() {
       }
     })
     // 重置到第一页
-    setCurrentPage(1)
+    setPage(1)
   }
   
   // 处理价格区间选择
@@ -176,35 +209,30 @@ export default function ProductsPage() {
       }
     })
     // 重置到第一页
-    setCurrentPage(1)
+    setPage(1)
   }
   
   // 处理评分选择
   const handleRatingChange = (rating: number) => {
     setMinRating(prev => prev === rating ? null : rating)
     // 重置到第一页
-    setCurrentPage(1)
+    setPage(1)
   }
   
   // 处理排序方式变化
   const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSortBy(event.target.value)
     // 重置到第一页
-    setCurrentPage(1)
-  }
-  
-  // 处理页码变化
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    window.scrollTo(0, 0)
+    setPage(1)
   }
   
   // 处理搜索
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault()
-    // 重置到第一页
-    setCurrentPage(1)
-    fetchProducts()
+    // 重置数据并从第一页开始
+    setProducts([])
+    setPage(1)
+    setHasMore(true)
   }
   
   // 重置筛选条件
@@ -214,7 +242,9 @@ export default function ProductsPage() {
     setSelectedPriceRanges([])
     setMinRating(null)
     setSortBy('recommend')
-    setCurrentPage(1)
+    setProducts([])
+    setPage(1)
+    setHasMore(true)
   }
   
   return (
@@ -230,7 +260,7 @@ export default function ProductsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 全部商品
-                <span className="ml-3 text-sm font-normal text-gray-500">({totalProducts}件)</span>
+                <span className="ml-3 text-sm font-normal text-gray-500">({products.length}件)</span>
               </h1>
               
               {/* 搜索栏 - 集成在标题行 */}
@@ -477,7 +507,7 @@ export default function ProductsPage() {
             </div>
           </div>
           
-          {loading ? (
+          {loading && products.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <div className="flex flex-col items-center">
                 <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -487,12 +517,15 @@ export default function ProductsPage() {
                 <p className="mt-4 text-gray-600">加载商品中...</p>
               </div>
             </div>
-          ) : error ? (
+          ) : error && products.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-8 text-center">
               <div className="text-4xl text-red-500 mb-4">⚠️</div>
               <h2 className="text-xl font-medium mb-4">{error}</h2>
               <button 
-                onClick={fetchProducts}
+                onClick={() => {
+                  setPage(1)
+                  fetchProducts(1, false)
+                }}
                 className="bg-primary text-white px-6 py-3 rounded-md hover:bg-blue-600 inline-block"
               >
                 重试
@@ -512,15 +545,43 @@ export default function ProductsPage() {
             </div>
           ) : (
             <>
-              {/* 商品展示 - 使用单一网格布局 */}
+              {/* 商品展示 - 使用网格布局 */}
               <div className="transition-all duration-500">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {products.map((product) => (
-                    <div key={product.id} className="transform transition duration-300 hover:scale-[1.03]">
-                      <ProductCard product={product} />
-                    </div>
-                  ))}
+                  {products.map((product, index) => {
+                    // 将最后一个元素添加引用，用于无限滚动
+                    if (index === products.length - 1) {
+                      return (
+                        <div key={product.id} ref={lastProductRef} className="transform transition duration-300 hover:scale-[1.03]">
+                          <ProductCard product={product} />
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div key={product.id} className="transform transition duration-300 hover:scale-[1.03]">
+                          <ProductCard product={product} />
+                        </div>
+                      );
+                    }
+                  })}
                 </div>
+                
+                {/* 加载更多指示器 */}
+                {loading && products.length > 0 && (
+                  <div className="flex justify-center items-center py-8" ref={loadingRef}>
+                    <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                )}
+                
+                {/* 已到底提示 */}
+                {!hasMore && products.length > 0 && (
+                  <div className="text-center text-gray-500 py-8">
+                    已显示全部商品
+                  </div>
+                )}
               </div>
               
               {/* 添加悬浮"返回顶部"按钮 */}
@@ -535,110 +596,6 @@ export default function ProductsPage() {
                   </svg>
                 </button>
               </div>
-
-              {/* 分页组件美化 */}
-              {totalPages > 1 && (
-                <div className="mt-8 flex justify-center">
-                  <nav className="inline-flex rounded-md shadow-sm">
-                    {/* 上一页按钮 */}
-                    <button
-                      onClick={() => handlePageChange(currentPage > 1 ? currentPage - 1 : 1)}
-                      disabled={currentPage === 1}
-                      className={`px-4 py-2 text-sm font-medium ${
-                        currentPage === 1
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-gray-50'
-                      } rounded-l-md border border-gray-300`}
-                    >
-                      上一页
-                    </button>
-                    
-                    {/* 页码按钮 - 逻辑完全重写 */}
-                    <div className="flex">
-                      {/* 始终显示第一页 */}
-                      <button
-                        onClick={() => handlePageChange(1)}
-                        className={`px-4 py-2 text-sm font-medium border-t border-b border-l border-gray-300 ${
-                          currentPage === 1
-                            ? 'bg-primary text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        1
-                      </button>
-                      
-                      {/* 如果不在第一页附近，显示省略号 */}
-                      {currentPage > 3 && (
-                        <span className="px-3 py-2 border-t border-b border-l border-gray-300 bg-white text-gray-500">
-                          ...
-                        </span>
-                      )}
-                      
-                      {/* 显示当前页码的前后页 */}
-                      {Array.from({ length: totalPages })
-                        .map((_, i) => i + 1)
-                        .filter(page => {
-                          // 不显示第一页和最后一页(已单独处理)
-                          if (page === 1 || page === totalPages) return false;
-                          
-                          // 显示当前页及其前后一页
-                          return Math.abs(currentPage - page) <= 1 ||
-                               // 如果当前页靠近开始，多显示几页
-                               (currentPage <= 3 && page <= 4) ||
-                               // 如果当前页靠近结束，多显示几页
-                               (currentPage >= totalPages - 2 && page >= totalPages - 3);
-                        })
-                        .map(page => (
-                          <button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            className={`px-4 py-2 text-sm font-medium border-t border-b border-l border-gray-300 ${
-                              currentPage === page
-                                ? 'bg-primary text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-                      
-                      {/* 如果不在最后页附近，显示省略号 */}
-                      {currentPage < totalPages - 2 && (
-                        <span className="px-3 py-2 border-t border-b border-l border-gray-300 bg-white text-gray-500">
-                          ...
-                        </span>
-                      )}
-                      
-                      {/* 始终显示最后一页 */}
-                      {totalPages > 1 && (
-                        <button
-                          onClick={() => handlePageChange(totalPages)}
-                          className={`px-4 py-2 text-sm font-medium border-t border-b border-l border-gray-300 ${
-                            currentPage === totalPages
-                              ? 'bg-primary text-white'
-                              : 'bg-white text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          {totalPages}
-                        </button>
-                      )}
-                    </div>
-                    
-                    {/* 下一页按钮 */}
-                    <button
-                      onClick={() => handlePageChange(currentPage < totalPages ? currentPage + 1 : totalPages)}
-                      disabled={currentPage === totalPages}
-                      className={`px-4 py-2 text-sm font-medium ${
-                        currentPage === totalPages
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-gray-50'
-                      } rounded-r-md border border-gray-300`}
-                    >
-                      下一页
-                    </button>
-                  </nav>
-                </div>
-              )}
             </>
           )}
         </div>
