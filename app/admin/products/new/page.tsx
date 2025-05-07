@@ -170,52 +170,76 @@ export default function NewProductPage() {
     
     if (!fileList) return
     
-    // 显示上传中状态
     setIsLoading(true)
     
+    // 本地预览处理
+    const newImages: File[] = []
+    const newImageUrls: string[] = []
+    
+    // 限制最多上传5张图片
+    const maxImages = 5
+    const totalImages = images.length + fileList.length
+    const imagesToProcess = totalImages > maxImages ? maxImages - images.length : fileList.length
+    
+    // 处理选择的图片
+    for (let i = 0; i < imagesToProcess; i++) {
+      const file = fileList[i]
+      newImages.push(file)
+      
+      // 创建本地预览URL
+      const localUrl = URL.createObjectURL(file)
+      newImageUrls.push(localUrl)
+    }
+    
+    // 立即更新状态以显示本地预览
+    setImages(prev => [...prev, ...newImages])
+    setImagePreviewUrls(prev => [...prev, ...newImageUrls])
+    
+    // 如果是第一张图片且没有设置主图，将本地预览设为主图
+    if (newImageUrls.length > 0 && !formData.image) {
+      setFormData(prev => ({ ...prev, image: newImageUrls[0] }))
+      setImagePreview(newImageUrls[0])
+    }
+    
+    // 如果超过5张图片，显示提示
+    if (totalImages > maxImages) {
+      alert(`最多只能上传5张图片，已选择前${maxImages}张。`)
+    }
+    
+    // 后台尝试上传到Supabase（不阻塞用户体验）
     try {
-      const newImages: File[] = []
-      const newImageUrls: string[] = []
-      
-      // 限制最多上传5张图片
-      const maxImages = 5
-      const totalImages = images.length + fileList.length
-      const imagesToProcess = totalImages > maxImages ? maxImages - images.length : fileList.length
-      
-      // 处理选择的图片
-      for (let i = 0; i < imagesToProcess; i++) {
-        const file = fileList[i]
-        newImages.push(file)
-        
+      // 异步上传到Supabase
+      for (let i = 0; i < newImages.length; i++) {
         try {
-          // 上传到 Supabase Storage 并获取永久URL
-          const publicUrl = await uploadImageToSupabase(file)
-          newImageUrls.push(publicUrl)
+          // 尝试上传到Supabase
+          const publicUrl = await uploadImageToSupabase(newImages[i])
           
-          // 如果是第一张图片且没有设置主图，则设为主图
-          if (i === 0 && !formData.image) {
-            setFormData(prev => ({ ...prev, image: publicUrl }))
-            setImagePreview(publicUrl)
+          // 如果上传成功，替换本地URL（用户不会注意到变化）
+          if (publicUrl && publicUrl !== newImageUrls[i] && !publicUrl.includes('picsum.photos')) {
+            console.log(`图片 ${i+1} 成功上传到Supabase: ${publicUrl}`)
+            
+            // 替换URL数组中的URL
+            const updatedUrls = [...imagePreviewUrls]
+            const index = updatedUrls.indexOf(newImageUrls[i])
+            if (index !== -1) {
+              updatedUrls[index] = publicUrl
+              setImagePreviewUrls(updatedUrls)
+              
+              // 如果这个URL是主图，也更新主图
+              if (formData.image === newImageUrls[i]) {
+                setFormData(prev => ({ ...prev, image: publicUrl }))
+                setImagePreview(publicUrl)
+              }
+            }
           }
         } catch (error) {
-          console.error(`上传图片 ${file.name} 失败:`, error)
-          // 创建临时预览URL (注意：这只是临时URL，上传失败时的备用)
-          const tempUrl = URL.createObjectURL(file)
-          newImageUrls.push(tempUrl)
+          // 上传失败也没关系，继续使用本地预览
+          console.error(`上传图片 ${i+1} 到Supabase失败:`, error)
         }
       }
-      
-      // 更新状态
-      setImages(prev => [...prev, ...newImages])
-      setImagePreviewUrls(prev => [...prev, ...newImageUrls])
-      
-      // 如果超过5张图片，显示提示
-      if (totalImages > maxImages) {
-        alert(`最多只能上传5张图片，已选择前${maxImages}张。`)
-      }
     } catch (error) {
-      console.error('处理图片上传失败:', error)
-      alert('上传图片时出错，请重试')
+      // 忽略错误，继续使用本地预览
+      console.error('Supabase上传过程中出错:', error)
     } finally {
       setIsLoading(false)
     }
@@ -232,57 +256,81 @@ export default function NewProductPage() {
     
     if (!droppedFiles || droppedFiles.length === 0) return
     
-    // 显示上传中状态
     setIsLoading(true)
     
+    // 本地预览处理
+    const newImages: File[] = []
+    const newImageUrls: string[] = []
+    
+    // 限制最多上传5张图片
+    const maxImages = 5
+    const remainingSlots = maxImages - images.length
+    const filesToProcess = Math.min(remainingSlots, droppedFiles.length)
+    
+    for (let i = 0; i < filesToProcess; i++) {
+      const file = droppedFiles[i]
+      
+      // 只接受图片文件
+      if (!file.type.startsWith('image/')) {
+        continue
+      }
+      
+      newImages.push(file)
+      
+      // 创建本地预览URL
+      const localUrl = URL.createObjectURL(file)
+      newImageUrls.push(localUrl)
+    }
+    
+    // 立即更新状态以显示本地预览
+    setImages(prev => [...prev, ...newImages])
+    setImagePreviewUrls(prev => [...prev, ...newImageUrls])
+    
+    // 如果是第一张图片且没有设置主图，将本地预览设为主图
+    if (newImageUrls.length > 0 && !formData.image) {
+      setFormData(prev => ({ ...prev, image: newImageUrls[0] }))
+      setImagePreview(newImageUrls[0])
+    }
+    
+    // 如果超过剩余插槽，显示提示
+    if (droppedFiles.length > remainingSlots) {
+      alert(`最多只能上传5张图片，已处理前${remainingSlots}张。`)
+    }
+    
+    // 后台尝试上传到Supabase（不阻塞用户体验）
     try {
-      const newImages: File[] = []
-      const newImageUrls: string[] = []
-      
-      // 限制最多上传5张图片
-      const maxImages = 5
-      const remainingSlots = maxImages - images.length
-      const filesToProcess = Math.min(remainingSlots, droppedFiles.length)
-      
-      for (let i = 0; i < filesToProcess; i++) {
-        const file = droppedFiles[i]
-        
-        // 只接受图片文件
-        if (!file.type.startsWith('image/')) {
-          continue
-        }
-        
-        newImages.push(file)
-        
+      // 异步上传到Supabase
+      for (let i = 0; i < newImages.length; i++) {
         try {
-          // 上传到 Supabase Storage 并获取永久URL
-          const publicUrl = await uploadImageToSupabase(file)
-          newImageUrls.push(publicUrl)
+          // 尝试上传到Supabase
+          const publicUrl = await uploadImageToSupabase(newImages[i])
           
-          // 如果是第一张图片且没有设置主图，则设为主图
-          if (i === 0 && !formData.image) {
-            setFormData(prev => ({ ...prev, image: publicUrl }))
-            setImagePreview(publicUrl)
+          // 如果上传成功，替换本地URL（用户不会注意到变化）
+          if (publicUrl && publicUrl !== newImageUrls[i] && !publicUrl.includes('picsum.photos')) {
+            console.log(`拖放图片 ${i+1} 成功上传到Supabase: ${publicUrl}`)
+            
+            // 替换URL数组中的URL
+            const updatedUrls = [...imagePreviewUrls]
+            const index = updatedUrls.indexOf(newImageUrls[i])
+            if (index !== -1) {
+              updatedUrls[index] = publicUrl
+              setImagePreviewUrls(updatedUrls)
+              
+              // 如果这个URL是主图，也更新主图
+              if (formData.image === newImageUrls[i]) {
+                setFormData(prev => ({ ...prev, image: publicUrl }))
+                setImagePreview(publicUrl)
+              }
+            }
           }
         } catch (error) {
-          console.error(`上传图片 ${file.name} 失败:`, error)
-          // 创建临时预览URL (注意：这只是临时URL，上传失败时的备用)
-          const tempUrl = URL.createObjectURL(file)
-          newImageUrls.push(tempUrl)
+          // 上传失败也没关系，继续使用本地预览
+          console.error(`上传图片 ${i+1} 到Supabase失败:`, error)
         }
       }
-      
-      // 更新状态
-      setImages(prev => [...prev, ...newImages])
-      setImagePreviewUrls(prev => [...prev, ...newImageUrls])
-      
-      // 如果超过剩余插槽，显示提示
-      if (droppedFiles.length > remainingSlots) {
-        alert(`最多只能上传5张图片，已处理前${remainingSlots}张。`)
-      }
     } catch (error) {
-      console.error('处理拖放图片失败:', error)
-      alert('上传图片时出错，请重试')
+      // 忽略错误，继续使用本地预览
+      console.error('Supabase上传过程中出错:', error)
     } finally {
       setIsLoading(false)
     }
@@ -374,21 +422,40 @@ export default function NewProductPage() {
       console.log('原始图片URL:', imageUrl);
       console.log('本地预览图片数量:', imagePreviewUrls.length);
       
-      // 如果有上传的图片但没有设置URL，使用默认图片
-      if (!imageUrl && imagePreviewUrls.length > 0) {
-        // 由于浏览器中的本地URL无法直接传递给服务器，使用默认图片
-        imageUrl = 'https://picsum.photos/id/1/500/500'
-        console.log('使用默认图片替代本地上传的图片:', imageUrl)
+      // 检查是否为本地blob URL
+      if (imageUrl && imageUrl.startsWith('blob:')) {
+        console.log('检测到本地blob URL，将尝试上传到Supabase')
+        
+        // 找到对应的图片文件
+        const blobIndex = imagePreviewUrls.indexOf(imageUrl)
+        if (blobIndex !== -1 && blobIndex < images.length) {
+          try {
+            setIsLoading(true)
+            // 尝试最后一次上传到Supabase
+            const publicUrl = await uploadImageToSupabase(images[blobIndex])
+            
+            if (publicUrl && !publicUrl.includes('picsum.photos')) {
+              console.log('成功上传主图到Supabase:', publicUrl)
+              imageUrl = publicUrl
+            } else {
+              console.log('使用Supabase提供的默认图片URL')
+              imageUrl = publicUrl
+            }
+          } catch (error) {
+            console.error('上传主图到Supabase失败:', error)
+            // 如果上传失败，使用默认图片
+            imageUrl = 'https://picsum.photos/id/1/500/500'
+          } finally {
+            setIsLoading(false)
+          }
+        } else {
+          console.log('无法找到对应的图片文件，使用默认图片')
+          imageUrl = 'https://picsum.photos/id/1/500/500'
+        }
       }
       
       // 如果仍然没有图片，使用默认图片
       if (!imageUrl) {
-        imageUrl = 'https://picsum.photos/id/1/500/500'
-      }
-      
-      // 确保URL是真实的Web URL而不是本地blob
-      if (imageUrl.startsWith('blob:')) {
-        console.log('检测到本地blob URL，替换为默认图片URL')
         imageUrl = 'https://picsum.photos/id/1/500/500'
       }
       
@@ -726,83 +793,115 @@ export default function NewProductPage() {
               </div>
               
               {/* 商品图片部分 */}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  商品图片 <span className="text-red-500">*</span>
-                </label>
+              <div>
+                <h2 className="text-xl font-medium mb-4">商品图片</h2>
                 
-                {/* 拖放上传区域 */}
+                {/* 图片上传区域 */}
                 <div 
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 text-center cursor-pointer hover:bg-gray-50 transition"
-                  onClick={handleSelectImageClick}
-                  onDrop={handleDrop}
+                  className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4"
                   onDragOver={handleDragOver}
+                  onDrop={handleDrop}
                 >
-                  {isLoading ? (
-                    <div className="text-center">
-                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-2"></div>
-                      <p>正在上传图片...</p>
-                    </div>
-                  ) : (
-                    <>
-                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                      </svg>
-                      <p className="mt-1 text-sm text-gray-600">
-                        点击选择或拖放图片至此处上传
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        支持 JPG, PNG, GIF 格式，最大 5MB（最多5张）
-                      </p>
-                    </>
-                  )}
-                  
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageUpload}
-                    ref={fileInputRef}
-                  />
+                  <div className="space-y-2">
+                    {isLoading ? (
+                      <div className="text-center">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-2"></div>
+                        <p className="text-gray-600">正在上传图片...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-4xl text-gray-400">📸</div>
+                        <p className="text-gray-500">点击上传或拖拽图片至此处</p>
+                        <p className="text-xs text-gray-400">支持 JPG, PNG 格式，最多可上传 5 张图片</p>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      id="images"
+                      ref={fileInputRef}
+                      accept="image/jpeg, image/png"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSelectImageClick}
+                      className="mt-2 inline-flex items-center px-4 py-2 border border-primary text-primary rounded-full hover:bg-blue-50 focus:outline-none"
+                    >
+                      选择图片
+                    </button>
+                  </div>
                 </div>
                 
                 {/* 图片预览区域 */}
                 {imagePreviewUrls.length > 0 && (
-                  <div className="grid grid-cols-5 gap-4 mt-4">
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                     {imagePreviewUrls.map((url, index) => (
-                      <div key={index} className="relative">
-                        <img 
-                          src={url} 
-                          alt={`上传预览 ${index+1}`} 
-                          className={`h-24 w-24 object-cover rounded border ${url === formData.image ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
+                      <div key={index} className="relative group">
+                        <div 
+                          className={`relative h-24 w-full rounded-md overflow-hidden border ${url === formData.image ? 'border-primary ring-2 ring-blue-300' : 'border-gray-200'}`}
                           onClick={() => {
                             setFormData(prev => ({ ...prev, image: url }))
                             setImagePreview(url)
                           }}
-                        />
+                        >
+                          <Image 
+                            src={url} 
+                            alt={`Preview ${index}`}
+                            fill
+                            className="object-cover"
+                          />
+                          {url === formData.image && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-primary text-white text-xs text-center py-0.5">
+                              主图
+                            </div>
+                          )}
+                        </div>
                         <button
                           type="button"
-                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 transform translate-x-1/2 -translate-y-1/2"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeImage(index)
-                          }}
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                          </svg>
+                          ×
                         </button>
-                        {url === formData.image && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-white text-xs text-center py-0.5">
-                            主图
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
                 )}
-                {errors.image && <p className="text-red-500 text-xs italic">{errors.image}</p>}
+                
+                {/* URL输入区域 */}
+                <div className="mt-4">
+                  <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+                    商品图片URL（可选）
+                  </label>
+                  <input
+                    type="text"
+                    id="image"
+                    name="image"
+                    value={formData.image}
+                    onChange={handleImageChange}
+                    placeholder="https://example.com/image.jpg"
+                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 ${errors.image ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:outline-none`}
+                  />
+                  {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
+                  
+                  {/* URL图片预览 */}
+                  {imagePreview && !imagePreviewUrls.includes(imagePreview) && (
+                    <div className="mt-2 relative h-40 w-40 border rounded-md overflow-hidden">
+                      <Image
+                        src={imagePreview}
+                        alt="商品图片预览"
+                        fill
+                        className="object-cover"
+                        onError={() => {
+                          setErrors(prev => ({ ...prev, image: '图片加载失败，请检查URL' }))
+                          setImagePreview(null)
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               
               {/* 配送与售后 */}
