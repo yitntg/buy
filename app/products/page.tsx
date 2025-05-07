@@ -384,72 +384,76 @@ export default function ProductsPage() {
               ) : (
                 <>
                   {/* 商品网格 */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {products.map((product) => (
                       <ProductCard key={product.id} product={product} />
                     ))}
                   </div>
                   
-                  {/* 分页 */}
+                  {/* 分页组件，完全重写为更直观的分页控件 */}
                   {totalPages > 1 && (
                     <div className="mt-8 flex justify-center">
-                      <nav className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage <= 1}
-                          className="px-3 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                      <nav className="inline-flex rounded-md shadow">
+                        {/* 上一页按钮 */}
+                        <button
+                          onClick={() => handlePageChange(currentPage > 1 ? currentPage - 1 : 1)}
+                          disabled={currentPage === 1}
+                          className={`px-4 py-2 text-sm font-medium ${
+                            currentPage === 1
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-white text-gray-700 hover:bg-gray-50'
+                          } rounded-l-md border border-gray-300`}
                         >
                           上一页
                         </button>
                         
-                        {/* 显示页码 */}
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNumber;
-                          // 显示当前页及其周围的页
-                          if (totalPages <= 5) {
-                            pageNumber = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNumber = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNumber = totalPages - 4 + i;
-                          } else {
-                            pageNumber = currentPage - 2 + i;
-                          }
-                          
-                          return (
-                            <button 
-                              key={pageNumber}
-                              onClick={() => handlePageChange(pageNumber)}
-                              className={`px-3 py-1 rounded ${
-                                currentPage === pageNumber
-                                  ? 'bg-primary text-white'
-                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                              }`}
-                            >
-                              {pageNumber}
-                            </button>
-                          );
-                        })}
+                        {/* 页码按钮 - 显示逻辑更清晰 */}
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                          .filter(pageNum => {
+                            // 显示第一页、最后一页，以及当前页附近的页
+                            return (
+                              pageNum === 1 ||
+                              pageNum === totalPages ||
+                              (pageNum >= currentPage - 1 && pageNum <= currentPage + 1) ||
+                              (currentPage <= 3 && pageNum <= 4) ||
+                              (currentPage >= totalPages - 2 && pageNum >= totalPages - 3)
+                            );
+                          })
+                          .map((pageNum, i, filteredPages) => {
+                            // 如果当前页和前一页相差超过1，插入省略号
+                            const previousPage = i > 0 ? filteredPages[i - 1] : null;
+                            
+                            return (
+                              <div key={pageNum} className="flex items-center">
+                                {previousPage && pageNum - previousPage > 1 && (
+                                  <span className="px-3 py-2 border-t border-b border-gray-300 bg-white text-gray-500">
+                                    ...
+                                  </span>
+                                )}
+                                
+                                <button
+                                  onClick={() => handlePageChange(pageNum)}
+                                  className={`px-4 py-2 text-sm font-medium border-t border-b border-gray-300 ${
+                                    currentPage === pageNum
+                                      ? 'bg-primary text-white'
+                                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  {pageNum}
+                                </button>
+                              </div>
+                            );
+                          })}
                         
-                        {/* 显示省略号 */}
-                        {totalPages > 5 && currentPage < totalPages - 2 && (
-                          <span className="px-3 py-1 text-gray-500">...</span>
-                        )}
-                        
-                        {/* 显示最后一页 */}
-                        {totalPages > 5 && currentPage < totalPages - 2 && (
-                          <button 
-                            onClick={() => handlePageChange(totalPages)}
-                            className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
-                          >
-                            {totalPages}
-                          </button>
-                        )}
-                        
-                        <button 
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage >= totalPages}
-                          className="px-3 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        {/* 下一页按钮 */}
+                        <button
+                          onClick={() => handlePageChange(currentPage < totalPages ? currentPage + 1 : totalPages)}
+                          disabled={currentPage === totalPages}
+                          className={`px-4 py-2 text-sm font-medium ${
+                            currentPage === totalPages
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-white text-gray-700 hover:bg-gray-50'
+                          } rounded-r-md border border-gray-300`}
                         >
                           下一页
                         </button>

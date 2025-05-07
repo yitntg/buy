@@ -113,17 +113,27 @@ async function ensureProductsTableExists() {
 // 获取商品列表
 export async function GET(request: NextRequest) {
   try {
-    // 注意：不要尝试读取request.body，这是导致错误的原因
+    // 解析查询参数
     const url = new URL(request.url)
     const page = parseInt(url.searchParams.get('page') || '1')
-    const limit = parseInt(url.searchParams.get('limit') || '10')
+    const limit = parseInt(url.searchParams.get('limit') || '12') // 默认为12个商品每页
     const keyword = url.searchParams.get('keyword') || ''
-    const category = url.searchParams.get('category')
+    const categoryParam = url.searchParams.getAll('category')
     const minPrice = url.searchParams.get('minPrice')
     const maxPrice = url.searchParams.get('maxPrice')
-    const sortBy = url.searchParams.get('sortBy') || 'relevance'
+    const sortBy = url.searchParams.get('sortBy') || 'newest'
+    const minRating = url.searchParams.get('minRating')
     
-    console.log('获取商品列表，参数:', { page, limit, keyword, category, minPrice, maxPrice, sortBy })
+    console.log('获取商品列表，参数:', { 
+      page, 
+      limit, 
+      keyword, 
+      category: categoryParam, 
+      minPrice, 
+      maxPrice, 
+      sortBy,
+      minRating
+    })
     
     // 确保产品表存在
     await ensureProductsTableExists()
@@ -136,9 +146,12 @@ export async function GET(request: NextRequest) {
       query = query.or(`name.ilike.%${keyword}%,description.ilike.%${keyword}%`)
     }
     
-    // 分类筛选
-    if (category) {
-      query = query.eq('category', parseInt(category))
+    // 分类筛选 - 支持多选
+    if (categoryParam && categoryParam.length > 0) {
+      const categories = categoryParam.map(c => parseInt(c)).filter(c => !isNaN(c))
+      if (categories.length > 0) {
+        query = query.in('category', categories)
+      }
     }
     
     // 价格范围筛选
@@ -150,23 +163,34 @@ export async function GET(request: NextRequest) {
       query = query.lte('price', parseFloat(maxPrice))
     }
     
+    // 评分筛选
+    if (minRating) {
+      query = query.gte('rating', parseFloat(minRating))
+    }
+    
     // 计算分页
     const startIndex = (page - 1) * limit
     
     // 排序
     switch (sortBy) {
-      case 'priceAsc':
+      case 'price-asc':
         query = query.order('price', { ascending: true })
         break
-      case 'priceDesc':
+      case 'price-desc':
         query = query.order('price', { ascending: false })
         break
-      case 'latest':
+      case 'rating':
+        query = query.order('rating', { ascending: false })
+        break
+      case 'newest':
         query = query.order('created_at', { ascending: false })
         break
-      case 'relevance':
+      case 'recommend':
       default:
-        query = query.order('id', { ascending: true })
+        // 推荐排序: 先按评分、然后按销量(这里用评价数替代)、最后按创建时间
+        query = query.order('rating', { ascending: false })
+               .order('reviews', { ascending: false })
+               .order('created_at', { ascending: false })
         break
     }
     
@@ -191,22 +215,27 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
     
-    console.log(`成功获取${products?.length || 0}件商品，总数:${count || 0}`)
+    const totalProducts = count || 0
+    const totalPages = Math.max(1, Math.ceil(totalProducts / limit))
     
-    // 返回结果
+    console.log(`成功获取${products?.length || 0}件商品，总数:${totalProducts}，总页数:${totalPages}`)
+    
+    // 返回增强的结果
     return NextResponse.json({
       products: products || [],
-      total: count || 0,
+      total: totalProducts,
       page,
       limit,
-      totalPages: count ? Math.ceil(count / limit) : 0
+      totalPages,
+      hasMore: page < totalPages,
+      sort: sortBy
     })
   } catch (error: any) {
     console.error('获取商品列表失败:', error)
     return NextResponse.json({
       error: '获取商品列表失败',
       details: error.message,
-      stack: error.stack
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 })
   }
 }
