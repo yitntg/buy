@@ -66,15 +66,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // 这里模拟API响应 - 为了测试方便，任何邮箱和密码组合都可以登录
+      // 50%的概率不提供头像，以展示文字头像功能
+      const showDefaultAvatar = Math.random() > 0.5;
+      
       const userData: User = {
         id: '1',
         username: '测试用户',
         email: email || 'test@example.com',
         firstName: '测试',
         lastName: '用户',
-        avatar: 'https://picsum.photos/id/64/200/200',
         role: 'admin' // 为测试方便，默认所有用户都是管理员
       };
+      
+      // 只有50%的概率添加头像
+      if (showDefaultAvatar) {
+        userData.avatar = 'https://picsum.photos/id/64/200/200';
+      }
       
       setUser(userData);
       if (isBrowser) {
@@ -97,6 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 在实际应用中，这里应该调用API进行注册
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // 50%的概率不提供头像，以展示文字头像功能
+      const showDefaultAvatar = Math.random() > 0.5;
+      
       // 这里模拟API响应
       const newUser: User = {
         id: '2',
@@ -106,6 +116,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastName: userData.lastName,
         role: 'user' // 新注册用户默认为普通用户角色
       };
+      
+      // 只有50%的概率添加头像
+      if (showDefaultAvatar) {
+        newUser.avatar = 'https://picsum.photos/id/64/200/200';
+      }
       
       setUser(newUser);
       if (isBrowser) {
