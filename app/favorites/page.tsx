@@ -6,7 +6,6 @@ import Image from 'next/image'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
-import ProductCard from '../components/ProductCard'
 
 // 收藏商品类型
 interface FavoriteProduct {
@@ -84,6 +83,63 @@ export default function FavoritesPage() {
     setFavorites(favorites.filter(product => product.id !== productId))
   }
   
+  // 渲染收藏商品卡片
+  const renderProductCard = (product: FavoriteProduct) => (
+    <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02]">
+      <div className="relative">
+        <Link href={`/products/${product.id}`}>
+          <div className="relative aspect-square overflow-hidden">
+            <Image 
+              src={product.image} 
+              alt={product.name} 
+              fill
+              className="object-cover hover:opacity-90 transition-opacity" 
+            />
+          </div>
+        </Link>
+        <button 
+          className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-md text-red-500 hover:text-red-700"
+          onClick={() => removeFromFavorites(product.id)}
+          title="移除收藏"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      
+      <div className="p-4">
+        <Link href={`/products/${product.id}`} className="block">
+          <h3 className="text-lg font-medium text-gray-800 mb-1 hover:text-primary truncate">{product.name}</h3>
+        </Link>
+        
+        <div className="flex items-center mb-2">
+          <div className="flex text-yellow-400">
+            {'★'.repeat(Math.round(product.rating))}
+            {'☆'.repeat(5 - Math.round(product.rating))}
+          </div>
+          <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <div className="text-lg font-semibold text-primary">
+            ¥{product.price}
+          </div>
+          <div className="flex space-x-2">
+            <button
+              className="p-2 rounded-full bg-primary text-white hover:bg-blue-600 shadow-sm"
+              title="加入购物车"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+  
   return (
     <>
       <Header />
@@ -142,20 +198,7 @@ export default function FavoritesPage() {
           ) : (
             <div className="transition-all duration-500">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {favorites.map((product) => (
-                  <div key={product.id} className="transform transition duration-300 hover:scale-[1.03] relative">
-                    <ProductCard product={product} />
-                    <button 
-                      className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-md text-red-500 hover:text-red-700 z-10"
-                      onClick={() => removeFromFavorites(product.id)}
-                      title="移除收藏"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                {favorites.map(product => renderProductCard(product))}
               </div>
             </div>
           )}
