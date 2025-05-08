@@ -47,7 +47,8 @@ export default function ProductsPage() {
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([])
   const [minRating, setMinRating] = useState<number | null>(null)
   const [sortBy, setSortBy] = useState('recommend')
-  const [limit] = useState(12)
+  // 每次加载的商品数量
+  const [limit] = useState(10)
   
   // 分类数据
   const categories = [
@@ -419,24 +420,6 @@ export default function ProductsPage() {
                       <option value="price-asc">价格由低到高</option>
                       <option value="price-desc">价格由高到低</option>
                       <option value="rating">评分</option>
-                    </select>
-                  </div>
-                  
-                  {/* 每页显示数量 */}
-                  <div className="hidden md:flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">每页:</span>
-                    <select 
-                      className="border border-gray-300 rounded px-2 py-1.5 text-xs"
-                      value={limit.toString()}
-                      onChange={(e) => {
-                        const newLimit = parseInt(e.target.value);
-                        alert(`实际应用中这里会设置每页显示${newLimit}项并重新加载数据`);
-                      }}
-                    >
-                      <option value="12">12</option>
-                      <option value="24">24</option>
-                      <option value="36">36</option>
-                      <option value="48">48</option>
                     </select>
                   </div>
                 </div>
