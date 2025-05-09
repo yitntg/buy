@@ -84,30 +84,6 @@ export default function ProductsPage() {
       priceCounts[range.id] = 0;
     });
     
-    products.forEach(product => {
-      // 统计分类
-      if (product.category) {
-        catCounts[product.category] = (catCounts[product.category] || 0) + 1;
-      }
-      
-      // 统计价格范围
-      priceRanges.forEach(range => {
-        const [min, max] = range.id.split('-').map(Number);
-        if (product.price >= min && product.price <= max) {
-          priceCounts[range.id] = (priceCounts[range.id] || 0) + 1;
-        }
-      });
-      
-      // 统计评分
-      if (product.rating) {
-        for (let i = 1; i <= 4; i++) {
-          if (product.rating >= i) {
-            rateCounts[i] = (rateCounts[i] || 0) + 1;
-          }
-        }
-      }
-    });
-    
     return { catCounts, priceCounts, rateCounts, total: products.length };
   };
 
@@ -142,13 +118,13 @@ export default function ProductsPage() {
   const [customPriceMax, setCustomPriceMax] = useState('')
   
   // 筛选项商品计数 - 预先初始化
-  const [categoryCounts, setCategoryCounts] = useState<Record<number, number>>(initialCounts.catCounts)
-  const [priceRangeCounts, setPriceRangeCounts] = useState<Record<string, number>>(initialCounts.priceCounts)
-  const [ratingCounts, setRatingCounts] = useState<Record<number, number>>(initialCounts.rateCounts)
-  const [totalProducts, setTotalProducts] = useState(initialCounts.total)
+  const [categoryCounts, setCategoryCounts] = useState<Record<number, number>>({})
+  const [priceRangeCounts, setPriceRangeCounts] = useState<Record<string, number>>({})
+  const [ratingCounts, setRatingCounts] = useState<Record<number, number>>({})
+  const [totalProducts, setTotalProducts] = useState(initialProducts.length)
   
   // 是否已加载过筛选计数
-  const [filtersCountLoaded, setFiltersCountLoaded] = useState(true)  // 设为true，因为已预加载
+  const [filtersCountLoaded, setFiltersCountLoaded] = useState(false)
   
   // 所有模拟数据的引用
   const allProductsRef = useRef<Product[]>(initialProducts);
@@ -575,9 +551,6 @@ export default function ProductsPage() {
                                 className="ml-2 text-sm text-gray-700 block w-full cursor-pointer flex justify-between"
                               >
                                 <span>{category.name}</span>
-                                <span className="text-gray-400 text-xs">
-                                  {categoryCounts[category.id] !== undefined ? categoryCounts[category.id] : loading ? '...' : '0'}
-                                </span>
                               </label>
                             </div>
                           ))}
@@ -637,9 +610,6 @@ export default function ProductsPage() {
                                 className="ml-2 text-sm text-gray-700 block w-full cursor-pointer flex justify-between"
                               >
                                 <span>{range.name}</span>
-                                <span className="text-gray-400 text-xs">
-                                  {priceRangeCounts[range.id] !== undefined ? priceRangeCounts[range.id] : loading ? '...' : '0'}
-                                </span>
                               </label>
                             </div>
                           ))}
@@ -735,9 +705,6 @@ export default function ProductsPage() {
                                   {rating}星及以上
                                   <span className="ml-1 text-yellow-400">{'★'.repeat(rating)}</span>
                                 </div>
-                                <span className="text-gray-400 text-xs">
-                                  {ratingCounts[rating] !== undefined ? ratingCounts[rating] : loading ? '...' : '0'}
-                                </span>
                               </label>
                             </div>
                           ))}
