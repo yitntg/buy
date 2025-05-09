@@ -1,13 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
-import ReviewSection from '../../components/ReviewSection'
+import ProductGallery from '../../components/ProductGallery'
+import ProductActions from '../../components/ProductActions'
+import ProductDescription from '../../components/ProductDescription'
+import ProductRecommendations from '../../components/ProductRecommendations'
+import ProductVariants from '../../components/ProductVariants'
+import { Share2, Heart } from 'lucide-react'
 
 // 定义商品类型接口
 interface Product {
@@ -20,6 +24,17 @@ interface Product {
   reviews: number
   inventory: number
   specifications?: Record<string, string>
+  images?: string[]
+  variants?: {
+    id: string
+    name: string
+    options: {
+      id: string
+      name: string
+      value: string
+      imageUrl?: string
+    }[]
+  }[]
 }
 
 // 定义评论类型接口
@@ -32,36 +47,16 @@ interface Review {
   content: string
 }
 
-// 模拟获取商品数据的函数
-async function getProduct(id: string) {
-  // 在实际应用中，这里应该调用API获取数据
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/products/${id}`, { cache: 'no-store' })
-  
-  if (!res.ok) {
-    throw new Error('获取商品信息失败')
-  }
-  
-  return res.json()
-}
-
 export default function ProductPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { addItem } = useCart()
-  const [quantity, setQuantity] = useState(1)
   const [loading, setLoading] = useState(true)
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [addingToCart, setAddingToCart] = useState(false)
-  
-  // 新增状态：用户评论相关
-  const [userReview, setUserReview] = useState({
-    rating: 5,
-    content: ''
-  })
-  const [submittingReview, setSubmittingReview] = useState(false)
-  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [isInWishlist, setIsInWishlist] = useState(false)
+  const [variantSelections, setVariantSelections] = useState<Record<string, string>>({})
   
   // 获取商品数据
   useEffect(() => {
@@ -77,6 +72,18 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         }
         
         const data = await res.json();
+        
+        // 添加处理商品图片的逻辑
+        // 如果没有images数组，则使用主图片创建一个单一图片的数组
+        if (!data.images || !Array.isArray(data.images) || data.images.length === 0) {
+          data.images = [data.image];
+        }
+        
+        // 确保主图片在图片数组中
+        if (data.image && !data.images.includes(data.image)) {
+          data.images.unshift(data.image);
+        }
+        
         setProduct(data);
         
         // 加载模拟评论数据
@@ -103,6 +110,17 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         
         // 获取相关产品
         fetchRelatedProducts();
+        
+        // 初始化变体选择
+        if (data.variants && data.variants.length > 0) {
+          const initialSelections: Record<string, string> = {};
+          data.variants.forEach((variant: any) => {
+            if (variant.options && variant.options.length > 0) {
+              initialSelections[variant.id] = variant.options[0].id;
+            }
+          });
+          setVariantSelections(initialSelections);
+        }
       } catch (err) {
         console.error('获取商品详情出错:', err);
         setError('获取商品信息失败，请稍后重试');
@@ -118,133 +136,99 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const fetchRelatedProducts = async () => {
     try {
       // 实际项目中，这里应该根据当前产品的分类或标签获取相关产品
-      const res = await fetch('/api/products?limit=4');
+      const res = await fetch('/api/products?limit=8');
       if (res.ok) {
         const data = await res.json();
         // 过滤掉当前产品
-        setRelatedProducts(data.products.filter((p: Product) => p.id !== params.id).slice(0, 3));
+        setRelatedProducts(data.products.filter((p: Product) => p.id !== params.id));
       }
     } catch (err) {
       console.error('获取相关产品出错:', err);
     }
   };
   
-  // 处理数量变化
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setQuantity(parseInt(e.target.value));
-  };
-  
-  // 手动调整数量
-  const adjustQuantity = (amount: number) => {
-    setQuantity(prev => {
-      const newValue = prev + amount;
-      return newValue > 0 && newValue <= (product?.inventory || 10) ? newValue : prev;
-    });
-  };
-  
   // 处理加入购物车
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (quantity: number) => {
     if (product) {
-      setAddingToCart(true);
-      
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 800));
-        addItem(product, quantity);
+        // 添加到购物车，包含变体选择
+        addItem({
+          ...product,
+          variantSelections
+        }, quantity);
         
-        // 显示成功消息
-        window.alert('已成功加入购物车！');
+        return Promise.resolve();
       } catch (err) {
         console.error('加入购物车失败:', err);
-      } finally {
-        setAddingToCart(false);
+        return Promise.reject(err);
       }
     }
+    return Promise.reject('商品不存在');
   };
   
   // 处理立即购买
-  const handleBuyNow = async () => {
+  const handleBuyNow = async (quantity: number) => {
     if (product) {
-      setAddingToCart(true);
-      
       try {
         // 添加到购物车
-        addItem(product, quantity);
+        addItem({
+          ...product,
+          variantSelections
+        }, quantity);
         
         // 导航到结账页面
         router.push('/cart');
+        return Promise.resolve();
       } catch (err) {
         console.error('立即购买失败:', err);
-      } finally {
-        setAddingToCart(false);
+        return Promise.reject(err);
       }
     }
+    return Promise.reject('商品不存在');
   };
   
-  // 处理评分变化
-  const handleRatingChange = (rating: number) => {
-    setUserReview(prev => ({ ...prev, rating }));
+  // 处理添加到收藏夹
+  const handleAddToWishlist = () => {
+    setIsInWishlist(!isInWishlist);
+    // 这里可以添加实际的收藏功能逻辑
   };
   
-  // 处理评论内容变化
-  const handleReviewContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setUserReview(prev => ({ ...prev, content: e.target.value }));
+  // 处理变体选择变化
+  const handleVariantChange = (selections: Record<string, string>) => {
+    setVariantSelections(selections);
+    // 在实际应用中，这里可能需要根据选择的变体更新价格、库存或图片
   };
   
-  // 提交评论
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!userReview.content.trim()) {
-      alert('请输入评论内容');
-      return;
-    }
-    
-    setSubmittingReview(true);
-    
-    try {
-      // 模拟API提交
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // 创建新评论对象
-      const newReview: Review = {
-        id: `review-${Date.now()}`,
-        userName: '当前用户', // 实际应用中应该使用真实用户名
-        userAvatar: '',
-        rating: userReview.rating,
-        date: new Date().toISOString().split('T')[0],
-        content: userReview.content
-      };
-      
-      // 更新评论列表
-      setReviews(prev => [newReview, ...prev]);
-      
-      // 清空表单并隐藏
-      setUserReview({ rating: 5, content: '' });
-      setShowReviewForm(false);
-      
-      // 显示成功消息
-      alert('评论提交成功！');
-    } catch (err) {
-      console.error('提交评论失败:', err);
-      alert('评论提交失败，请重试');
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
-  
+  // 加载状态
   if (loading) {
     return (
       <>
         <Header />
-        <main className="min-h-screen py-12">
-          <div className="container mx-auto px-4 flex justify-center items-center">
-            <div className="flex flex-col items-center">
-              <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <p className="mt-4 text-gray-600">加载商品信息...</p>
+        <main className="min-h-screen py-12 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-center">
+              <div className="animate-pulse w-full max-w-6xl">
+                <div className="h-4 bg-gray-300 rounded w-1/4 mb-6"></div>
+                <div className="flex flex-col md:flex-row gap-8">
+                  <div className="md:w-1/2">
+                    <div className="h-96 bg-gray-300 rounded-lg"></div>
+                  </div>
+                  <div className="md:w-1/2">
+                    <div className="h-8 bg-gray-300 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/2 mb-6"></div>
+                    <div className="h-12 bg-gray-300 rounded mb-6"></div>
+                    <div className="space-y-4">
+                      <div className="h-4 bg-gray-300 rounded"></div>
+                      <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+                      <div className="h-4 bg-gray-300 rounded w-4/6"></div>
+                    </div>
+                    <div className="mt-8 flex space-x-4">
+                      <div className="h-12 bg-gray-300 rounded w-1/2"></div>
+                      <div className="h-12 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -253,13 +237,14 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     )
   }
   
+  // 错误状态
   if (error || !product) {
     return (
       <>
         <Header />
-        <main className="min-h-screen py-12">
+        <main className="min-h-screen py-12 bg-gray-50">
           <div className="container mx-auto px-4">
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-md mx-auto">
               <div className="text-4xl text-red-500 mb-4">⚠️</div>
               <h2 className="text-xl font-medium mb-4">{error || '商品不存在'}</h2>
               <p className="text-gray-500 mb-8">请返回首页查看其他商品</p>
@@ -280,37 +265,35 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   return (
     <>
       <Header />
-      <main className="min-h-screen py-12">
+      <main className="min-h-screen py-8 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            {/* 面包屑导航 */}
-            <div className="p-4 border-b bg-gray-50">
-              <div className="flex items-center text-sm">
-                <Link href="/" className="text-gray-500 hover:text-primary">
-                  首页
-                </Link>
-                <span className="mx-2 text-gray-300">/</span>
-                <Link href="/products" className="text-gray-500 hover:text-primary">
-                  全部商品
-                </Link>
-                <span className="mx-2 text-gray-300">/</span>
-                <span className="text-gray-700">{product.name}</span>
-              </div>
+          {/* 面包屑导航 */}
+          <div className="mb-6">
+            <div className="flex items-center text-sm">
+              <Link href="/" className="text-gray-500 hover:text-primary">
+                首页
+              </Link>
+              <span className="mx-2 text-gray-300">/</span>
+              <Link href="/products" className="text-gray-500 hover:text-primary">
+                全部商品
+              </Link>
+              <span className="mx-2 text-gray-300">/</span>
+              <span className="text-gray-700">{product.name}</span>
             </div>
-            
-            {/* 商品信息 */}
+          </div>
+          
+          {/* 商品主要信息区 */}
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* 商品图片 */}
-              <div className="relative h-80 md:h-96 rounded-lg overflow-hidden border">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
+              {/* 左侧：商品图片 */}
+              <div>
+                <ProductGallery 
+                  images={product.images || [product.image]} 
+                  productName={product.name} 
                 />
               </div>
               
-              {/* 商品详情 */}
+              {/* 右侧：商品信息和操作 */}
               <div className="flex flex-col">
                 <h1 className="text-2xl font-bold mb-2">{product.name}</h1>
                 
@@ -334,280 +317,140 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                     <span className="ml-1">{product.rating}</span>
                   </div>
                   <span className="text-gray-500">{product.reviews} 条评价</span>
-                </div>
-                
-                <div className="bg-gray-50 px-4 py-3 mb-6">
-                  <div className="text-3xl font-bold text-primary">
-                    ¥{product.price}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    市场价: <span className="line-through">¥{Math.round(product.price * 1.2)}</span>
-                  </div>
-                </div>
-                
-                <p className="text-gray-600 mb-6">{product.description}</p>
-                
-                <div className="border-t border-b py-4 mb-6">
-                  <div className="flex items-center">
-                    <div className="w-20 text-gray-500">商品库存:</div>
-                    <div className={product.inventory > 10 ? 'text-green-600' : product.inventory > 0 ? 'text-orange-500' : 'text-red-500'}>
-                      {product.inventory > 0 ? `${product.inventory} 件` : '无货'}
-                    </div>
-                  </div>
                   
-                  <div className="flex items-center mt-2">
-                    <div className="w-20 text-gray-500">配送至:</div>
-                    <div className="flex items-center">
-                      <span>北京市</span>
-                      <button className="ml-2 text-primary text-sm">修改</button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center mt-2">
-                    <div className="w-20 text-gray-500">服务:</div>
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-600 mr-4">
-                        <span className="text-primary">✓</span> 7天无理由退货
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        <span className="text-primary">✓</span> 48小时发货
-                      </span>
-                    </div>
+                  {/* 社交分享和收藏按钮 */}
+                  <div className="ml-auto flex space-x-2">
+                    <button 
+                      className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${isInWishlist ? 'bg-red-50 text-red-500 border-red-200' : 'text-gray-400 border-gray-200 hover:text-gray-600'}`}
+                      onClick={handleAddToWishlist}
+                      title="收藏商品"
+                    >
+                      <Heart size={16} className={isInWishlist ? 'fill-current' : ''} />
+                    </button>
+                    <button 
+                      className="w-8 h-8 rounded-full flex items-center justify-center border border-gray-200 text-gray-400 hover:text-gray-600"
+                      title="分享商品"
+                    >
+                      <Share2 size={16} />
+                    </button>
                   </div>
                 </div>
                 
-                <div className="mb-6">
-                  <div className="flex items-center">
-                    <label htmlFor="quantity" className="w-20 text-gray-500">
-                      数量:
-                    </label>
-                    <div className="flex items-center border border-gray-300 rounded-md">
-                      <button 
-                        onClick={() => adjustQuantity(-1)} 
-                        disabled={quantity <= 1}
-                        className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-                      >
-                        -
-                      </button>
-                      <div className="w-14 h-10 border-x border-gray-300 flex items-center justify-center">
-                        {quantity}
-                      </div>
-                      <button 
-                        onClick={() => adjustQuantity(1)} 
-                        disabled={quantity >= product.inventory}
-                        className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <span className="ml-3 text-sm text-gray-500">
-                      (最多可购买 {product.inventory} 件)
-                    </span>
-                  </div>
+                <div className="border-t border-b py-4 mb-4">
+                  <p className="text-gray-600">{product.description}</p>
                 </div>
                 
-                <div className="flex space-x-4">
-                  <button 
-                    className="flex-1 bg-primary hover:bg-blue-600 text-white py-3 rounded-md flex items-center justify-center disabled:opacity-70"
-                    onClick={handleAddToCart}
-                    disabled={addingToCart || product.inventory <= 0}
-                  >
-                    {addingToCart ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        处理中...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        加入购物车
-                      </>
-                    )}
-                  </button>
-                  <button 
-                    className="flex-1 border border-primary text-primary hover:bg-blue-50 py-3 rounded-md disabled:opacity-70"
-                    onClick={handleBuyNow}
-                    disabled={addingToCart || product.inventory <= 0}
-                  >
-                    立即购买
-                  </button>
-                </div>
+                {/* 变体选择 */}
+                {product.variants && product.variants.length > 0 && (
+                  <div className="mb-6">
+                    <ProductVariants 
+                      variants={product.variants} 
+                      onChange={handleVariantChange}
+                      defaultSelections={variantSelections}
+                      disabled={product.inventory <= 0}
+                    />
+                  </div>
+                )}
+                
+                {/* 购买操作区 */}
+                <ProductActions 
+                  price={product.price}
+                  originalPrice={product.price * 1.2} // 示例：原价为现价的1.2倍
+                  inventory={product.inventory}
+                  onAddToCart={handleAddToCart}
+                  onBuyNow={handleBuyNow}
+                  onAddToWishlist={handleAddToWishlist}
+                  disablePurchase={product.inventory <= 0}
+                />
               </div>
             </div>
-            
-            {/* 商品规格 */}
-            <div className="p-6 border-t">
-              <h2 className="text-xl font-bold mb-4">商品规格</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {product.specifications && Object.entries(product.specifications).map(([key, value]) => (
-                  <div key={key} className="flex border-b border-gray-100 py-2">
-                    <div className="w-24 text-gray-500">{key}:</div>
-                    <div className="text-gray-800">{String(value)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* 商品评价 */}
-            <div className="p-6 border-t">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">用户评价 ({reviews.length})</h2>
-                <button 
-                  onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="text-primary hover:underline"
-                >
-                  {showReviewForm ? '取消评价' : '我要评价'}
-                </button>
-              </div>
-              
-              {/* 评价表单 */}
-              {showReviewForm && (
-                <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                  <h3 className="text-lg font-medium mb-3">发表评价</h3>
-                  <form onSubmit={handleSubmitReview}>
-                    <div className="mb-4">
-                      <label className="block text-gray-600 mb-2">评分</label>
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => handleRatingChange(star)}
-                            className="text-2xl focus:outline-none mr-1"
-                          >
-                            <span className={star <= userReview.rating ? 'text-yellow-400' : 'text-gray-300'}>
-                              ★
-                            </span>
-                          </button>
-                        ))}
-                        <span className="ml-2 text-gray-600">
-                          {userReview.rating} 星
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label htmlFor="reviewContent" className="block text-gray-600 mb-2">
-                        评价内容
-                      </label>
-                      <textarea
-                        id="reviewContent"
-                        rows={4}
-                        value={userReview.content}
-                        onChange={handleReviewContentChange}
-                        placeholder="请分享您对这款商品的体验和建议..."
-                        className="w-full border rounded-lg p-3 focus:ring-primary focus:border-primary"
-                        required
-                      ></textarea>
-                    </div>
-                    
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={submittingReview}
-                        className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-70"
-                      >
-                        {submittingReview ? '提交中...' : '提交评价'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-              
-              {/* 评价列表 */}
-              {reviews.length > 0 ? (
-                <div className="space-y-6">
-                  {reviews.map(review => (
+          </div>
+          
+          {/* 商品详情区 */}
+          <ProductDescription 
+            description={product.description}
+            specifications={product.specifications}
+            reviewsSection={
+              <div className="space-y-6">
+                {reviews.length > 0 ? (
+                  reviews.map(review => (
                     <div key={review.id} className="border-b pb-6">
-                      <div className="flex items-center mb-2">
+                      <div className="flex items-start">
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
                           {review.userAvatar ? (
                             <img 
                               src={review.userAvatar} 
                               alt={review.userName} 
-                              className="w-full h-full rounded-full object-cover"
+                              className="w-10 h-10 rounded-full object-cover"
                             />
                           ) : (
                             <span className="text-gray-500">{review.userName.slice(0, 1)}</span>
                           )}
                         </div>
-                        <div>
-                          <div className="font-medium">{review.userName}</div>
-                          <div className="text-gray-500 text-sm">{review.date}</div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <div className="font-medium">{review.userName}</div>
+                              <div className="flex text-yellow-400 mt-1">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <span key={star} className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}>
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="text-gray-500 text-sm">{review.date}</div>
+                          </div>
+                          <p className="text-gray-700 mt-2">{review.content}</p>
                         </div>
                       </div>
-                      
-                      <div className="flex text-yellow-400 mb-2">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <span key={star} className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}>
-                            ★
-                          </span>
-                        ))}
-                      </div>
-                      
-                      <p className="text-gray-700">{review.content}</p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  暂无评价，快来发表第一条评价吧！
-                </div>
-              )}
-              
-              {reviews.length > 0 && (
-                <div className="mt-6 text-center">
-                  <Link href={`/product/${product.id}/reviews`} className="text-primary hover:underline">
-                    查看全部评价 →
-                  </Link>
-                </div>
-              )}
-            </div>
-            
-            {/* 相关商品 */}
-            {relatedProducts.length > 0 && (
-              <div className="p-6 border-t">
-                <h2 className="text-xl font-bold mb-4">相关商品</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {relatedProducts.map(relatedProduct => (
-                    <Link key={relatedProduct.id} href={`/product/${relatedProduct.id}`}>
-                      <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                        <div className="relative h-48">
-                          <Image
-                            src={relatedProduct.image}
-                            alt={relatedProduct.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <h3 className="font-medium text-lg mb-2 hover:text-primary transition-colors">
-                            {relatedProduct.name}
-                          </h3>
-                          <div className="text-primary font-bold">¥{relatedProduct.price}</div>
-                        </div>
-                      </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    暂无评价，快来发表第一条评价吧！
+                  </div>
+                )}
+                
+                {reviews.length > 0 && (
+                  <div className="mt-6 text-center">
+                    <Link href={`/product/${product.id}/reviews`} className="text-primary hover:underline">
+                      查看全部评价 →
                     </Link>
-                  ))}
+                  </div>
+                )}
+              </div>
+            }
+            additionalInfo={
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-medium mb-2">售后保障</h3>
+                  <p className="text-sm text-gray-600">本商品支持7天无理由退换，15天质量问题换货，1年保修服务。</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-medium mb-2">温馨提示</h3>
+                  <p className="text-sm text-gray-600">商品实际颜色以实物为准，因拍摄灯光及显示器色差等问题可能造成商品图片与实物有些许差异。</p>
                 </div>
               </div>
-            )}
-          </div>
+            }
+          />
+          
+          {/* 相关商品推荐 */}
+          <ProductRecommendations 
+            title="猜你喜欢"
+            products={relatedProducts}
+            currentProductId={product.id}
+          />
+          
+          {/* 最近浏览 */}
+          <ProductRecommendations 
+            title="同类热卖"
+            products={relatedProducts.slice().reverse()} // 示例：使用相同数据但反转顺序
+            currentProductId={product.id}
+          />
         </div>
       </main>
       <Footer />
-      
-      {/* 评论组件 */}
-      {!loading && product && (
-        <section className="container mx-auto px-4 py-8">
-          <ReviewSection productId={params.id} />
-        </section>
-      )}
     </>
   )
 } 
