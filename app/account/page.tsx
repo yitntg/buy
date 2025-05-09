@@ -1,32 +1,96 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import { useAuth } from '../context/AuthContext'
+import { useRouter } from 'next/navigation'
 
 export default function AccountPage() {
+  const { user: authUser, logout } = useAuth()
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState({ type: '', text: '' })
+  const [avatar, setAvatar] = useState<File | null>(null)
+  const [previewURL, setPreviewURL] = useState<string>('')
+
+  // 扩展用户类型，添加可能的字段
+  interface Order {
+    id: string;
+    date: string;
+    status: string;
+    total: number;
+  }
+
   // 模拟用户数据，实际应用中应该从会话或API获取
   const user = {
-    name: '张三',
-    email: 'zhangsan@example.com',
-    phone: '138****1234',
-    avatar: 'https://picsum.photos/id/64/200/200',
-    memberSince: '2023年10月',
+    name: authUser?.username || '张三',
+    email: authUser?.email || 'zhangsan@example.com',
+    phone: '138****1234', // 默认值
+    avatar: authUser?.avatar || 'https://picsum.photos/id/64/200/200',
+    memberSince: '2023年10月', // 默认值
     orders: [
       { id: 'ORD12345', date: '2023-11-15', status: '已完成', total: 598 },
       { id: 'ORD12346', date: '2023-11-02', status: '已发货', total: 4999 },
-    ]
+    ] as Order[]
   }
   
-  // 账户菜单项
+  // 账户菜单项 - 只保留已实现的功能
   const menuItems = [
     { label: '个人信息', href: '/account', active: true },
     { label: '我的订单', href: '/account/orders', active: false },
-    { label: '收货地址', href: '/account/addresses', active: false },
-    { label: '支付方式', href: '/account/payment', active: false },
-    { label: '优惠券', href: '/account/coupons', active: false },
-    { label: '消息通知', href: '/account/notifications', active: false },
-    { label: '账户安全', href: '/account/security', active: false },
   ]
+  
+  // 处理退出登录
+  const handleLogout = () => {
+    logout()
+    router.push('/')
+  }
+  
+  // 处理表单提交
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setMessage({ type: '', text: '' })
+    
+    // 模拟API请求延迟
+    setTimeout(() => {
+      setIsLoading(false)
+      setMessage({ type: 'success', text: '个人信息已更新' })
+      
+      // 消息3秒后自动消失
+      setTimeout(() => {
+        setMessage({ type: '', text: '' })
+      }, 3000)
+    }, 800)
+  }
+  
+  // 处理头像上传
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const result = reader.result
+        if (typeof result === 'string') {
+          setPreviewURL(result)
+        }
+      }
+      reader.readAsDataURL(file)
+      setAvatar(file)
+    }
+  }
+  
+  // 触发文件选择
+  const triggerFileInput = () => {
+    const fileInput = document.getElementById('avatarInput') as HTMLInputElement
+    if (fileInput) {
+      fileInput.click()
+    }
+  }
   
   return (
     <>
@@ -42,7 +106,7 @@ export default function AccountPage() {
                 <div className="flex items-center mb-6">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden">
                     <Image
-                      src={user.avatar}
+                      src={previewURL || user.avatar}
                       alt={user.name}
                       fill
                       className="object-cover"
@@ -75,7 +139,10 @@ export default function AccountPage() {
               </div>
               
               <div className="bg-white rounded-lg shadow-md p-6">
-                <button className="w-full text-red-500 hover:text-red-600 text-sm font-medium">
+                <button 
+                  onClick={handleLogout}
+                  className="w-full text-red-500 hover:text-red-600 text-sm font-medium"
+                >
                   退出登录
                 </button>
               </div>
@@ -86,7 +153,13 @@ export default function AccountPage() {
               <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h2 className="text-xl font-medium mb-4">个人信息</h2>
                 
-                <form className="space-y-6">
+                {message.text && (
+                  <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {message.text}
+                  </div>
+                )}
+                
+                <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -134,15 +207,23 @@ export default function AccountPage() {
                       <div className="flex items-center">
                         <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
                           <Image
-                            src={user.avatar}
+                            src={previewURL || user.avatar}
                             alt={user.name}
                             fill
                             className="object-cover"
                           />
                         </div>
+                        <input 
+                          type="file" 
+                          id="avatarInput" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleAvatarChange}
+                        />
                         <button
                           type="button"
                           className="text-sm text-primary border border-primary px-3 py-1 rounded-md hover:bg-blue-50"
+                          onClick={triggerFileInput}
                         >
                           更换头像
                         </button>
@@ -153,9 +234,10 @@ export default function AccountPage() {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      className="bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600"
+                      className={`bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      disabled={isLoading}
                     >
-                      保存更改
+                      {isLoading ? '保存中...' : '保存更改'}
                     </button>
                   </div>
                 </form>
