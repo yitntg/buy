@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useRouter } from 'next/navigation'
 import UserAvatar from './UserAvatar'
+import { Menu } from '@headlessui/react'
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth()
@@ -237,6 +238,34 @@ export default function Header() {
                   />
                 </div>
               </Link>
+              
+              {/* 用户个人中心选项，根据用户角色显示不同选项 */}
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg overflow-hidden z-10 hidden md:block" style={{ display: isUserMenuOpen ? 'block' : 'none' }}>
+                <div className="py-1">
+                  <Link 
+                    href="/account" 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    个人中心
+                  </Link>
+                  {isAdmin && (
+                    <Link 
+                      href="/dashboard" 
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      管理后台
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                  >
+                    退出登录
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="flex items-center space-x-4">

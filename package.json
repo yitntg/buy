@@ -12,6 +12,7 @@
     "direct-init": "node scripts/direct-init.js"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.2",
     "@supabase/supabase-js": "^2.49.4",
     "autoprefixer": "^10.4.16",
     "dotenv": "16.5.0",

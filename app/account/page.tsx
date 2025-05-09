@@ -49,6 +49,10 @@ export default function AccountPage() {
     { label: '个人信息', href: '/account', active: true },
     { label: '我的订单', href: '/account/orders', active: false },
     { label: '收货地址', href: '/account/addresses', active: false },
+    { label: '支付方式', href: '/account/payment', active: false },
+    { label: '优惠券', href: '/account/coupons', active: false },
+    { label: '消息通知', href: '/account/notifications', active: false },
+    { label: '账户安全', href: '/account/security', active: false },
   ]
   
   // 处理退出登录
