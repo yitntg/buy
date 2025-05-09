@@ -6,88 +6,28 @@ import Image from 'next/image'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
-
-// 收藏商品类型
-interface FavoriteProduct {
-  id: number
-  name: string
-  description: string
-  price: number
-  image: string
-  category: number
-  rating: number
-  reviews: number
-  addedAt: string
-  inventory: number
-}
+import { useFavorites, FavoriteProduct } from '../context/FavoritesContext'
+import StarRating from '../components/StarRating'
 
 export default function FavoritesPage() {
-  const { isAuthenticated, user } = useAuth()
-  const [favorites, setFavorites] = useState<FavoriteProduct[]>([])
+  const { isAuthenticated } = useAuth()
+  const { favorites, removeFromFavorites } = useFavorites()
   const [loading, setLoading] = useState(true)
   
-  // 模拟获取收藏夹数据
+  // 模拟API请求延迟
   useEffect(() => {
-    // 模拟API请求延迟
     const timer = setTimeout(() => {
-      // 如果用户已登录，获取服务器端数据
-      // 如果未登录，从本地存储中获取数据
-      const demoFavorites = [
-        {
-          id: 1,
-          name: '无线蓝牙耳机',
-          description: '高音质立体声，续航持久',
-          price: 299,
-          image: 'https://picsum.photos/id/1/400/400',
-          category: 1,
-          rating: 4.5,
-          reviews: 125,
-          addedAt: '2023-11-12',
-          inventory: 100,
-        },
-        {
-          id: 2,
-          name: '智能手表',
-          description: '健康监测，多功能运动',
-          price: 799,
-          image: 'https://picsum.photos/id/2/400/400',
-          category: 1,
-          rating: 4.2,
-          reviews: 98,
-          addedAt: '2023-11-10',
-          inventory: 50,
-        },
-        {
-          id: 3,
-          name: '时尚休闲衬衫',
-          description: '舒适面料，经典款式',
-          price: 199,
-          image: 'https://picsum.photos/id/3/400/400',
-          category: 3,
-          rating: 4.8,
-          reviews: 205,
-          addedAt: '2023-11-05',
-          inventory: 75,
-        },
-      ]
-      
-      setFavorites(demoFavorites)
       setLoading(false)
     }, 800)
     
     return () => clearTimeout(timer)
-  }, [isAuthenticated])
-  
-  // 模拟移除收藏
-  const removeFromFavorites = (productId: number) => {
-    setFavorites(favorites.filter(product => product.id !== productId))
-  }
+  }, [])
   
   // 渲染收藏商品卡片
   const renderProductCard = (product: FavoriteProduct) => (
     <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02]">
       <div className="relative">
-        <Link href={`/products/${product.id}`}>
+        <Link href={`/product/${product.id}`}>
           <div className="relative aspect-square overflow-hidden">
             <Image 
               src={product.image} 
@@ -109,16 +49,17 @@ export default function FavoritesPage() {
       </div>
       
       <div className="p-4">
-        <Link href={`/products/${product.id}`} className="block">
+        <Link href={`/product/${product.id}`} className="block">
           <h3 className="text-lg font-medium text-gray-800 mb-1 hover:text-primary truncate">{product.name}</h3>
         </Link>
         
         <div className="flex items-center mb-2">
-          <div className="flex text-yellow-400">
-            {'★'.repeat(Math.round(product.rating))}
-            {'☆'.repeat(5 - Math.round(product.rating))}
-          </div>
-          <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
+          <StarRating 
+            rating={product.rating} 
+            size="sm" 
+            showNumber={true} 
+            reviewCount={product.reviews}
+          />
         </div>
         
         <div className="flex justify-between items-center">

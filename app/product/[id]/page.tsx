@@ -13,6 +13,7 @@ import ProductRecommendations from '../../components/ProductRecommendations'
 import ProductVariants from '../../components/ProductVariants'
 import StarRating from '../../components/StarRating'
 import { Share2, Heart } from 'lucide-react'
+import { useFavorites } from '../../context/FavoritesContext'
 
 // 定义商品类型接口
 interface Product {
@@ -51,6 +52,7 @@ interface Review {
 export default function ProductPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { addItem } = useCart()
+  const { addToFavorites, removeFromFavorites, isInFavorites } = useFavorites()
   const [loading, setLoading] = useState(true)
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
@@ -133,6 +135,13 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     fetchProduct();
   }, [params.id]);
   
+  // 在useEffect中检查商品是否已在收藏夹中
+  useEffect(() => {
+    if (product) {
+      setIsInWishlist(isInFavorites(product.id))
+    }
+  }, [product, isInFavorites])
+  
   // 获取相关产品
   const fetchRelatedProducts = async () => {
     try {
@@ -190,9 +199,26 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   
   // 处理添加到收藏夹
   const handleAddToWishlist = () => {
-    setIsInWishlist(!isInWishlist);
-    // 这里可以添加实际的收藏功能逻辑
-  };
+    if (!product) return
+    
+    if (isInWishlist) {
+      removeFromFavorites(product.id)
+    } else {
+      addToFavorites({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        rating: product.rating,
+        reviews: product.reviews,
+        addedAt: new Date().toISOString(),
+        inventory: product.inventory
+      })
+    }
+    
+    setIsInWishlist(!isInWishlist)
+  }
   
   // 处理变体选择变化
   const handleVariantChange = (selections: Record<string, string>) => {
