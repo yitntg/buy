@@ -50,6 +50,12 @@ export default function ProductsPage() {
   // 每次加载的商品数量
   const [limit] = useState(10)
   
+  // 筛选器下拉菜单状态
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  // 自定义价格范围
+  const [customPriceMin, setCustomPriceMin] = useState('')
+  const [customPriceMax, setCustomPriceMax] = useState('')
+  
   // 分类数据
   const categories = [
     { id: 1, name: '电子产品' },
@@ -187,6 +193,52 @@ export default function ProductsPage() {
     sortBy
   ]);
   
+  // 处理点击其他区域关闭下拉菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdown) {
+        const target = event.target as HTMLElement;
+        const dropdown = document.getElementById(`${openDropdown}-dropdown`);
+        const button = document.getElementById(`${openDropdown}-button`);
+        
+        if (dropdown && button && !dropdown.contains(target) && !button.contains(target)) {
+          setOpenDropdown(null);
+        }
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
+  
+  // 切换下拉菜单
+  const toggleDropdown = (id: string) => {
+    setOpenDropdown(prevDropdown => prevDropdown === id ? null : id);
+  };
+  
+  // 处理自定义价格范围提交
+  const handleCustomPriceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (customPriceMin && customPriceMax) {
+      const min = parseInt(customPriceMin);
+      const max = parseInt(customPriceMax);
+      
+      if (!isNaN(min) && !isNaN(max) && min >= 0 && max > min) {
+        const customRangeId = `${min}-${max}`;
+        
+        // 检查自定义范围是否已存在
+        if (!selectedPriceRanges.includes(customRangeId)) {
+          setSelectedPriceRanges(prev => [...prev, customRangeId]);
+          setPage(1);
+          setOpenDropdown(null);
+        }
+      }
+    }
+  };
+  
   // 处理分类选择
   const handleCategoryChange = (categoryId: number) => {
     setSelectedCategories(prev => {
@@ -288,27 +340,35 @@ export default function ProductsPage() {
             
             {/* 高级筛选栏 - 合并筛选和布局控制 */}
             <div className="bg-white rounded-lg shadow-md p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   {/* 筛选按钮组 - 左侧 */}
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-3">
                     {/* 分类筛选下拉菜单 */}
                     <div className="relative inline-block text-left">
                       <button 
+                        id="category-button"
                         type="button" 
-                        className="inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
-                        onClick={() => {
-                          const elem = document.getElementById('category-dropdown');
-                          if (elem) elem.classList.toggle('hidden');
-                        }}
+                        className={`inline-flex justify-center items-center rounded-md border ${selectedCategories.length > 0 ? 'border-primary bg-blue-50' : 'border-gray-300'} shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary`}
+                        onClick={() => toggleDropdown('category')}
+                        aria-expanded={openDropdown === 'category'}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1 ${selectedCategories.length > 0 ? 'text-primary' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                         分类
+                        {selectedCategories.length > 0 && (
+                          <span className="ml-1.5 px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">
+                            {selectedCategories.length}
+                          </span>
+                        )}
                       </button>
-                      <div id="category-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
-                        <div className="py-1 p-2" role="none">
+                      <div 
+                        id="category-dropdown" 
+                        className={`${openDropdown === 'category' ? 'block' : 'hidden'} origin-top-right absolute left-0 mt-2 w-64 md:w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10`} 
+                        role="menu"
+                      >
+                        <div className="py-1 p-2 max-h-60 overflow-y-auto" role="none">
                           {categories.map(category => (
                             <div key={category.id} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
                               <input 
@@ -316,7 +376,7 @@ export default function ProductsPage() {
                                 id={`category-${category.id}`}
                                 checked={selectedCategories.includes(category.id)}
                                 onChange={() => handleCategoryChange(category.id)}
-                                className="h-4 w-4 text-primary rounded"
+                                className="h-4 w-4 text-primary rounded focus:ring-primary"
                               />
                               <label 
                                 htmlFor={`category-${category.id}`}
@@ -327,26 +387,47 @@ export default function ProductsPage() {
                             </div>
                           ))}
                         </div>
+                        {selectedCategories.length > 0 && (
+                          <div className="border-t border-gray-100 p-2">
+                            <button
+                              onClick={() => {
+                                setSelectedCategories([]);
+                                setPage(1);
+                              }}
+                              className="w-full text-sm text-gray-500 hover:text-primary py-1"
+                            >
+                              清除所有分类
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
                     {/* 价格筛选下拉菜单 */}
                     <div className="relative inline-block text-left">
                       <button 
+                        id="price-button"
                         type="button" 
-                        className="inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
-                        onClick={() => {
-                          const elem = document.getElementById('price-dropdown');
-                          if (elem) elem.classList.toggle('hidden');
-                        }}
+                        className={`inline-flex justify-center items-center rounded-md border ${selectedPriceRanges.length > 0 ? 'border-primary bg-blue-50' : 'border-gray-300'} shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary`}
+                        onClick={() => toggleDropdown('price')}
+                        aria-expanded={openDropdown === 'price'}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1 ${selectedPriceRanges.length > 0 ? 'text-primary' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         价格
+                        {selectedPriceRanges.length > 0 && (
+                          <span className="ml-1.5 px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">
+                            {selectedPriceRanges.length}
+                          </span>
+                        )}
                       </button>
-                      <div id="price-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
-                        <div className="py-1 p-2" role="none">
+                      <div 
+                        id="price-dropdown" 
+                        className={`${openDropdown === 'price' ? 'block' : 'hidden'} origin-top-right absolute left-0 mt-2 w-64 md:w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10`} 
+                        role="menu"
+                      >
+                        <div className="py-1 p-2 max-h-60 overflow-y-auto" role="none">
                           {priceRanges.map(range => (
                             <div key={range.id} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
                               <input 
@@ -354,7 +435,7 @@ export default function ProductsPage() {
                                 id={`price-${range.id}`}
                                 checked={selectedPriceRanges.includes(range.id)}
                                 onChange={() => handlePriceRangeChange(range.id)}
-                                className="h-4 w-4 text-primary rounded"
+                                className="h-4 w-4 text-primary rounded focus:ring-primary"
                               />
                               <label 
                                 htmlFor={`price-${range.id}`}
@@ -364,35 +445,89 @@ export default function ProductsPage() {
                               </label>
                             </div>
                           ))}
+                          
+                          {/* 自定义价格范围 */}
+                          <div className="border-t border-gray-100 mt-2 pt-3 px-2">
+                            <p className="text-sm text-gray-500 mb-2">自定义价格范围</p>
+                            <form onSubmit={handleCustomPriceSubmit} className="flex items-center space-x-2">
+                              <input 
+                                type="number" 
+                                placeholder="¥最低" 
+                                min="0"
+                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                value={customPriceMin}
+                                onChange={(e) => setCustomPriceMin(e.target.value)}
+                              />
+                              <span className="text-gray-400">-</span>
+                              <input 
+                                type="number" 
+                                placeholder="¥最高" 
+                                min="0"
+                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                value={customPriceMax}
+                                onChange={(e) => setCustomPriceMax(e.target.value)}
+                              />
+                              <button 
+                                type="submit"
+                                className="bg-primary text-white p-1 rounded hover:bg-blue-600"
+                                disabled={!customPriceMin || !customPriceMax}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                            </form>
+                          </div>
                         </div>
+                        {selectedPriceRanges.length > 0 && (
+                          <div className="border-t border-gray-100 p-2">
+                            <button
+                              onClick={() => {
+                                setSelectedPriceRanges([]);
+                                setPage(1);
+                              }}
+                              className="w-full text-sm text-gray-500 hover:text-primary py-1"
+                            >
+                              清除所有价格筛选
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
                     {/* 评分筛选下拉菜单 */}
                     <div className="relative inline-block text-left">
                       <button 
+                        id="rating-button"
                         type="button" 
-                        className="inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
-                        onClick={() => {
-                          const elem = document.getElementById('rating-dropdown');
-                          if (elem) elem.classList.toggle('hidden');
-                        }}
+                        className={`inline-flex justify-center items-center rounded-md border ${minRating ? 'border-primary bg-blue-50' : 'border-gray-300'} shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary`}
+                        onClick={() => toggleDropdown('rating')}
+                        aria-expanded={openDropdown === 'rating'}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1 ${minRating ? 'text-yellow-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                         </svg>
                         评分
+                        {minRating && (
+                          <span className="ml-1.5 px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">
+                            {minRating}★+
+                          </span>
+                        )}
                       </button>
-                      <div id="rating-dropdown" className="hidden origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
+                      <div 
+                        id="rating-dropdown" 
+                        className={`${openDropdown === 'rating' ? 'block' : 'hidden'} origin-top-right absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10`} 
+                        role="menu"
+                      >
                         <div className="py-1 p-2" role="none">
                           {[4, 3, 2, 1].map(rating => (
                             <div key={rating} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
                               <input 
-                                type="checkbox" 
+                                type="radio" 
                                 id={`rating-${rating}`}
                                 checked={minRating === rating}
                                 onChange={() => handleRatingChange(rating)}
-                                className="h-4 w-4 text-primary rounded"
+                                className="h-4 w-4 text-primary focus:ring-primary"
                               />
                               <label 
                                 htmlFor={`rating-${rating}`}
@@ -404,6 +539,19 @@ export default function ProductsPage() {
                             </div>
                           ))}
                         </div>
+                        {minRating && (
+                          <div className="border-t border-gray-100 p-2">
+                            <button
+                              onClick={() => {
+                                setMinRating(null);
+                                setPage(1);
+                              }}
+                              className="w-full text-sm text-gray-500 hover:text-primary py-1"
+                            >
+                              清除评分筛选
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
