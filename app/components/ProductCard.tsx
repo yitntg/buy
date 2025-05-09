@@ -4,12 +4,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '../context/CartContext'
 import { useTheme } from '../context/ThemeContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import StarRating from './StarRating'
+import { useFavorites } from '../context/FavoritesContext'
 
 // 定义商品类型接口
 interface Product {
-  id: number
+  id: number | string
   name: string
   description: string
   price: number
@@ -27,6 +28,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart()
   const { theme } = useTheme()
+  const { addToFavorites, removeFromFavorites, isInFavorites } = useFavorites()
   const [isAdding, setIsAdding] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
@@ -36,6 +38,11 @@ export default function ProductCard({ product }: ProductCardProps) {
   useState(() => {
     setTimeout(() => setIsFadeIn(true), 50);
   });
+  
+  // 检查商品是否在收藏夹中
+  useEffect(() => {
+    setIsLiked(isInFavorites(product.id));
+  }, [product.id, isInFavorites]);
   
   // 格式化价格显示
   const formatPrice = (price: number) => {
@@ -76,6 +83,23 @@ export default function ProductCard({ product }: ProductCardProps) {
   const handleToggleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (isLiked) {
+      removeFromFavorites(product.id);
+    } else {
+      addToFavorites({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        rating: product.rating || 0,
+        reviews: product.reviews || 0,
+        addedAt: new Date().toISOString(),
+        inventory: product.inventory || 0
+      });
+    }
+    
     setIsLiked(!isLiked);
   };
   
@@ -141,7 +165,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
           
           {/* 打折标签示例 */}
-          {product.id % 3 === 0 && (
+          {typeof product.id === 'number' && product.id % 3 === 0 && (
             <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
               限时优惠
             </div>
