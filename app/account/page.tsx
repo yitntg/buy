@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
 
 export default function AccountPage() {
-  const { user: authUser, logout } = useAuth()
+  const { user, logout } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -25,11 +25,11 @@ export default function AccountPage() {
   }
 
   // 模拟用户数据，实际应用中应该从会话或API获取
-  const user = {
-    name: authUser?.username || '张三',
-    email: authUser?.email || 'zhangsan@example.com',
+  const userData = {
+    name: user?.username || '张三',
+    email: user?.email || 'zhangsan@example.com',
     phone: '138****1234', // 默认值
-    avatar: authUser?.avatar || 'https://picsum.photos/id/64/200/200',
+    avatar: user?.avatar || 'https://picsum.photos/id/64/200/200',
     memberSince: '2023年10月', // 默认值
     orders: [
       { id: 'ORD12345', date: '2023-11-15', status: '已完成', total: 598 },
@@ -37,10 +37,18 @@ export default function AccountPage() {
     ] as Order[]
   }
   
-  // 账户菜单项 - 只保留已实现的功能
+  // 表单状态
+  const [formData, setFormData] = useState({
+    name: userData.name,
+    email: userData.email,
+    phone: userData.phone
+  });
+  
+  // 账户菜单项 - 包含已实现的功能
   const menuItems = [
     { label: '个人信息', href: '/account', active: true },
     { label: '我的订单', href: '/account/orders', active: false },
+    { label: '收货地址', href: '/account/addresses', active: false },
   ]
   
   // 处理退出登录
@@ -49,22 +57,43 @@ export default function AccountPage() {
     router.push('/')
   }
   
+  // 处理表单字段变化
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  }
+  
   // 处理表单提交
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setMessage({ type: '', text: '' })
     
-    // 模拟API请求延迟
-    setTimeout(() => {
-      setIsLoading(false)
-      setMessage({ type: 'success', text: '个人信息已更新' })
+    try {
+      // 模拟API请求延迟
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // 显示成功消息
+      setMessage({ 
+        type: 'success', 
+        text: '个人信息已更新' 
+      })
       
       // 消息3秒后自动消失
       setTimeout(() => {
         setMessage({ type: '', text: '' })
       }, 3000)
-    }, 800)
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: '更新失败，请重试' 
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
   
   // 处理头像上传
@@ -106,15 +135,15 @@ export default function AccountPage() {
                 <div className="flex items-center mb-6">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden">
                     <Image
-                      src={previewURL || user.avatar}
-                      alt={user.name}
+                      src={previewURL || userData.avatar}
+                      alt={userData.name}
                       fill
                       className="object-cover"
                     />
                   </div>
                   <div className="ml-4">
-                    <h3 className="font-medium">{user.name}</h3>
-                    <p className="text-sm text-gray-500">会员自 {user.memberSince}</p>
+                    <h3 className="font-medium">{userData.name}</h3>
+                    <p className="text-sm text-gray-500">会员自 {userData.memberSince}</p>
                   </div>
                 </div>
                 
@@ -169,7 +198,8 @@ export default function AccountPage() {
                         type="text"
                         id="name"
                         name="name"
-                        defaultValue={user.name}
+                        value={formData.name}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
@@ -182,7 +212,8 @@ export default function AccountPage() {
                         type="email"
                         id="email"
                         name="email"
-                        defaultValue={user.email}
+                        value={formData.email}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
@@ -195,7 +226,8 @@ export default function AccountPage() {
                         type="tel"
                         id="phone"
                         name="phone"
-                        defaultValue={user.phone}
+                        value={formData.phone}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
@@ -207,8 +239,8 @@ export default function AccountPage() {
                       <div className="flex items-center">
                         <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
                           <Image
-                            src={previewURL || user.avatar}
-                            alt={user.name}
+                            src={previewURL || userData.avatar}
+                            alt={userData.name}
                             fill
                             className="object-cover"
                           />
@@ -234,10 +266,18 @@ export default function AccountPage() {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      className={`bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      className="bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600 flex items-center"
                       disabled={isLoading}
                     >
-                      {isLoading ? '保存中...' : '保存更改'}
+                      {isLoading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          正在保存...
+                        </>
+                      ) : '保存更改'}
                     </button>
                   </div>
                 </form>
@@ -251,7 +291,7 @@ export default function AccountPage() {
                   </Link>
                 </div>
                 
-                {user.orders.length > 0 ? (
+                {userData.orders.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50">
@@ -264,7 +304,7 @@ export default function AccountPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {user.orders.map((order) => (
+                        {userData.orders.map((order) => (
                           <tr key={order.id}>
                             <td className="px-4 py-3">{order.id}</td>
                             <td className="px-4 py-3">{order.date}</td>
