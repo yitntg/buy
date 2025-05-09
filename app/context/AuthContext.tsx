@@ -11,6 +11,7 @@ export interface User {
   lastName?: string;
   avatar?: string;
   role?: 'user' | 'admin';
+  phone?: string; // 添加电话号码字段
 }
 
 // 认证上下文类型
@@ -21,6 +22,7 @@ interface AuthContextType {
   login: (email: string, password: string, useDefaultAvatar?: boolean) => Promise<void>;
   register: (userData: any, useDefaultAvatar?: boolean) => Promise<void>;
   logout: () => void;
+  updateUser: (userData: Partial<User>) => void; // 添加更新用户信息的方法
   error: string | null;
 }
 
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: email || 'test@example.com',
         firstName: '测试',
         lastName: '用户',
+        phone: '138****1234', // 添加默认电话号码
         role: 'admin' // 为测试方便，默认所有用户都是管理员
       };
       
@@ -108,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
+        phone: userData.phone || '138****1234', // 添加电话号码
         role: 'user' // 新注册用户默认为普通用户角色
       };
       
@@ -136,6 +140,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   
+  // 更新用户信息方法
+  const updateUser = (userData: Partial<User>) => {
+    if (!user) return;
+    
+    const updatedUser = { ...user, ...userData };
+    setUser(updatedUser);
+    
+    if (isBrowser) {
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+  
   // 提供上下文值
   const value = {
     user,
@@ -144,6 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
+    updateUser, // 添加到上下文值中
     error
   };
   

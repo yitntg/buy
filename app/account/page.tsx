@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
 
 export default function AccountPage() {
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -24,13 +24,13 @@ export default function AccountPage() {
     total: number;
   }
 
-  // 模拟用户数据，实际应用中应该从会话或API获取
+  // 使用从AuthContext获取的用户数据
   const userData = {
     name: user?.username || '张三',
     email: user?.email || 'zhangsan@example.com',
-    phone: '138****1234', // 默认值
+    phone: user?.phone || '138****1234',
     avatar: user?.avatar || 'https://picsum.photos/id/64/200/200',
-    memberSince: '2023年10月', // 默认值
+    memberSince: '2023年10月',
     orders: [
       { id: 'ORD12345', date: '2023-11-15', status: '已完成', total: 598 },
       { id: 'ORD12346', date: '2023-11-02', status: '已发货', total: 4999 },
@@ -79,6 +79,15 @@ export default function AccountPage() {
     try {
       // 模拟API请求延迟
       await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // 更新用户信息到AuthContext
+      updateUser({
+        username: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        // 如果有预览URL，说明用户上传了新头像
+        ...(previewURL && { avatar: previewURL })
+      });
       
       // 显示成功消息
       setMessage({ 
