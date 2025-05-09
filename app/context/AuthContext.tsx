@@ -12,6 +12,8 @@ export interface User {
   avatar?: string;
   role?: 'user' | 'admin';
   phone?: string; // 添加电话号码字段
+  join_date?: string; // 加入日期
+  last_login?: string; // 最后登录时间
 }
 
 // 认证上下文类型
@@ -22,7 +24,7 @@ interface AuthContextType {
   login: (email: string, password: string, useDefaultAvatar?: boolean) => Promise<void>;
   register: (userData: any, useDefaultAvatar?: boolean) => Promise<void>;
   logout: () => void;
-  updateUser: (userData: Partial<User>) => void; // 添加更新用户信息的方法
+  updateUser: (userData: Partial<User>) => Promise<void>; // 更新为异步方法
   error: string | null;
 }
 
@@ -96,48 +98,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      // 在实际应用中，这里应该调用API进行身份验证
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 调用登录API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
       
-      // 尝试从用户配置文件中找到匹配的用户
-      let existingUserData = null;
-      
-      if (isBrowser) {
-        try {
-          const userProfiles = JSON.parse(localStorage.getItem(USER_PROFILES_KEY) || '{}');
-          
-          // 查找匹配的用户
-          Object.values(userProfiles).forEach((profile: any) => {
-            if (profile.email === email) {
-              existingUserData = profile;
-            }
-          });
-        } catch (err) {
-          console.error('Failed to parse user profiles from localStorage:', err);
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '登录失败');
       }
       
-      // 这里模拟API响应 - 为了测试方便，任何邮箱和密码组合都可以登录
-      const userData: User = existingUserData || {
-        id: '1',
-        username: '测试用户',
-        email: email || 'test@example.com',
-        firstName: '测试',
-        lastName: '用户',
-        phone: '138****1234', // 添加默认电话号码
-        role: 'admin' // 为测试方便，默认所有用户都是管理员
-      };
+      const data = await response.json();
+      const userData = data.user;
       
-      // 如果没有现有数据且明确指定使用默认头像，才添加默认头像
-      if (!existingUserData && useDefaultAvatar) {
-        userData.avatar = 'https://picsum.photos/id/64/200/200';
-      }
-      
+      // 设置用户状态
       setUser(userData);
+      
+      // 保存到本地存储
       saveUserToStorage(userData);
+      
+      console.log('登录成功:', userData);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败，请稍后重试');
       console.error('Login error:', err);
+      throw err; // 重新抛出以便调用者处理
     } finally {
       setIsLoading(false);
     }
@@ -149,33 +137,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      // 在实际应用中，这里应该调用API进行注册
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 使用随机ID或自动递增ID
-      const newId = Date.now().toString();
-      
-      // 这里模拟API响应
-      const newUser: User = {
-        id: newId,
+      // 构建注册数据
+      const registerData = {
         username: userData.username,
         email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phone: userData.phone || '138****1234', // 添加电话号码
-        role: 'user' // 新注册用户默认为普通用户角色
+        password: userData.password || '123456', // 默认密码，实际项目应该要求用户设置密码
+        avatar: useDefaultAvatar ? `https://api.dicebear.com/6.x/avataaars/svg?seed=${Date.now()}` : undefined
       };
       
-      // 只有明确指定使用默认头像时才添加avatar字段
-      if (useDefaultAvatar) {
-        newUser.avatar = 'https://picsum.photos/id/64/200/200';
+      // 调用注册API
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registerData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '注册失败');
       }
       
-      setUser(newUser);
-      saveUserToStorage(newUser);
+      const data = await response.json();
+      const createdUser = data.user;
+      
+      // 设置用户状态
+      setUser(createdUser);
+      
+      // 保存到本地存储
+      saveUserToStorage(createdUser);
+      
+      console.log('注册成功:', createdUser);
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败，请稍后重试');
       console.error('Register error:', err);
+      throw err; // 重新抛出以便调用者处理
     } finally {
       setIsLoading(false);
     }
@@ -194,12 +191,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   
   // 更新用户信息方法
-  const updateUser = (userData: Partial<User>) => {
+  const updateUser = async (userData: Partial<User>) => {
     if (!user) return;
     
-    const updatedUser = { ...user, ...userData };
-    setUser(updatedUser);
-    saveUserToStorage(updatedUser);
+    setIsLoading(true);
+    
+    try {
+      // 构建更新数据
+      const updateData = {
+        id: user.id,
+        ...userData
+      };
+      
+      // 调用API更新用户资料
+      const response = await fetch('/api/auth/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '更新资料失败');
+      }
+      
+      const data = await response.json();
+      const updatedUser = data.user;
+      
+      // 更新用户状态
+      setUser(updatedUser);
+      
+      // 保存到本地存储
+      saveUserToStorage(updatedUser);
+      
+      console.log('用户资料更新成功:', updatedUser);
+    } catch (err) {
+      console.error('更新用户资料失败:', err);
+      throw err; // 重新抛出以便调用者处理
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   // 提供上下文值
@@ -210,7 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
-    updateUser, // 添加到上下文值中
+    updateUser,
     error
   };
   

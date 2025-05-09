@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Header from '../components/Header'
@@ -15,6 +15,17 @@ export default function AccountPage() {
   const [message, setMessage] = useState({ type: '', text: '' })
   const [avatar, setAvatar] = useState<File | null>(null)
   const [previewURL, setPreviewURL] = useState<string>('')
+  
+  // 使用useEffect在用户数据加载后更新表单
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.username || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      })
+    }
+  }, [user])
 
   // 扩展用户类型，添加可能的字段
   interface Order {
@@ -26,11 +37,11 @@ export default function AccountPage() {
 
   // 使用从AuthContext获取的用户数据
   const userData = {
-    name: user?.username || '张三',
-    email: user?.email || 'zhangsan@example.com',
-    phone: user?.phone || '138****1234',
+    name: user?.username || '用户',
+    email: user?.email || '',
+    phone: user?.phone || '',
     avatar: user?.avatar || 'https://picsum.photos/id/64/200/200',
-    memberSince: '2023年10月',
+    memberSince: user?.join_date ? new Date(user.join_date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' }) : '2023年10月',
     orders: [
       { id: 'ORD12345', date: '2023-11-15', status: '已完成', total: 598 },
       { id: 'ORD12346', date: '2023-11-02', status: '已发货', total: 4999 },
@@ -77,17 +88,17 @@ export default function AccountPage() {
     setMessage({ type: '', text: '' })
     
     try {
-      // 模拟API请求延迟
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      // 更新用户信息到AuthContext
-      updateUser({
+      // 准备更新数据
+      const updateData = {
         username: formData.name,
         email: formData.email,
         phone: formData.phone,
         // 如果有预览URL，说明用户上传了新头像
         ...(previewURL && { avatar: previewURL })
-      });
+      };
+      
+      // 调用API更新用户信息
+      await updateUser(updateData);
       
       // 显示成功消息
       setMessage({ 
@@ -104,6 +115,7 @@ export default function AccountPage() {
         type: 'error', 
         text: '更新失败，请重试' 
       })
+      console.error('更新失败:', error);
     } finally {
       setIsLoading(false)
     }
@@ -132,6 +144,24 @@ export default function AccountPage() {
     if (fileInput) {
       fileInput.click()
     }
+  }
+  
+  // 如果用户未登录，显示加载状态或重定向到登录页面
+  if (!user) {
+    // 简单的检查以避免页面闪烁
+    if (typeof window !== 'undefined') {
+      router.push('/auth/login');
+    }
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full" role="status">
+            <span className="visually-hidden">正在加载...</span>
+          </div>
+          <p className="mt-2">正在检查登录状态...</p>
+        </div>
+      </div>
+    );
   }
   
   return (
