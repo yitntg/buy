@@ -1,8 +1,6 @@
 import { supabase } from './supabase';
 
-// 备用默认图片URL，如果上传失败可以使用
-const DEFAULT_IMAGE_URL = 'https://picsum.photos/id/1/500/500';
-
+// 移除默认图片URL，改为直接抛出错误
 /**
  * 将图片上传到 Supabase Storage
  * @param file 要上传的文件
@@ -20,7 +18,7 @@ export async function uploadImageToSupabase(
     const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
     
     // 检查Supabase配置
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://pzjhupjfojvlbthnsgqt.supabase.co';
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     console.log(`Supabase配置检查: URL=${supabaseUrl}, 密钥存在=${!!supabaseKey}`);
     
@@ -54,12 +52,12 @@ export async function uploadImageToSupabase(
         
         // 其他错误
         console.error('上传图片错误:', error);
-        return DEFAULT_IMAGE_URL;
+        throw new Error(`上传图片失败: ${error.message}`);
       }
       
       if (!data) {
         console.error('上传成功但未返回数据');
-        return DEFAULT_IMAGE_URL;
+        throw new Error('上传成功但未返回数据路径');
       }
       
       // 获取公开访问URL
@@ -82,7 +80,7 @@ export async function uploadImageToSupabase(
           return publicUrl;
         } catch (buildError) {
           console.error('构建URL失败:', buildError);
-          return DEFAULT_IMAGE_URL;
+          throw new Error('无法获取上传图片的公开URL');
         }
       }
     } catch (uploadError: any) {
@@ -96,7 +94,7 @@ export async function uploadImageToSupabase(
       }
       
       console.error('执行上传操作失败:', uploadError);
-      return DEFAULT_IMAGE_URL;
+      throw uploadError; // 直接抛出错误，不再返回默认图片
     }
   } catch (error: any) {
     if (error.message.includes('权限错误') || error.message.includes('Unauthorized')) {
@@ -110,6 +108,6 @@ export async function uploadImageToSupabase(
     }
     
     console.error('上传图片失败:', error);
-    return DEFAULT_IMAGE_URL;
+    throw error; // 直接抛出错误，不再返回默认图片
   }
 } 

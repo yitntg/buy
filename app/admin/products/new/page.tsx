@@ -202,81 +202,13 @@ export default function NewProductPage() {
       setImagePreview(newImageUrls[0])
     }
     
-    // 如果超过5张图片，显示提示
-    if (totalImages > maxImages) {
-      alert(`最多只能上传5张图片，已选择前${maxImages}张。`)
+    // 清空文件输入以允许再次选择相同文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
-    
-    // 后台尝试上传（不阻塞用户体验）
-    try {
-      // 异步上传到服务器
-      for (let i = 0; i < newImages.length; i++) {
-        try {
-          // 首先尝试本地上传
-          let serverUrl: string | undefined;
-          let uploadSuccess = false;
-          let errorMessage = '';
-          
-          try {
-            console.log(`尝试将图片 ${i+1} 上传到本地服务器...`);
-            serverUrl = await uploadImageToLocalServer(newImages[i]);
-            console.log(`拖放图片 ${i+1} 成功上传到本地服务器: ${serverUrl}`);
-            uploadSuccess = true;
-          } catch (localError) {
-            console.error(`本地上传失败，尝试Supabase备选方案:`, localError);
-            errorMessage = `本地上传失败: ${(localError as Error).message}`;
-            
-            // 本地上传失败，尝试Supabase
-            try {
-              console.log(`尝试将图片 ${i+1} 上传到Supabase...`);
-              serverUrl = await uploadImageToSupabase(newImages[i]);
-              
-              if (serverUrl && !serverUrl.includes('picsum.photos')) {
-                console.log(`图片 ${i+1} 成功上传到Supabase: ${serverUrl}`);
-                uploadSuccess = true;
-              } else {
-                errorMessage += `, Supabase返回默认图片`;
-                console.warn(`Supabase上传返回默认图片URL`);
-              }
-            } catch (supabaseError) {
-              console.error(`Supabase上传失败:`, supabaseError);
-              errorMessage += `, Supabase上传失败: ${(supabaseError as Error).message}`;
-            }
-          }
-          
-          if (uploadSuccess && serverUrl) {
-            // 替换URL数组中的URL
-            const updatedUrls = [...imagePreviewUrls];
-            const index = updatedUrls.indexOf(newImageUrls[i]);
-            if (index !== -1) {
-              updatedUrls[index] = serverUrl;
-              setImagePreviewUrls(updatedUrls);
-              
-              // 如果这个URL是主图，也更新主图
-              if (formData.image === newImageUrls[i]) {
-                setFormData(prev => ({ ...prev, image: serverUrl }));
-                setImagePreview(serverUrl);
-              }
-            }
-          } else {
-            // 上传失败但保留本地预览，显示警告
-            console.warn(`图片 ${i+1} 上传失败，使用本地预览。错误: ${errorMessage}`);
-            setErrors(prev => ({
-              ...prev, 
-              uploadWarning: `一些图片上传失败，保存商品时将使用备用图片。错误: ${errorMessage}`
-            }));
-          }
-        } catch (error) {
-          // 上传失败也没关系，继续使用本地预览
-          console.error(`上传图片 ${i+1} 失败:`, error);
-        }
-      }
-    } catch (error) {
-      // 忽略错误，继续使用本地预览
-      console.error('图片上传过程中出错:', error);
-    } finally {
-      setIsLoading(false);
-    }
+
+    // 不再需要在这里上传图片，只在表单提交时上传
+    setIsLoading(false)
   }
   
   // 处理拖放图片上传
@@ -485,86 +417,51 @@ export default function NewProductPage() {
       // 使用上传的图片或URL图片
       let imageUrl = formData.image
       
-      // 添加更多调试信息
-      console.log('原始图片URL:', imageUrl);
-      console.log('本地预览图片数量:', imagePreviewUrls.length);
-      
       // 检查是否为本地blob URL
       if (imageUrl && imageUrl.startsWith('blob:')) {
-        console.log('检测到本地blob URL，将尝试上传到服务器');
+        console.log('检测到本地blob URL，将上传到Supabase');
         
         // 找到对应的图片文件
         const blobIndex = imagePreviewUrls.indexOf(imageUrl);
         if (blobIndex !== -1 && blobIndex < images.length) {
           try {
-            setIsLoading(true);
-            // 首先尝试本地上传
-            let serverUrl: string | undefined;
-            let uploadSuccess = false;
-            let errorMessage = '';
+            // 直接上传到Supabase，不再尝试本地上传
+            console.log('上传主图到Supabase...');
+            const serverUrl = await uploadImageToSupabase(images[blobIndex]);
             
-            try {
-              console.log('尝试将主图上传到本地服务器...');
-              serverUrl = await uploadImageToLocalServer(images[blobIndex]);
-              console.log('成功上传主图到本地服务器:', serverUrl);
-              uploadSuccess = true;
-            } catch (localError) {
-              console.error('本地上传失败，尝试Supabase备选方案:', localError);
-              errorMessage = `本地上传失败: ${(localError as Error).message}`;
-              
-              // 本地上传失败，尝试Supabase
-              try {
-                console.log('尝试将主图上传到Supabase...');
-                serverUrl = await uploadImageToSupabase(images[blobIndex]);
-                
-                if (serverUrl && !serverUrl.includes('picsum.photos')) {
-                  console.log('成功上传主图到Supabase:', serverUrl);
-                  uploadSuccess = true;
-                } else {
-                  errorMessage += ', Supabase返回默认图片';
-                  console.warn('Supabase上传返回默认图片URL');
-                  // 使用默认图片
-                  imageUrl = serverUrl || 'https://picsum.photos/id/1/500/500';
-                }
-              } catch (supabaseError) {
-                console.error('Supabase上传失败:', supabaseError);
-                errorMessage += `, Supabase上传失败: ${(supabaseError as Error).message}`;
-                // 上传失败，使用默认图片
-                imageUrl = 'https://picsum.photos/id/1/500/500';
-                
-                // 显示错误提示但继续提交
-                setErrors(prev => ({
-                  ...prev,
-                  uploadError: `图片上传失败，将使用默认图片。错误: ${errorMessage}`
-                }));
-              }
+            if (!serverUrl) {
+              throw new Error('Supabase上传失败，未返回URL');
             }
             
-            if (uploadSuccess && serverUrl) {
-              imageUrl = serverUrl;
-            }
+            console.log('成功上传主图到Supabase:', serverUrl);
+            imageUrl = serverUrl;
           } catch (error) {
-            console.error('上传主图失败:', error);
-            // 如果上传失败，使用默认图片
-            imageUrl = 'https://picsum.photos/id/1/500/500';
-            
-            // 显示错误提示但继续提交
+            console.error('上传主图到Supabase失败:', error);
             setErrors(prev => ({
               ...prev,
-              uploadError: `图片上传失败，将使用默认图片: ${(error as Error).message}`
+              uploadError: `图片上传失败: ${(error as Error).message}`
             }));
-          } finally {
             setIsLoading(false);
+            return; // 上传失败时终止提交
           }
         } else {
-          console.log('无法找到对应的图片文件，使用默认图片');
-          imageUrl = 'https://picsum.photos/id/1/500/500';
+          console.log('无法找到对应的图片文件');
+          setErrors(prev => ({
+            ...prev,
+            uploadError: '无法处理上传的图片'
+          }));
+          setIsLoading(false);
+          return; // 找不到图片文件时终止提交
         }
       }
       
-      // 如果仍然没有图片，使用默认图片
       if (!imageUrl) {
-        imageUrl = 'https://picsum.photos/id/1/500/500'
+        setErrors(prev => ({
+          ...prev,
+          image: '请上传商品图片'
+        }));
+        setIsLoading(false);
+        return; // 没有图片URL时终止提交
       }
       
       // 构建商品数据
