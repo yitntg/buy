@@ -56,6 +56,12 @@ export default function ProductsPage() {
   const [customPriceMin, setCustomPriceMin] = useState('')
   const [customPriceMax, setCustomPriceMax] = useState('')
   
+  // 筛选项商品计数
+  const [categoryCounts, setCategoryCounts] = useState<Record<number, number>>({})
+  const [priceRangeCounts, setPriceRangeCounts] = useState<Record<string, number>>({})
+  const [ratingCounts, setRatingCounts] = useState<Record<number, number>>({})
+  const [totalProducts, setTotalProducts] = useState(0)
+  
   // 分类数据
   const categories = [
     { id: 1, name: '电子产品' },
@@ -140,6 +146,27 @@ export default function ProductsPage() {
           setProducts(data.products)
         }
         
+        // 更新商品总数
+        if (data.total !== undefined) {
+          setTotalProducts(data.total);
+        }
+        
+        // 如果是第一页且返回了筛选统计数据，更新筛选计数
+        if (pageNumber === 1 && data.filterCounts) {
+          if (data.filterCounts.categories) {
+            setCategoryCounts(data.filterCounts.categories);
+          }
+          if (data.filterCounts.priceRanges) {
+            setPriceRangeCounts(data.filterCounts.priceRanges);
+          }
+          if (data.filterCounts.ratings) {
+            setRatingCounts(data.filterCounts.ratings);
+          }
+        } else if (pageNumber === 1) {
+          // 如果API没有返回统计数据，尝试从返回的产品列表中计算
+          calculateFilterCounts(data.products);
+        }
+        
         // 判断是否还有更多数据
         setHasMore(data.products.length === limit && pageNumber < (data.totalPages || 1))
       } else {
@@ -158,6 +185,41 @@ export default function ProductsPage() {
       setLoading(false)
     }
   }
+
+  // 计算筛选项的商品数量
+  const calculateFilterCounts = (productList: Product[]) => {
+    const catCounts: Record<number, number> = {};
+    const priceCounts: Record<string, number> = {};
+    const rateCounts: Record<number, number> = {1: 0, 2: 0, 3: 0, 4: 0};
+    
+    productList.forEach(product => {
+      // 统计分类
+      if (product.category) {
+        catCounts[product.category] = (catCounts[product.category] || 0) + 1;
+      }
+      
+      // 统计价格范围
+      priceRanges.forEach(range => {
+        const [min, max] = range.id.split('-').map(Number);
+        if (product.price >= min && product.price <= max) {
+          priceCounts[range.id] = (priceCounts[range.id] || 0) + 1;
+        }
+      });
+      
+      // 统计评分
+      if (product.rating) {
+        for (let i = 1; i <= 4; i++) {
+          if (product.rating >= i) {
+            rateCounts[i] = (rateCounts[i] || 0) + 1;
+          }
+        }
+      }
+    });
+    
+    setCategoryCounts(catCounts);
+    setPriceRangeCounts(priceCounts);
+    setRatingCounts(rateCounts);
+  };
 
   // 监听滚动加载更多
   const lastProductRef = useCallback((node: HTMLDivElement) => {
@@ -313,7 +375,7 @@ export default function ProductsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 全部商品
-                <span className="ml-3 text-sm font-normal text-gray-500">({products.length}件)</span>
+                <span className="ml-3 text-sm font-normal text-gray-500">({totalProducts || products.length}件)</span>
               </h1>
               
               {/* 搜索栏 - 集成在标题行 */}
@@ -380,9 +442,12 @@ export default function ProductsPage() {
                               />
                               <label 
                                 htmlFor={`category-${category.id}`}
-                                className="ml-2 text-sm text-gray-700 block w-full cursor-pointer"
+                                className="ml-2 text-sm text-gray-700 block w-full cursor-pointer flex justify-between"
                               >
-                                {category.name}
+                                <span>{category.name}</span>
+                                <span className="text-gray-400 text-xs">
+                                  {categoryCounts[category.id] !== undefined ? categoryCounts[category.id] : '0'}
+                                </span>
                               </label>
                             </div>
                           ))}
@@ -439,9 +504,12 @@ export default function ProductsPage() {
                               />
                               <label 
                                 htmlFor={`price-${range.id}`}
-                                className="ml-2 text-sm text-gray-700 block w-full cursor-pointer"
+                                className="ml-2 text-sm text-gray-700 block w-full cursor-pointer flex justify-between"
                               >
-                                {range.name}
+                                <span>{range.name}</span>
+                                <span className="text-gray-400 text-xs">
+                                  {priceRangeCounts[range.id] !== undefined ? priceRangeCounts[range.id] : '0'}
+                                </span>
                               </label>
                             </div>
                           ))}
@@ -531,10 +599,15 @@ export default function ProductsPage() {
                               />
                               <label 
                                 htmlFor={`rating-${rating}`}
-                                className="ml-2 text-sm text-gray-700 flex items-center cursor-pointer w-full"
+                                className="ml-2 text-sm text-gray-700 flex items-center justify-between cursor-pointer w-full"
                               >
-                                {rating}星及以上
-                                <span className="ml-1 text-yellow-400">{'★'.repeat(rating)}</span>
+                                <div className="flex items-center">
+                                  {rating}星及以上
+                                  <span className="ml-1 text-yellow-400">{'★'.repeat(rating)}</span>
+                                </div>
+                                <span className="text-gray-400 text-xs">
+                                  {ratingCounts[rating] !== undefined ? ratingCounts[rating] : '0'}
+                                </span>
                               </label>
                             </div>
                           ))}
