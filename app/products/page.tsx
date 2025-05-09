@@ -62,6 +62,9 @@ export default function ProductsPage() {
   const [ratingCounts, setRatingCounts] = useState<Record<number, number>>({})
   const [totalProducts, setTotalProducts] = useState(0)
   
+  // 是否已加载过筛选计数
+  const [filtersCountLoaded, setFiltersCountLoaded] = useState(false)
+  
   // 分类数据
   const categories = [
     { id: 1, name: '电子产品' },
@@ -83,6 +86,66 @@ export default function ProductsPage() {
   
   // 获取主题设置
   const { theme, updateTheme } = useTheme()
+  
+  // 初始加载时获取筛选项统计数据
+  useEffect(() => {
+    const loadFilterCounts = async () => {
+      if (filtersCountLoaded) return;
+      
+      try {
+        // 获取全部数据用于计算筛选统计
+        let allData;
+        try {
+          const res = await fetch('/api/products?limit=1000', {
+            method: 'GET',
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          
+          if (!res.ok) {
+            throw new Error('获取初始数据失败');
+          }
+          
+          allData = await res.json();
+        } catch (apiError) {
+          console.log('初始加载使用模拟数据');
+          // 如果API请求失败，使用模拟数据
+          allData = generateMockData(1, new URLSearchParams('limit=1000'));
+        }
+        
+        if (allData && allData.products) {
+          // 更新商品总数
+          if (allData.total !== undefined) {
+            setTotalProducts(allData.total);
+          } else {
+            setTotalProducts(allData.products.length);
+          }
+          
+          // 如果API返回了筛选统计
+          if (allData.filterCounts) {
+            if (allData.filterCounts.categories) {
+              setCategoryCounts(allData.filterCounts.categories);
+            }
+            if (allData.filterCounts.priceRanges) {
+              setPriceRangeCounts(allData.filterCounts.priceRanges);
+            }
+            if (allData.filterCounts.ratings) {
+              setRatingCounts(allData.filterCounts.ratings);
+            }
+          } else {
+            // 从产品数据计算筛选统计
+            calculateFilterCounts(allData.products);
+          }
+          
+          setFiltersCountLoaded(true);
+        }
+      } catch (err) {
+        console.error('加载筛选统计失败:', err);
+      }
+    };
+    
+    loadFilterCounts();
+  }, [filtersCountLoaded]);
   
   // 获取产品数据
   const fetchProducts = async (pageNumber = 1, append = false) => {
@@ -160,8 +223,8 @@ export default function ProductsPage() {
           setTotalProducts(data.total);
         }
         
-        // 如果是第一页且返回了筛选统计数据，更新筛选计数
-        if (pageNumber === 1 && data.filterCounts) {
+        // 如果是第一页但没有加载过筛选统计，更新筛选计数
+        if (pageNumber === 1 && !filtersCountLoaded && data.filterCounts) {
           if (data.filterCounts.categories) {
             setCategoryCounts(data.filterCounts.categories);
           }
@@ -171,9 +234,11 @@ export default function ProductsPage() {
           if (data.filterCounts.ratings) {
             setRatingCounts(data.filterCounts.ratings);
           }
-        } else if (pageNumber === 1) {
-          // 如果API没有返回统计数据，尝试从返回的产品列表中计算
+          setFiltersCountLoaded(true);
+        } else if (pageNumber === 1 && !filtersCountLoaded) {
+          // 从产品数据计算筛选统计
           calculateFilterCounts(data.products);
+          setFiltersCountLoaded(true);
         }
         
         // 判断是否还有更多数据
@@ -548,7 +613,7 @@ export default function ProductsPage() {
                               >
                                 <span>{category.name}</span>
                                 <span className="text-gray-400 text-xs">
-                                  {categoryCounts[category.id] !== undefined ? categoryCounts[category.id] : '0'}
+                                  {categoryCounts[category.id] !== undefined ? categoryCounts[category.id] : loading ? '...' : '0'}
                                 </span>
                               </label>
                             </div>
@@ -610,7 +675,7 @@ export default function ProductsPage() {
                               >
                                 <span>{range.name}</span>
                                 <span className="text-gray-400 text-xs">
-                                  {priceRangeCounts[range.id] !== undefined ? priceRangeCounts[range.id] : '0'}
+                                  {priceRangeCounts[range.id] !== undefined ? priceRangeCounts[range.id] : loading ? '...' : '0'}
                                 </span>
                               </label>
                             </div>
@@ -708,7 +773,7 @@ export default function ProductsPage() {
                                   <span className="ml-1 text-yellow-400">{'★'.repeat(rating)}</span>
                                 </div>
                                 <span className="text-gray-400 text-xs">
-                                  {ratingCounts[rating] !== undefined ? ratingCounts[rating] : '0'}
+                                  {ratingCounts[rating] !== undefined ? ratingCounts[rating] : loading ? '...' : '0'}
                                 </span>
                               </label>
                             </div>
