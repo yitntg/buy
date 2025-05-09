@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Heart, ShoppingCart, Share2, ChevronDown, ChevronUp, Truck, RotateCcw, Shield } from 'lucide-react'
+import { ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface ProductActionsProps {
   price: number
@@ -143,7 +143,7 @@ export default function ProductActions({
       </div>
       
       {/* 购买按钮 */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4">
         <button
           type="button"
           onClick={handleAddToCart}
@@ -178,45 +178,6 @@ export default function ProductActions({
         >
           {isProcessing ? '处理中...' : '立即购买'}
         </button>
-      </div>
-      
-      {/* 其他操作按钮 */}
-      <div className="flex items-center space-x-4 mb-6">
-        <button
-          type="button"
-          onClick={onAddToWishlist}
-          className="flex items-center text-gray-500 hover:text-primary"
-        >
-          <Heart size={18} className="mr-1" />
-          <span className="text-sm">收藏</span>
-        </button>
-        
-        <button
-          type="button"
-          className="flex items-center text-gray-500 hover:text-primary"
-        >
-          <Share2 size={18} className="mr-1" />
-          <span className="text-sm">分享</span>
-        </button>
-      </div>
-      
-      {/* 服务承诺 */}
-      <div className="border-t pt-4">
-        <div className="text-sm text-gray-500 mb-2 font-medium">服务承诺</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <div className="flex items-center text-gray-600">
-            <Truck size={16} className="mr-1 text-primary" />
-            <span className="text-xs">极速发货</span>
-          </div>
-          <div className="flex items-center text-gray-600">
-            <RotateCcw size={16} className="mr-1 text-primary" />
-            <span className="text-xs">7天无理由退换</span>
-          </div>
-          <div className="flex items-center text-gray-600">
-            <Shield size={16} className="mr-1 text-primary" />
-            <span className="text-xs">官方品质保证</span>
-          </div>
-        </div>
       </div>
     </div>
   )
