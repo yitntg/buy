@@ -41,6 +41,9 @@ export default function OrdersPage() {
     { label: '账户安全', href: '/account/security', active: false },
   ]
   
+  // 添加会员注册时间
+  const memberSince = '2023年10月'
+  
   // 如果用户未登录，重定向到登录页面
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -229,7 +232,7 @@ export default function OrdersPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className="font-medium">{user?.username || '用户'}</h3>
-                    <p className="text-sm text-gray-500">会员</p>
+                    <p className="text-sm text-gray-500">会员自 {memberSince}</p>
                   </div>
                 </div>
                 

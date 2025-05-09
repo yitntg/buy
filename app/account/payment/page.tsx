@@ -58,6 +58,9 @@ export default function PaymentPage() {
     { label: '账户安全', href: '/account/security', active: false },
   ];
 
+  // 添加会员注册时间
+  const memberSince = '2023年10月'
+
   // 处理表单字段变化
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -191,7 +194,7 @@ export default function PaymentPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className="font-medium">{user?.username || '用户'}</h3>
-                    <p className="text-sm text-gray-500">会员</p>
+                    <p className="text-sm text-gray-500">会员自 {memberSince}</p>
                   </div>
                 </div>
                 

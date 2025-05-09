@@ -54,6 +54,9 @@ export default function SecurityPage() {
     { label: '账户安全', href: '/account/security', active: true },
   ];
 
+  // 添加会员注册时间
+  const memberSince = '2023年10月'
+
   // 处理密码表单更改
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -248,7 +251,7 @@ export default function SecurityPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className="font-medium">{user?.username || '用户'}</h3>
-                    <p className="text-sm text-gray-500">会员</p>
+                    <p className="text-sm text-gray-500">会员自 {memberSince}</p>
                   </div>
                 </div>
                 

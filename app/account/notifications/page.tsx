@@ -74,6 +74,9 @@ export default function NotificationsPage() {
     { label: '账户安全', href: '/account/security', active: false },
   ];
 
+  // 添加会员注册时间
+  const memberSince = '2023年10月'
+
   // 标记为已读
   const markAsRead = (id: string) => {
     setNotifications(prev => 
@@ -171,7 +174,7 @@ export default function NotificationsPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className="font-medium">{user?.username || '用户'}</h3>
-                    <p className="text-sm text-gray-500">会员</p>
+                    <p className="text-sm text-gray-500">会员自 {memberSince}</p>
                   </div>
                 </div>
                 
