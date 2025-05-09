@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import bcrypt from 'bcrypt'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,10 +44,27 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // 为了简化演示，我们暂时不做真正的密码验证
-    // 在真实项目中，应该使用加密算法比较密码，例如 bcrypt.compare
+    // 验证密码
+    let passwordValid = false
     
-    // 测试模式 - 默认允许登录
+    if (user.password_hash) {
+      try {
+        // 使用bcrypt比较密码
+        passwordValid = await bcrypt.compare(password, user.password_hash)
+      } catch (bcryptError) {
+        console.error('密码验证错误:', bcryptError)
+      }
+    }
+    
+    if (!passwordValid) {
+      console.log(`登录失败: 用户 ${email} 密码错误`)
+      return NextResponse.json(
+        { error: '用户名或密码错误' },
+        { status: 401 }
+      )
+    }
+    
+    // 密码验证成功，登录
     console.log(`用户 ${email} 登录成功`)
     
     // 更新最后登录时间

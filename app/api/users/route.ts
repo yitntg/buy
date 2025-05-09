@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import bcrypt from 'bcrypt'
 
 // 创建用户表（如果不存在）
 async function ensureUsersTableExists() {
@@ -43,7 +44,7 @@ async function ensureUsersTableExists() {
             .insert([
               {
                 username: '管理员',
-                email: 'admin@example.com',
+                email: process.env.ADMIN_EMAIL || 'admin@example.com',
                 role: 'admin',
                 status: 'active',
               }
@@ -60,59 +61,60 @@ async function ensureUsersTableExists() {
       
       console.log('用户表创建成功')
       
+      // 生成安全的密码哈希
+      const adminPassword = process.env.ADMIN_PASSWORD || generateSecurePassword()
+      const passwordHash = await bcrypt.hash(adminPassword, 10)
+      
+      console.log('已创建管理员账户:')
+      console.log(`- 邮箱: ${process.env.ADMIN_EMAIL || 'admin@example.com'}`)
+      if (!process.env.ADMIN_PASSWORD) {
+        console.log(`- 临时密码: ${adminPassword}`)
+        console.log('⚠️ 警告：这是自动生成的临时密码，请立即登录并修改密码！')
+      } else {
+        console.log('- 密码: 已使用环境变量中的密码')
+      }
+      
       // 插入示例用户数据
       const sampleUsers = [
         {
           username: '管理员',
-          email: 'admin@example.com',
+          email: process.env.ADMIN_EMAIL || 'admin@example.com',
           role: 'admin',
           status: 'active',
           avatar: 'https://api.dicebear.com/6.x/avataaars/svg?seed=1',
-          password_hash: '$2a$10$QbF8yQKv8S4Ye9vWy7LM.u/QAtLlB1QgRFfEjk7OvpnV8C9EuQU9W', // 密码: admin123
+          password_hash: passwordHash,
           join_date: new Date().toISOString(),
           last_login: new Date().toISOString()
-        },
-        {
-          username: '张三',
-          email: 'zhangsan@example.com',
-          role: 'user',
-          status: 'active',
-          avatar: 'https://api.dicebear.com/6.x/avataaars/svg?seed=2',
-          password_hash: '$2a$10$QbF8yQKv8S4Ye9vWy7LM.u/QAtLlB1QgRFfEjk7OvpnV8C9EuQU9W', // 密码: 123456
-          join_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30天前
-          last_login: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2天前
-        },
-        {
-          username: '李四',
-          email: 'lisi@example.com',
-          role: 'user',
-          status: 'active',
-          avatar: 'https://api.dicebear.com/6.x/avataaars/svg?seed=3',
-          password_hash: '$2a$10$QbF8yQKv8S4Ye9vWy7LM.u/QAtLlB1QgRFfEjk7OvpnV8C9EuQU9W', // 密码: 123456
-          join_date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(), // 20天前
-          last_login: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() // 1天前
-        },
-        {
-          username: '王五',
-          email: 'wangwu@example.com',
-          role: 'user',
-          status: 'inactive',
-          avatar: 'https://api.dicebear.com/6.x/avataaars/svg?seed=4',
-          password_hash: '$2a$10$QbF8yQKv8S4Ye9vWy7LM.u/QAtLlB1QgRFfEjk7OvpnV8C9EuQU9W', // 密码: 123456
-          join_date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10天前
-          last_login: null
-        },
-        {
-          username: '赵六',
-          email: 'zhaoliu@example.com',
-          role: 'user',
-          status: 'banned',
-          avatar: 'https://api.dicebear.com/6.x/avataaars/svg?seed=5',
-          password_hash: '$2a$10$QbF8yQKv8S4Ye9vWy7LM.u/QAtLlB1QgRFfEjk7OvpnV8C9EuQU9W', // 密码: 123456
-          join_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5天前
-          last_login: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3天前
         }
       ]
+      
+      // 如果是开发环境，可以添加测试用户
+      if (process.env.NODE_ENV === 'development') {
+        const testUserPasswordHash = await bcrypt.hash('123456', 10)
+        const testUsers = [
+          {
+            username: '张三',
+            email: 'zhangsan@example.com',
+            role: 'user',
+            status: 'active',
+            avatar: 'https://api.dicebear.com/6.x/avataaars/svg?seed=2',
+            password_hash: testUserPasswordHash,
+            join_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            last_login: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            username: '李四',
+            email: 'lisi@example.com',
+            role: 'user',
+            status: 'active',
+            avatar: 'https://api.dicebear.com/6.x/avataaars/svg?seed=3',
+            password_hash: testUserPasswordHash,
+            join_date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+            last_login: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ]
+        sampleUsers.push(...testUsers)
+      }
       
       const { error: insertError } = await supabase
         .from('users')
@@ -130,6 +132,16 @@ async function ensureUsersTableExists() {
     console.error('检查/创建用户表失败:', error)
     return false
   }
+}
+
+// 生成安全的随机密码
+function generateSecurePassword(length = 12) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+'
+  let password = ''
+  for (let i = 0; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return password
 }
 
 // 获取用户列表

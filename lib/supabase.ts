@@ -1,9 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
 
-// 使用正确的生产环境API密钥
-const supabaseUrl = 'https://pzjhupjfojvlbthnsgqt.supabase.co'
-// 使用正确的ANON_KEY
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0'
+// 使用环境变量获取Supabase配置
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+// 创建Supabase客户端
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+})
+
+// 检查环境变量是否已配置
+if (!supabaseUrl || !supabaseKey) {
+  console.error('未配置Supabase环境变量。请确保设置了以下环境变量：')
+  console.error('- NEXT_PUBLIC_SUPABASE_URL')
+  console.error('- NEXT_PUBLIC_SUPABASE_ANON_KEY')
+}
 
 // 确认凭证
 console.log('Supabase配置信息:')
@@ -56,7 +71,7 @@ if (urlDiagnostic !== '正常' || keyDiagnostic !== '正常') {
 }
 
 // 创建增强型客户端
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+export const supabaseEnhanced = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,

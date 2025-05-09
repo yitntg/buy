@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import bcrypt from 'bcrypt'
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +27,14 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // 验证密码强度
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: '密码必须至少包含8个字符' },
+        { status: 400 }
+      )
+    }
+    
     // 检查邮箱是否已经存在
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
@@ -42,12 +51,14 @@ export async function POST(request: NextRequest) {
     
     console.log(`创建新用户: ${email}`)
     
+    // 使用bcrypt加密密码
+    const passwordHash = await bcrypt.hash(password, 10)
+    
     // 构建新用户数据
-    // 在真实项目中，应该使用加密算法（如bcrypt）来存储密码
     const newUser = {
       username,
       email,
-      password_hash: password, // 实际项目中应该加密
+      password_hash: passwordHash,
       role: 'user',
       status: 'active',
       avatar: avatar || `https://api.dicebear.com/6.x/avataaars/svg?seed=${Date.now()}`,

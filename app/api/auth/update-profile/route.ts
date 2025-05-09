@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import bcrypt from 'bcrypt'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     
-    const { id, username, email, phone, avatar } = userData
+    const { id, username, email, phone, avatar, currentPassword, newPassword } = userData
     
     // 验证必填字段
     if (!id) {
@@ -57,6 +58,41 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // 如果要更改密码，验证当前密码
+    if (newPassword) {
+      // 密码强度验证
+      if (newPassword.length < 8) {
+        return NextResponse.json(
+          { error: '新密码长度必须至少为8个字符' },
+          { status: 400 }
+        )
+      }
+      
+      // 必须提供当前密码以验证身份
+      if (!currentPassword) {
+        return NextResponse.json(
+          { error: '更改密码需要提供当前密码' },
+          { status: 400 }
+        )
+      }
+      
+      // 验证当前密码
+      try {
+        const isPasswordValid = await bcrypt.compare(currentPassword, existingUser.password_hash)
+        if (!isPasswordValid) {
+          return NextResponse.json(
+            { error: '当前密码错误' },
+            { status: 401 }
+          )
+        }
+      } catch (e) {
+        return NextResponse.json(
+          { error: '密码验证错误' },
+          { status: 500 }
+        )
+      }
+    }
+    
     console.log(`更新用户资料: ${id}`)
     
     // 构建更新数据
@@ -67,6 +103,11 @@ export async function POST(request: NextRequest) {
     if (email) updates.email = email
     if (phone) updates.phone = phone
     if (avatar) updates.avatar = avatar
+    
+    // 如果要更新密码，生成新的密码哈希
+    if (newPassword) {
+      updates.password_hash = await bcrypt.hash(newPassword, 10)
+    }
     
     // 更新时间戳
     updates.updated_at = new Date().toISOString()
