@@ -25,10 +25,21 @@ interface Order {
 
 export default function OrdersPage() {
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { user, isAuthenticated, isLoading } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
   const [activeTab, setActiveTab] = useState('all') // all, processing, completed, cancelled
   const [isLoadingOrders, setIsLoadingOrders] = useState(true)
+  
+  // 账户菜单项
+  const menuItems = [
+    { label: '个人信息', href: '/account', active: false },
+    { label: '我的订单', href: '/account/orders', active: true },
+    { label: '收货地址', href: '/account/addresses', active: false },
+    { label: '支付方式', href: '/account/payment', active: false },
+    { label: '优惠券', href: '/account/coupons', active: false },
+    { label: '消息通知', href: '/account/notifications', active: false },
+    { label: '账户安全', href: '/account/security', active: false },
+  ]
   
   // 如果用户未登录，重定向到登录页面
   useEffect(() => {
@@ -160,6 +171,14 @@ export default function OrdersPage() {
     setActiveTab(tab)
   }
   
+  // 处理退出登录
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      // 在实际应用中，这里应该调用登出API
+      router.push('/')
+    }
+  }
+  
   if (isLoading) {
     return (
       <>
@@ -185,170 +204,178 @@ export default function OrdersPage() {
       <Header />
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="container mx-auto px-4">
-          {/* 面包屑导航 */}
-          <div className="mb-6 flex items-center text-sm">
-            <Link href="/" className="text-gray-500 hover:text-primary">
-              首页
-            </Link>
-            <span className="mx-2 text-gray-300">/</span>
-            <Link href="/account" className="text-gray-500 hover:text-primary">
-              我的账户
-            </Link>
-            <span className="mx-2 text-gray-300">/</span>
-            <span className="text-gray-700">我的订单</span>
-          </div>
+          <h1 className="text-2xl font-bold mb-6">我的账户</h1>
           
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-6 border-b">
-              <h1 className="text-2xl font-bold">我的订单</h1>
-            </div>
-            
-            {/* 订单筛选选项卡 */}
-            <div className="border-b">
-              <div className="flex">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* 侧边栏菜单 */}
+            <div className="lg:w-1/4">
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div className="flex items-center mb-6">
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200">
+                    {user?.avatar ? (
+                      <Image 
+                        src={user.avatar} 
+                        alt={user.username || "用户头像"}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="font-medium">{user?.username || '用户'}</h3>
+                    <p className="text-sm text-gray-500">会员</p>
+                  </div>
+                </div>
+                
+                <nav>
+                  <ul className="space-y-2">
+                    {menuItems.map((item) => (
+                      <li key={item.label}>
+                        <Link
+                          href={item.href}
+                          className={`block px-3 py-2 rounded-md ${
+                            item.active
+                              ? 'bg-primary text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              </div>
+              
+              <div className="bg-white rounded-lg shadow-md p-6">
                 <button 
-                  className={`px-6 py-3 font-medium ${activeTab === 'all' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                  onClick={() => handleTabChange('all')}
+                  onClick={handleLogout}
+                  className="w-full text-red-500 hover:text-red-600 text-sm font-medium"
                 >
-                  全部订单
-                </button>
-                <button 
-                  className={`px-6 py-3 font-medium ${activeTab === 'processing' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                  onClick={() => handleTabChange('processing')}
-                >
-                  处理中
-                </button>
-                <button 
-                  className={`px-6 py-3 font-medium ${activeTab === 'completed' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                  onClick={() => handleTabChange('completed')}
-                >
-                  已完成
-                </button>
-                <button 
-                  className={`px-6 py-3 font-medium ${activeTab === 'cancelled' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                  onClick={() => handleTabChange('cancelled')}
-                >
-                  已取消
+                  退出登录
                 </button>
               </div>
             </div>
             
-            {/* 订单列表 */}
-            <div className="p-6">
-              {isLoadingOrders ? (
-                <div className="flex justify-center py-12">
-                  <div className="flex flex-col items-center">
-                    <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p className="mt-4 text-gray-600">正在加载订单数据...</p>
+            {/* 主内容区 */}
+            <div className="lg:w-3/4">
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="p-6 border-b">
+                  <h2 className="text-xl font-medium">我的订单</h2>
+                </div>
+                
+                {/* 订单筛选选项卡 */}
+                <div className="border-b">
+                  <div className="flex flex-wrap">
+                    <button 
+                      className={`px-6 py-3 font-medium ${activeTab === 'all' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                      onClick={() => handleTabChange('all')}
+                    >
+                      全部订单
+                    </button>
+                    <button 
+                      className={`px-6 py-3 font-medium ${activeTab === 'processing' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                      onClick={() => handleTabChange('processing')}
+                    >
+                      处理中
+                    </button>
+                    <button 
+                      className={`px-6 py-3 font-medium ${activeTab === 'completed' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                      onClick={() => handleTabChange('completed')}
+                    >
+                      已完成
+                    </button>
+                    <button 
+                      className={`px-6 py-3 font-medium ${activeTab === 'cancelled' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                      onClick={() => handleTabChange('cancelled')}
+                    >
+                      已取消
+                    </button>
                   </div>
                 </div>
-              ) : orders.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-6xl text-gray-300 mb-4">📦</div>
-                  <h2 className="text-xl font-medium mb-4">暂无订单</h2>
-                  <p className="text-gray-500 mb-8">您还没有{activeTab !== 'all' ? '此类型的' : '任何'}订单</p>
-                  <Link 
-                    href="/products" 
-                    className="bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600 inline-block"
-                  >
-                    去购物
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {orders.map(order => (
-                    <div key={order.id} className="border rounded-lg overflow-hidden">
-                      {/* 订单头部 */}
-                      <div className="bg-gray-50 p-4 flex flex-wrap items-center justify-between">
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div>
-                            <span className="text-gray-500 mr-2">订单号:</span>
-                            <span className="font-medium">{order.id}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 mr-2">下单时间:</span>
-                            <span>{order.date}</span>
-                          </div>
-                        </div>
-                        <div>
-                          <span className={`px-3 py-1 rounded-full text-sm ${getStatusStyle(order.status)}`}>
-                            {order.status}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* 订单商品 */}
-                      <div className="p-4">
-                        {order.items.map(item => (
-                          <div key={item.id} className="flex items-center py-3 border-b last:border-b-0">
-                            <div className="w-16 h-16 relative flex-shrink-0">
-                              <Image 
-                                src={item.image} 
-                                alt={item.name}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="ml-4 flex-1">
-                              <Link 
-                                href={`/product/${item.id}`}
-                                className="font-medium hover:text-primary line-clamp-1"
-                              >
-                                {item.name}
-                              </Link>
-                              <div className="flex justify-between mt-2">
-                                <div className="text-gray-500 text-sm">
-                                  数量: {item.quantity}
-                                </div>
-                                <div className="font-medium">
-                                  ¥{item.price}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* 订单底部 */}
-                      <div className="bg-gray-50 p-4 flex flex-wrap justify-between items-center">
-                        <div className="text-gray-500">
-                          共 <span className="font-medium">{order.items.reduce((sum, item) => sum + item.quantity, 0)}</span> 件商品，
-                          实付 <span className="font-medium text-primary">¥{order.total}</span>
-                        </div>
-                        <div className="flex space-x-3 mt-3 md:mt-0">
-                          <Link 
-                            href={`/account/orders/${order.id}`}
-                            className="px-4 py-2 border border-gray-300 rounded-md hover:border-primary hover:text-primary"
-                          >
-                            查看详情
-                          </Link>
-                          
-                          {order.status === '已完成' && (
-                            <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-primary hover:text-primary">
-                              评价订单
-                            </button>
-                          )}
-                          
-                          {order.status === '待发货' && (
-                            <button className="px-4 py-2 border border-red-300 text-red-500 rounded-md hover:bg-red-50">
-                              取消订单
-                            </button>
-                          )}
-                          
-                          {order.status === '已完成' && (
-                            <button className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-600">
-                              再次购买
-                            </button>
-                          )}
-                        </div>
+                
+                {/* 订单列表 */}
+                <div className="p-6">
+                  {isLoadingOrders ? (
+                    <div className="flex justify-center py-12">
+                      <div className="flex flex-col items-center">
+                        <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p className="mt-4 text-gray-600">正在加载订单数据...</p>
                       </div>
                     </div>
-                  ))}
+                  ) : orders.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-6xl text-gray-300 mb-4">📦</div>
+                      <p className="text-gray-500 mb-4">没有{activeTab !== 'all' ? '相关' : ''}订单</p>
+                      <Link href="/products" className="inline-block bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                        去购物
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {orders.map(order => (
+                        <div key={order.id} className="border rounded-lg overflow-hidden">
+                          <div className="bg-gray-50 px-4 py-3 flex justify-between items-center border-b">
+                            <div>
+                              <span className="text-gray-500 mr-4">订单号: {order.id}</span>
+                              <span className="text-gray-500">下单时间: {order.date}</span>
+                            </div>
+                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusStyle(order.status)}`}>
+                              {order.status}
+                            </span>
+                          </div>
+                          
+                          <div className="p-4">
+                            {order.items.map(item => (
+                              <div key={item.id} className="flex items-center py-3 border-b last:border-0">
+                                <div className="relative h-16 w-16 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
+                                  <Image
+                                    src={item.image}
+                                    alt={item.name}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                                <div className="ml-4 flex-grow">
+                                  <h3 className="font-medium">{item.name}</h3>
+                                  <p className="text-sm text-gray-500">数量: {item.quantity}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-medium">¥{item.price.toFixed(2)}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="bg-gray-50 px-4 py-3 flex justify-between items-center border-t">
+                            <div>
+                              <span className="text-gray-500">共 {order.items.reduce((sum, item) => sum + item.quantity, 0)} 件商品</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="mr-4">订单金额: <span className="font-medium">¥{order.total.toFixed(2)}</span></span>
+                              <Link
+                                href={`/account/orders/${order.id}`}
+                                className="bg-primary text-white px-4 py-1 rounded-md hover:bg-blue-600 text-sm"
+                              >
+                                订单详情
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
