@@ -67,8 +67,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 在实际应用中，这里应该调用API进行身份验证
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // 检查是否有之前保存的用户信息
+      let existingUserData = null;
+      if (isBrowser) {
+        try {
+          const savedUser = localStorage.getItem('user');
+          if (savedUser) {
+            const parsedUser = JSON.parse(savedUser);
+            // 如果邮箱匹配，使用之前保存的用户信息
+            if (parsedUser.email === email) {
+              existingUserData = parsedUser;
+            }
+          }
+        } catch (err) {
+          console.error('Failed to parse user from localStorage:', err);
+        }
+      }
+      
       // 这里模拟API响应 - 为了测试方便，任何邮箱和密码组合都可以登录
-      const userData: User = {
+      const userData: User = existingUserData || {
         id: '1',
         username: '测试用户',
         email: email || 'test@example.com',
@@ -78,8 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: 'admin' // 为测试方便，默认所有用户都是管理员
       };
       
-      // 只有明确指定使用默认头像时才添加avatar字段
-      if (useDefaultAvatar) {
+      // 如果没有现有数据且明确指定使用默认头像，才添加默认头像
+      if (!existingUserData && useDefaultAvatar) {
         userData.avatar = 'https://picsum.photos/id/64/200/200';
       }
       

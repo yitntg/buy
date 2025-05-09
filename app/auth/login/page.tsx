@@ -37,7 +37,8 @@ export default function LoginPage() {
     e.preventDefault()
     
     try {
-      await login(formData.email, formData.password)
+      // 默认使用头像，这样如果没有保存的用户信息，也会为用户设置默认头像
+      await login(formData.email, formData.password, true)
       // 登录成功将在useEffect中处理重定向
     } catch (err) {
       // 错误已在useAuth hook中处理
