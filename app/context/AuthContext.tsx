@@ -32,6 +32,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // 检查是否在浏览器环境
 const isBrowser = typeof window !== 'undefined';
 
+// 存储用户列表键名
+const USER_STORAGE_KEY = 'user';
+const USER_PROFILES_KEY = 'userProfiles';
+const CURRENT_USER_KEY = 'currentUser';
+
 // 认证提供者组件
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -43,10 +48,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadUser = () => {
       if (isBrowser) {
         try {
-          const savedUser = localStorage.getItem('user');
+          // 加载当前用户ID
+          const currentUserId = localStorage.getItem(CURRENT_USER_KEY);
           
-          if (savedUser) {
-            setUser(JSON.parse(savedUser));
+          if (currentUserId) {
+            // 从用户配置文件列表加载用户数据
+            const userProfiles = JSON.parse(localStorage.getItem(USER_PROFILES_KEY) || '{}');
+            const userData = userProfiles[currentUserId];
+            
+            if (userData) {
+              setUser(userData);
+            }
           }
         } catch (err) {
           console.error('Failed to parse user from localStorage:', err);
@@ -58,6 +70,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
   
+  // 保存用户到本地存储
+  const saveUserToStorage = (userData: User) => {
+    if (!isBrowser) return;
+    
+    try {
+      // 保存当前用户ID
+      localStorage.setItem(CURRENT_USER_KEY, userData.id);
+      
+      // 更新用户配置文件列表
+      const userProfiles = JSON.parse(localStorage.getItem(USER_PROFILES_KEY) || '{}');
+      userProfiles[userData.id] = userData;
+      localStorage.setItem(USER_PROFILES_KEY, JSON.stringify(userProfiles));
+      
+      // 兼容旧版本：保存当前用户到原来的位置
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+    } catch (err) {
+      console.error('Failed to save user to localStorage:', err);
+    }
+  };
+  
   // 登录方法
   const login = async (email: string, password: string, useDefaultAvatar = false) => {
     setIsLoading(true);
@@ -67,20 +99,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 在实际应用中，这里应该调用API进行身份验证
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // 检查是否有之前保存的用户信息
+      // 尝试从用户配置文件中找到匹配的用户
       let existingUserData = null;
+      
       if (isBrowser) {
         try {
-          const savedUser = localStorage.getItem('user');
-          if (savedUser) {
-            const parsedUser = JSON.parse(savedUser);
-            // 如果邮箱匹配，使用之前保存的用户信息
-            if (parsedUser.email === email) {
-              existingUserData = parsedUser;
+          const userProfiles = JSON.parse(localStorage.getItem(USER_PROFILES_KEY) || '{}');
+          
+          // 查找匹配的用户
+          Object.values(userProfiles).forEach((profile: any) => {
+            if (profile.email === email) {
+              existingUserData = profile;
             }
-          }
+          });
         } catch (err) {
-          console.error('Failed to parse user from localStorage:', err);
+          console.error('Failed to parse user profiles from localStorage:', err);
         }
       }
       
@@ -101,9 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       setUser(userData);
-      if (isBrowser) {
-        localStorage.setItem('user', JSON.stringify(userData));
-      }
+      saveUserToStorage(userData);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败，请稍后重试');
       console.error('Login error:', err);
@@ -121,9 +152,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 在实际应用中，这里应该调用API进行注册
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // 使用随机ID或自动递增ID
+      const newId = Date.now().toString();
+      
       // 这里模拟API响应
       const newUser: User = {
-        id: '2',
+        id: newId,
         username: userData.username,
         email: userData.email,
         firstName: userData.firstName,
@@ -138,9 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       setUser(newUser);
-      if (isBrowser) {
-        localStorage.setItem('user', JSON.stringify(newUser));
-      }
+      saveUserToStorage(newUser);
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败，请稍后重试');
       console.error('Register error:', err);
@@ -152,8 +184,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 退出登录方法
   const logout = () => {
     setUser(null);
+    
     if (isBrowser) {
-      localStorage.removeItem('user');
+      // 仅移除当前用户标记，但不删除用户数据
+      localStorage.removeItem(CURRENT_USER_KEY);
+      // 为兼容性移除旧键
+      localStorage.removeItem(USER_STORAGE_KEY);
     }
   };
   
@@ -163,10 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const updatedUser = { ...user, ...userData };
     setUser(updatedUser);
-    
-    if (isBrowser) {
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
+    saveUserToStorage(updatedUser);
   };
   
   // 提供上下文值
