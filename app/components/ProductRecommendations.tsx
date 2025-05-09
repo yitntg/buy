@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import StarRating from './StarRating'
 
 interface Product {
   id: string
@@ -125,21 +126,12 @@ export default function ProductRecommendations({
                   ¥{product.price.toFixed(2)}
                 </div>
                 {product.rating !== undefined && (
-                  <div className="mt-1 flex items-center">
-                    <div className="flex text-yellow-400">
-                      {[1, 2, 3, 4, 5].map(star => (
-                        <svg 
-                          key={star} 
-                          className={`w-3 h-3 ${star <= Math.round(product.rating || 0) ? 'fill-current' : 'text-gray-300'}`} 
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="ml-1 text-xs text-gray-500">
-                      {product.rating.toFixed(1)}
-                    </span>
+                  <div className="mt-1">
+                    <StarRating 
+                      rating={product.rating} 
+                      size="sm" 
+                      showNumber={true}
+                    />
                   </div>
                 )}
               </div>

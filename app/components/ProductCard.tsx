@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useCart } from '../context/CartContext'
 import { useTheme } from '../context/ThemeContext'
 import { useState } from 'react'
+import StarRating from './StarRating'
 
 // 定义商品类型接口
 interface Product {
@@ -96,18 +97,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     "w-full"
   ].filter(Boolean).join(" ");
 
-  // 显示评级星星
-  const renderStars = () => {
-    if (!product.rating) return null;
-    
-    return (
-      <div className="flex text-yellow-400">
-        {'★'.repeat(Math.round(product.rating))}
-        {'☆'.repeat(5 - Math.round(product.rating))}
-      </div>
-    );
-  };
-
   return (
     <div 
       className={cardClasses}
@@ -167,12 +156,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             </h3>
           </Link>
           
-          {product.rating && (
-            <div className="flex items-center mb-2">
-              {renderStars()}
-              <span className="text-xs text-gray-500 ml-1">
-                ({product.reviews || 0})
-              </span>
+          {product.rating !== undefined && (
+            <div className="mb-2">
+              <StarRating 
+                rating={product.rating}
+                size="sm"
+                reviewCount={product.reviews || 0}
+              />
             </div>
           )}
           

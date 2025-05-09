@@ -11,6 +11,7 @@ import ProductActions from '../../components/ProductActions'
 import ProductDescription from '../../components/ProductDescription'
 import ProductRecommendations from '../../components/ProductRecommendations'
 import ProductVariants from '../../components/ProductVariants'
+import StarRating from '../../components/StarRating'
 import { Share2, Heart } from 'lucide-react'
 
 // 定义商品类型接口
@@ -298,25 +299,13 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 <h1 className="text-2xl font-bold mb-2">{product.name}</h1>
                 
                 <div className="flex items-center mb-4">
-                  <div className="flex items-center mr-4">
-                    <div className="flex text-yellow-400">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <svg
-                          key={star}
-                          className={`w-5 h-5 ${
-                            star <= Math.round(product.rating)
-                              ? 'fill-current'
-                              : 'text-gray-300'
-                          }`}
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="ml-1">{product.rating}</span>
-                  </div>
-                  <span className="text-gray-500">{product.reviews} 条评价</span>
+                  <StarRating 
+                    rating={product.rating} 
+                    size="md" 
+                    showNumber={true} 
+                    reviewCount={product.reviews}
+                    className="mr-2"
+                  />
                   
                   {/* 社交分享和收藏按钮 */}
                   <div className="ml-auto flex space-x-2">
@@ -391,13 +380,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                           <div className="flex justify-between items-center">
                             <div>
                               <div className="font-medium">{review.userName}</div>
-                              <div className="flex text-yellow-400 mt-1">
-                                {[1, 2, 3, 4, 5].map(star => (
-                                  <span key={star} className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}>
-                                    ★
-                                  </span>
-                                ))}
-                              </div>
+                              <StarRating rating={review.rating} size="sm" className="mt-1" />
                             </div>
                             <div className="text-gray-500 text-sm">{review.date}</div>
                           </div>
