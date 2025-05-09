@@ -30,9 +30,94 @@ interface Pagination {
 }
 
 export default function ProductsPage() {
+  // 获取主题设置
+  const { theme, updateTheme } = useTheme()
+
+  // 分类数据
+  const categories = [
+    { id: 1, name: '电子产品' },
+    { id: 2, name: '家居用品' },
+    { id: 3, name: '服装鞋帽' },
+    { id: 4, name: '美妆护肤' },
+    { id: 5, name: '食品饮料' },
+    { id: 6, name: '运动户外' }
+  ]
+  
+  // 价格区间
+  const priceRanges = [
+    { id: '0-100', name: '¥0 - ¥100' },
+    { id: '100-300', name: '¥100 - ¥300' },
+    { id: '300-500', name: '¥300 - ¥500' },
+    { id: '500-1000', name: '¥500 - ¥1000' },
+    { id: '1000-999999', name: '¥1000以上' }
+  ]
+
+  // 创建模拟数据集合
+  const createInitialMockData = () => {
+    // 创建50个模拟商品
+    return Array.from({ length: 150 }, (_, i) => ({
+      id: i + 1,
+      name: `模拟商品 ${i + 1}`,
+      description: `这是一个模拟商品的描述 ${i + 1}`,
+      price: Math.floor(Math.random() * 2000) + 1, // 1-2000元随机价格
+      image: `https://picsum.photos/id/${(i % 30) + 1}/400/400`, // 使用随机图片
+      category: Math.floor(Math.random() * 6) + 1, // 1-6随机分类
+      inventory: Math.floor(Math.random() * 100) + 1, // 1-100随机库存
+      rating: Math.floor(Math.random() * 5) + 1, // 1-5随机评分
+      reviews: Math.floor(Math.random() * 200) + 1, // 1-200随机评论数
+    }));
+  };
+
+  // 计算初始筛选计数
+  const calculateInitialCounts = (products: Product[]) => {
+    const catCounts: Record<number, number> = {};
+    const priceCounts: Record<string, number> = {};
+    const rateCounts: Record<number, number> = {1: 0, 2: 0, 3: 0, 4: 0};
+    
+    // 确保所有类别都有默认值
+    categories.forEach(cat => {
+      catCounts[cat.id] = 0;
+    });
+
+    // 确保所有价格区间都有默认值
+    priceRanges.forEach(range => {
+      priceCounts[range.id] = 0;
+    });
+    
+    products.forEach(product => {
+      // 统计分类
+      if (product.category) {
+        catCounts[product.category] = (catCounts[product.category] || 0) + 1;
+      }
+      
+      // 统计价格范围
+      priceRanges.forEach(range => {
+        const [min, max] = range.id.split('-').map(Number);
+        if (product.price >= min && product.price <= max) {
+          priceCounts[range.id] = (priceCounts[range.id] || 0) + 1;
+        }
+      });
+      
+      // 统计评分
+      if (product.rating) {
+        for (let i = 1; i <= 4; i++) {
+          if (product.rating >= i) {
+            rateCounts[i] = (rateCounts[i] || 0) + 1;
+          }
+        }
+      }
+    });
+    
+    return { catCounts, priceCounts, rateCounts, total: products.length };
+  };
+
+  // 初始化模拟数据和筛选计数
+  const initialProducts = createInitialMockData();
+  const initialCounts = calculateInitialCounts(initialProducts);
+  
   // 状态管理
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<Product[]>(initialProducts.slice(0, 10))
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
   // 无限滚动状态
@@ -56,96 +141,17 @@ export default function ProductsPage() {
   const [customPriceMin, setCustomPriceMin] = useState('')
   const [customPriceMax, setCustomPriceMax] = useState('')
   
-  // 筛选项商品计数
-  const [categoryCounts, setCategoryCounts] = useState<Record<number, number>>({})
-  const [priceRangeCounts, setPriceRangeCounts] = useState<Record<string, number>>({})
-  const [ratingCounts, setRatingCounts] = useState<Record<number, number>>({})
-  const [totalProducts, setTotalProducts] = useState(0)
+  // 筛选项商品计数 - 预先初始化
+  const [categoryCounts, setCategoryCounts] = useState<Record<number, number>>(initialCounts.catCounts)
+  const [priceRangeCounts, setPriceRangeCounts] = useState<Record<string, number>>(initialCounts.priceCounts)
+  const [ratingCounts, setRatingCounts] = useState<Record<number, number>>(initialCounts.rateCounts)
+  const [totalProducts, setTotalProducts] = useState(initialCounts.total)
   
   // 是否已加载过筛选计数
-  const [filtersCountLoaded, setFiltersCountLoaded] = useState(false)
+  const [filtersCountLoaded, setFiltersCountLoaded] = useState(true)  // 设为true，因为已预加载
   
-  // 分类数据
-  const categories = [
-    { id: 1, name: '电子产品' },
-    { id: 2, name: '家居用品' },
-    { id: 3, name: '服装鞋帽' },
-    { id: 4, name: '美妆护肤' },
-    { id: 5, name: '食品饮料' },
-    { id: 6, name: '运动户外' }
-  ]
-  
-  // 价格区间
-  const priceRanges = [
-    { id: '0-100', name: '¥0 - ¥100' },
-    { id: '100-300', name: '¥100 - ¥300' },
-    { id: '300-500', name: '¥300 - ¥500' },
-    { id: '500-1000', name: '¥500 - ¥1000' },
-    { id: '1000-999999', name: '¥1000以上' }
-  ]
-  
-  // 获取主题设置
-  const { theme, updateTheme } = useTheme()
-  
-  // 初始加载时获取筛选项统计数据
-  useEffect(() => {
-    const loadFilterCounts = async () => {
-      if (filtersCountLoaded) return;
-      
-      try {
-        // 获取全部数据用于计算筛选统计
-        let allData;
-        try {
-          const res = await fetch('/api/products?limit=1000', {
-            method: 'GET',
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache' }
-          });
-          
-          if (!res.ok) {
-            throw new Error('获取初始数据失败');
-          }
-          
-          allData = await res.json();
-        } catch (apiError) {
-          console.log('初始加载使用模拟数据');
-          // 如果API请求失败，使用模拟数据
-          allData = generateMockData(1, new URLSearchParams('limit=1000'));
-        }
-        
-        if (allData && allData.products) {
-          // 更新商品总数
-          if (allData.total !== undefined) {
-            setTotalProducts(allData.total);
-          } else {
-            setTotalProducts(allData.products.length);
-          }
-          
-          // 如果API返回了筛选统计
-          if (allData.filterCounts) {
-            if (allData.filterCounts.categories) {
-              setCategoryCounts(allData.filterCounts.categories);
-            }
-            if (allData.filterCounts.priceRanges) {
-              setPriceRangeCounts(allData.filterCounts.priceRanges);
-            }
-            if (allData.filterCounts.ratings) {
-              setRatingCounts(allData.filterCounts.ratings);
-            }
-          } else {
-            // 从产品数据计算筛选统计
-            calculateFilterCounts(allData.products);
-          }
-          
-          setFiltersCountLoaded(true);
-        }
-      } catch (err) {
-        console.error('加载筛选统计失败:', err);
-      }
-    };
-    
-    loadFilterCounts();
-  }, [filtersCountLoaded]);
+  // 所有模拟数据的引用
+  const allProductsRef = useRef<Product[]>(initialProducts);
   
   // 获取产品数据
   const fetchProducts = async (pageNumber = 1, append = false) => {
@@ -190,25 +196,8 @@ export default function ProductsPage() {
 
       console.log('筛选参数:', params.toString());
       
-      // 获取数据
-      let data;
-      try {
-        const res = await fetch(`/api/products?${params.toString()}`, {
-          method: 'GET',
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        
-        if (!res.ok) {
-          throw new Error('API请求失败，状态码: ' + res.status);
-        }
-        
-        data = await res.json();
-      } catch (apiError) {
-        console.error('API请求错误:', apiError);
-        // 如果API请求失败，使用模拟数据
-        data = generateMockData(pageNumber, params);
-      }
+      // 使用模拟数据来处理请求，无论API是否可用
+      let data = generateMockData(pageNumber, params);
       
       if (data && data.products) {
         // 无限滚动模式下，将新数据追加到现有数据
@@ -223,28 +212,20 @@ export default function ProductsPage() {
           setTotalProducts(data.total);
         }
         
-        // 如果是第一页但没有加载过筛选统计，更新筛选计数
-        if (pageNumber === 1 && !filtersCountLoaded && data.filterCounts) {
-          if (data.filterCounts.categories) {
+        // 更新筛选计数 - 但仅在筛选条件变化时才更新
+        if (pageNumber === 1) {
+          // 始终更新筛选计数，确保与当前筛选结果一致
+          if (data.filterCounts) {
             setCategoryCounts(data.filterCounts.categories);
-          }
-          if (data.filterCounts.priceRanges) {
             setPriceRangeCounts(data.filterCounts.priceRanges);
-          }
-          if (data.filterCounts.ratings) {
             setRatingCounts(data.filterCounts.ratings);
           }
-          setFiltersCountLoaded(true);
-        } else if (pageNumber === 1 && !filtersCountLoaded) {
-          // 从产品数据计算筛选统计
-          calculateFilterCounts(data.products);
-          setFiltersCountLoaded(true);
         }
         
         // 判断是否还有更多数据
         setHasMore(data.products.length === limit && pageNumber < (data.totalPages || 1))
       } else {
-        console.error('API返回的数据格式不正确', data)
+        console.error('数据格式不正确', data)
         setProducts(append ? products : [])
         setHasMore(false)
       }
@@ -262,27 +243,15 @@ export default function ProductsPage() {
 
   // 生成模拟数据
   const generateMockData = (pageNumber: number, params: URLSearchParams) => {
-    // 创建50个模拟商品
-    const mockProducts: Product[] = Array.from({ length: 50 }, (_, i) => ({
-      id: i + 1,
-      name: `模拟商品 ${i + 1}`,
-      description: `这是一个模拟商品的描述 ${i + 1}`,
-      price: Math.floor(Math.random() * 2000) + 1, // 1-2000元随机价格
-      image: `https://picsum.photos/id/${(i % 30) + 1}/400/400`, // 使用随机图片
-      category: Math.floor(Math.random() * 6) + 1, // 1-6随机分类
-      inventory: Math.floor(Math.random() * 100) + 1, // 1-100随机库存
-      rating: Math.floor(Math.random() * 5) + 1, // 1-5随机评分
-      reviews: Math.floor(Math.random() * 200) + 1, // 1-200随机评论数
-    }));
-
-    // 应用筛选条件
-    let filteredProducts = [...mockProducts];
+    // 使用所有模拟数据进行过滤
+    let filteredProducts = [...allProductsRef.current];
     
     // 关键词筛选
     const keyword = params.get('keyword');
     if (keyword) {
       filteredProducts = filteredProducts.filter(p => 
-        p.name.includes(keyword) || p.description.includes(keyword)
+        p.name.toLowerCase().includes(keyword.toLowerCase()) || 
+        p.description.toLowerCase().includes(keyword.toLowerCase())
       );
     }
     
@@ -307,6 +276,25 @@ export default function ProductsPage() {
       filteredProducts = filteredProducts.filter(p => p.rating >= Number(minRating));
     }
     
+    // 排序处理
+    const sortBy = params.get('sortBy');
+    if (sortBy) {
+      switch (sortBy) {
+        case 'price-asc':
+          filteredProducts.sort((a, b) => a.price - b.price);
+          break;
+        case 'price-desc':
+          filteredProducts.sort((a, b) => b.price - a.price);
+          break;
+        case 'newest':
+          filteredProducts.sort((a, b) => b.id - a.id);
+          break;
+        case 'rating':
+          filteredProducts.sort((a, b) => b.rating - a.rating);
+          break;
+      }
+    }
+    
     // 分页处理
     const limit = Number(params.get('limit') || '10');
     const start = (pageNumber - 1) * limit;
@@ -319,6 +307,16 @@ export default function ProductsPage() {
       priceRanges: {} as Record<string, number>,
       ratings: {} as Record<number, number>,
     };
+    
+    // 确保所有类别都有默认值
+    categories.forEach(cat => {
+      filterCounts.categories[cat] = 0;
+    });
+
+    // 确保所有价格区间都有默认值
+    priceRanges.forEach(range => {
+      filterCounts.priceRanges[range.id] = 0;
+    });
     
     // 计算各分类的商品数
     filteredProducts.forEach(p => {
@@ -341,7 +339,7 @@ export default function ProductsPage() {
       });
     });
     
-    console.log('使用模拟数据，筛选后商品数:', filteredProducts.length);
+    console.log('筛选后商品数:', filteredProducts.length);
     
     return {
       products: pagedProducts,
@@ -350,41 +348,6 @@ export default function ProductsPage() {
       filterCounts
     };
   }
-
-  // 计算筛选项的商品数量
-  const calculateFilterCounts = (productList: Product[]) => {
-    const catCounts: Record<number, number> = {};
-    const priceCounts: Record<string, number> = {};
-    const rateCounts: Record<number, number> = {1: 0, 2: 0, 3: 0, 4: 0};
-    
-    productList.forEach(product => {
-      // 统计分类
-      if (product.category) {
-        catCounts[product.category] = (catCounts[product.category] || 0) + 1;
-      }
-      
-      // 统计价格范围
-      priceRanges.forEach(range => {
-        const [min, max] = range.id.split('-').map(Number);
-        if (product.price >= min && product.price <= max) {
-          priceCounts[range.id] = (priceCounts[range.id] || 0) + 1;
-        }
-      });
-      
-      // 统计评分
-      if (product.rating) {
-        for (let i = 1; i <= 4; i++) {
-          if (product.rating >= i) {
-            rateCounts[i] = (rateCounts[i] || 0) + 1;
-          }
-        }
-      }
-    });
-    
-    setCategoryCounts(catCounts);
-    setPriceRangeCounts(priceCounts);
-    setRatingCounts(rateCounts);
-  };
 
   // 监听滚动加载更多
   const lastProductRef = useCallback((node: HTMLDivElement) => {
