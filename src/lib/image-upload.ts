@@ -1,19 +1,21 @@
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from './supabase';
 
-export async function uploadImage(file: File): Promise<string> {
-  const supabase = createClient();
+export async function uploadImageToSupabase(file: File, bucket: string = 'products'): Promise<string> {
   const fileExt = file.name.split('.').pop();
   const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-  
-  const { data, error } = await supabase.storage
-    .from('products')
-    .upload(fileName, file);
+  const filePath = `${fileName}`;
 
-  if (error) throw error;
+  const { error: uploadError } = await supabase.storage
+    .from(bucket)
+    .upload(filePath, file);
+
+  if (uploadError) {
+    throw new Error(`Error uploading image: ${uploadError.message}`);
+  }
 
   const { data: { publicUrl } } = supabase.storage
-    .from('products')
-    .getPublicUrl(fileName);
+    .from(bucket)
+    .getPublicUrl(filePath);
 
   return publicUrl;
 } 
