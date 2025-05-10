@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/app/context/AuthContext'
+import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 
 export default function SQLExecutorPage() {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
+  const isAuthenticated = !!user
   const [sql, setSql] = useState('')
   const [results, setResults] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
