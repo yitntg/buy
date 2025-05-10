@@ -51,11 +51,7 @@ export class CommentAggregate {
     const comment = this.getComment(commentId);
     comment.delete();
     this.comments.delete(commentId);
-    this.addDomainEvent(new CommentDeletedEvent({
-      id: commentId,
-      productId: this.productId,
-      userId: this.userId
-    }));
+    this.addDomainEvent(new CommentDeletedEvent(comment));
   }
 
   likeComment(commentId: string, userId: string): void {
@@ -79,7 +75,7 @@ export class CommentAggregate {
     const parentComment = this.getComment(parentId);
     const reply = this.createComment(content, rating, images, parentId);
     parentComment.addReply(reply);
-    this.addDomainEvent(new CommentRepliedEvent(parentComment, reply));
+    this.addDomainEvent(new CommentRepliedEvent(parentComment, reply.id, reply.userId));
     return reply;
   }
 
