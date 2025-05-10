@@ -46,6 +46,12 @@ export class Comment {
     this._updatedAt = new Date();
   }
 
+  update(content: string, rating: number): void {
+    this.updateContent(content);
+    this.updateRating(rating);
+    this.addDomainEvent(new CommentUpdatedEvent(this));
+  }
+
   updateImages(images: string[]): void {
     this.images = images;
     this._updatedAt = new Date();

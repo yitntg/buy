@@ -56,8 +56,7 @@ export class CommentDomainService {
     content?: string;
     rating?: number;
     images?: string[];
-  }): Promise<Comment> {
-    // 获取评论
+  }): Promise<void> {
     const comment = await this.commentRepository.findById(params.commentId);
     if (!comment) {
       throw new Error('评论不存在');
