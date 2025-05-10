@@ -95,9 +95,9 @@ export class CategoryApi implements CategoryRepository {
     }
   }
 
-  async update(category: Category): Promise<void> {
+  async update(id: string, category: Category): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/${category.id}`, {
+      const response = await fetch(`${this.baseUrl}/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

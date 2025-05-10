@@ -6,6 +6,6 @@ export interface CategoryRepository {
   findByParentId(parentId: string): Promise<Category[]>;
   findActive(): Promise<Category[]>;
   save(category: Category): Promise<void>;
-  update(category: Category): Promise<void>;
+  update(id: string, category: Category): Promise<void>;
   delete(id: string): Promise<void>;
 } 
