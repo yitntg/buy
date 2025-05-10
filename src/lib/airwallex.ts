@@ -13,7 +13,15 @@ export interface AirwallexPaymentIntent {
   client_secret: string;
 }
 
-export async function createPaymentIntent(amount: number, currency: string = 'USD'): Promise<AirwallexPaymentIntent> {
+interface CreatePaymentIntentParams {
+  amount: number;
+  currency: string;
+  orderId: string;
+  customerInfo: any;
+  returnUrl: string;
+}
+
+export async function createPaymentIntent(params: CreatePaymentIntentParams): Promise<AirwallexPaymentIntent> {
   const response = await fetch(`${AIRWALLEX_API_URL}/pa/payment_intents`, {
     method: 'POST',
     headers: {
@@ -21,10 +29,15 @@ export async function createPaymentIntent(amount: number, currency: string = 'US
       'Authorization': `Bearer ${AIRWALLEX_API_KEY}`,
     },
     body: JSON.stringify({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency,
+      amount: Math.round(params.amount * 100), // Convert to cents
+      currency: params.currency,
       payment_method_types: ['card'],
       capture_method: 'automatic',
+      metadata: {
+        orderId: params.orderId,
+        customerInfo: params.customerInfo,
+        returnUrl: params.returnUrl
+      }
     }),
   });
 
