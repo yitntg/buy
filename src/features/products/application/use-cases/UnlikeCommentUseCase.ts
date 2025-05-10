@@ -24,6 +24,6 @@ export class UnlikeCommentUseCase {
 
     await this.commentRepository.unlikeComment(commentId, userId);
     // 发布领域事件
-    this.eventBus.publish(new CommentUnlikedEvent(comment));
+    this.eventBus.publish(new CommentUnlikedEvent(comment, userId));
   }
 } 

@@ -8,6 +8,7 @@ import { DomainEvent } from '@/shared/domain/events/DomainEvent';
 
 export class Comment {
   private domainEvents: DomainEvent[] = [];
+  private likes: string[] = [];
 
   private constructor(
     public readonly id: string,
@@ -99,7 +100,7 @@ export class Comment {
   }
 
   addReply(reply: Comment): void {
-    this.addDomainEvent(new CommentRepliedEvent(this, reply));
+    this.addDomainEvent(new CommentRepliedEvent(this, reply.id, reply.userId));
   }
 
   addDomainEvent(event: DomainEvent): void {
