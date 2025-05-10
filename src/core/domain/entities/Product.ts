@@ -9,6 +9,7 @@ export interface ProductProps {
   categoryId: string;
   stock: number;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
 export class Product {
@@ -50,6 +51,10 @@ export class Product {
     return new Date(this.props.createdAt);
   }
 
+  public get updatedAt(): Date | undefined {
+    return this.props.updatedAt ? new Date(this.props.updatedAt) : undefined;
+  }
+
   public updateStock(quantity: number): void {
     if (quantity < 0) {
       throw new Error('Stock cannot be negative');
@@ -59,5 +64,12 @@ export class Product {
 
   public hasStock(quantity: number): boolean {
     return this.stock >= quantity;
+  }
+
+  public update(props: Partial<ProductProps>): void {
+    Object.assign(this.props, {
+      ...props,
+      updatedAt: new Date()
+    });
   }
 } 
