@@ -28,7 +28,7 @@ interface Product {
 }
 
 export default function ReviewDetail({ params }: { params: { id: string } }) {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
   const [review, setReview] = useState<Review | null>(null)
   const [product, setProduct] = useState<Product | null>(null)
@@ -38,14 +38,14 @@ export default function ReviewDetail({ params }: { params: { id: string } }) {
   
   // 检查用户是否已登录并且是管理员
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!user) {
       router.push('/auth/login?redirect=/admin/reviews/' + params.id)
-    } else if (user?.role !== 'admin') {
+    } else if (user.role !== 'admin') {
       router.push('/') // 如果不是管理员，重定向到首页
     } else {
       fetchReviewData()
     }
-  }, [isAuthenticated, user, router, params.id])
+  }, [user, router, params.id])
   
   // 获取评论数据
   const fetchReviewData = async () => {
@@ -199,81 +199,39 @@ export default function ReviewDetail({ params }: { params: { id: string } }) {
                 </div>
                 
                 <div className="mb-4">
-                  <div className="text-sm text-gray-500 mb-1">用户ID</div>
-                  <div className="font-mono text-sm">{review.user_id}</div>
+                  <div className="text-sm text-gray-500 mb-1">评分</div>
+                  {renderStars(review.rating)}
                 </div>
                 
                 <div className="mb-4">
-                  <div className="text-sm text-gray-500 mb-1">评分</div>
-                  <div className="flex items-center">
-                    {renderStars(review.rating)}
-                    <span className="ml-2">{review.rating}/5</span>
-                  </div>
+                  <div className="text-sm text-gray-500 mb-1">评论内容</div>
+                  <div className="font-medium whitespace-pre-wrap">{review.comment}</div>
                 </div>
               </div>
               
-              <div>
-                <div className="mb-4">
-                  <div className="text-sm text-gray-500 mb-1">评论时间</div>
-                  <div>{new Date(review.created_at).toLocaleString('zh-CN')}</div>
-                </div>
-                
-                <div className="mb-4">
-                  <div className="text-sm text-gray-500 mb-1">商品ID</div>
-                  <div>
-                    <Link href={`/product/${review.product_id}`} className="text-primary hover:underline">
-                      {review.product_id}
-                    </Link>
+              {product && (
+                <div>
+                  <div className="mb-4">
+                    <div className="text-sm text-gray-500 mb-1">产品信息</div>
+                    <div className="flex items-center space-x-4">
+                      <div className="relative w-16 h-16">
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                      <div>
+                        <div className="font-medium">{product.name}</div>
+                        <div className="text-sm text-gray-500">¥{product.price}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            
-            <div className="mt-4">
-              <div className="text-sm text-gray-500 mb-1">评论内容</div>
-              <div className="bg-gray-50 p-4 rounded">{review.comment}</div>
+              )}
             </div>
           </div>
-          
-          {product && (
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">相关商品</h3>
-              
-              <div className="flex flex-col md:flex-row">
-                <div className="md:w-40 md:h-40 relative mb-4 md:mb-0 md:mr-6">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover rounded"
-                  />
-                </div>
-                
-                <div className="flex-1">
-                  <h4 className="text-xl font-medium mb-2">
-                    <Link href={`/product/${product.id}`} className="text-primary hover:underline">
-                      {product.name}
-                    </Link>
-                  </h4>
-                  
-                  <div className="text-lg font-bold text-primary mb-2">
-                    ¥{product.price.toFixed(2)}
-                  </div>
-                  
-                  <p className="text-gray-700 line-clamp-2">{product.description}</p>
-                  
-                  <div className="mt-4">
-                    <Link 
-                      href={`/admin/products/${product.id}`} 
-                      className="text-primary hover:underline"
-                    >
-                      查看商品详情
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </div>
