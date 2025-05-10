@@ -1,11 +1,12 @@
 import { Comment } from '../domain/Comment';
-import { CommentRepository, CommentQueryParams, PaginatedResult } from '../domain/CommentRepository';
+import { CommentRepository, CommentQueryParams } from '../domain/CommentRepository';
+import { PaginatedResult } from '@/shared/domain/PaginatedResult';
 
 export class CommentApi implements CommentRepository {
   private readonly baseUrl = '/api/comments';
 
   async findById(id: string): Promise<Comment | null> {
-    const response = await fetch(`/api/comments/${id}`);
+    const response = await fetch(`${this.baseUrl}/${id}`);
     const item = await response.json();
     if (!item) return null;
     return Comment.create(
@@ -20,127 +21,11 @@ export class CommentApi implements CommentRepository {
   }
 
   async findByProductId(productId: string, params?: CommentQueryParams): Promise<PaginatedResult<Comment>> {
-    try {
-      const queryParams = new URLSearchParams();
-      
-      // 添加分页参数
-      if (params?.pagination) {
-        queryParams.append('page', params.pagination.page.toString());
-        queryParams.append('pageSize', params.pagination.pageSize.toString());
-      }
-
-      // 添加排序参数
-      if (params?.sort) {
-        queryParams.append('sortField', params.sort.field);
-        queryParams.append('sortOrder', params.sort.order);
-      }
-
-      // 添加筛选参数
-      if (params?.filter) {
-        if (params.filter.rating) {
-          queryParams.append('rating', params.filter.rating.toString());
-        }
-        if (params.filter.hasImages !== undefined) {
-          queryParams.append('hasImages', params.filter.hasImages.toString());
-        }
-        if (params.filter.startDate) {
-          queryParams.append('startDate', params.filter.startDate.toISOString());
-        }
-        if (params.filter.endDate) {
-          queryParams.append('endDate', params.filter.endDate.toISOString());
-        }
-      }
-
-      const response = await fetch(`${this.baseUrl}/product/${productId}?${queryParams.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch comments');
-      }
-      const data = await response.json();
-      return {
-        items: data.items.map((item: any) => Comment.create(
-          item.id,
-          item.productId,
-          item.userId,
-          item.content,
-          item.rating,
-          item.images,
-          item.parentId
-        )),
-        total: data.total,
-        page: data.page,
-        pageSize: data.pageSize,
-        totalPages: data.totalPages
-      };
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-      throw error;
-    }
-  }
-
-  async findByUserId(userId: string, params?: CommentQueryParams): Promise<PaginatedResult<Comment>> {
-    try {
-      const queryParams = new URLSearchParams();
-      
-      // 添加分页参数
-      if (params?.pagination) {
-        queryParams.append('page', params.pagination.page.toString());
-        queryParams.append('pageSize', params.pagination.pageSize.toString());
-      }
-
-      // 添加排序参数
-      if (params?.sort) {
-        queryParams.append('sortField', params.sort.field);
-        queryParams.append('sortOrder', params.sort.order);
-      }
-
-      // 添加筛选参数
-      if (params?.filter) {
-        if (params.filter.rating) {
-          queryParams.append('rating', params.filter.rating.toString());
-        }
-        if (params.filter.hasImages !== undefined) {
-          queryParams.append('hasImages', params.filter.hasImages.toString());
-        }
-        if (params.filter.startDate) {
-          queryParams.append('startDate', params.filter.startDate.toISOString());
-        }
-        if (params.filter.endDate) {
-          queryParams.append('endDate', params.filter.endDate.toISOString());
-        }
-      }
-
-      const response = await fetch(`${this.baseUrl}/user/${userId}?${queryParams.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch comments');
-      }
-      const data = await response.json();
-      return {
-        items: data.items.map((item: any) => Comment.create(
-          item.id,
-          item.productId,
-          item.userId,
-          item.content,
-          item.rating,
-          item.images,
-          item.parentId
-        )),
-        total: data.total,
-        page: data.page,
-        pageSize: data.pageSize,
-        totalPages: data.totalPages
-      };
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-      throw error;
-    }
-  }
-
-  async findByParentId(parentId: string, params?: CommentQueryParams): Promise<PaginatedResult<Comment>> {
-    const page = params?.pagination?.page || 1;
-    const pageSize = params?.pagination?.pageSize || 10;
-    const sortField = params?.sort?.field || 'createdAt';
-    const sortOrder = params?.sort?.order || 'asc';
-    const response = await fetch(`/api/comments?parentId=${parentId}&page=${page}&pageSize=${pageSize}&sortField=${sortField}&sortOrder=${sortOrder}`);
+    const page = params?.page || 1;
+    const pageSize = params?.pageSize || 10;
+    const sortBy = params?.sortBy || 'createdAt';
+    const sortOrder = params?.sortOrder || 'asc';
+    const response = await fetch(`${this.baseUrl}?productId=${productId}&page=${page}&pageSize=${pageSize}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
     const data = await response.json();
     return {
       items: data.items.map((item: any) => Comment.create(
@@ -155,8 +40,85 @@ export class CommentApi implements CommentRepository {
       total: data.total,
       page: data.page,
       pageSize: data.pageSize,
-      totalPages: data.totalPages
+      totalPages: data.totalPages,
+      hasNext: data.page < data.totalPages,
+      hasPrevious: data.page > 1
     };
+  }
+
+  async findByUserId(userId: string, params?: CommentQueryParams): Promise<PaginatedResult<Comment>> {
+    const page = params?.page || 1;
+    const pageSize = params?.pageSize || 10;
+    const sortBy = params?.sortBy || 'createdAt';
+    const sortOrder = params?.sortOrder || 'asc';
+    const response = await fetch(`${this.baseUrl}?userId=${userId}&page=${page}&pageSize=${pageSize}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
+    const data = await response.json();
+    return {
+      items: data.items.map((item: any) => Comment.create(
+        item.id,
+        item.productId,
+        item.userId,
+        item.content,
+        item.rating,
+        item.images,
+        item.parentId
+      )),
+      total: data.total,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalPages: data.totalPages,
+      hasNext: data.page < data.totalPages,
+      hasPrevious: data.page > 1
+    };
+  }
+
+  async findByParentId(parentId: string, params?: CommentQueryParams): Promise<PaginatedResult<Comment>> {
+    const page = params?.page || 1;
+    const pageSize = params?.pageSize || 10;
+    const sortBy = params?.sortBy || 'createdAt';
+    const sortOrder = params?.sortOrder || 'asc';
+    const response = await fetch(`${this.baseUrl}?parentId=${parentId}&page=${page}&pageSize=${pageSize}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
+    const data = await response.json();
+    return {
+      items: data.items.map((item: any) => Comment.create(
+        item.id,
+        item.productId,
+        item.userId,
+        item.content,
+        item.rating,
+        item.images,
+        item.parentId
+      )),
+      total: data.total,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalPages: data.totalPages,
+      hasNext: data.page < data.totalPages,
+      hasPrevious: data.page > 1
+    };
+  }
+
+  async findByProductIdAndUserId(productId: string, userId: string): Promise<Comment | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}?productId=${productId}&userId=${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch comment');
+      }
+      const data = await response.json();
+      if (!data) return null;
+      return Comment.create(
+        data.id,
+        data.productId,
+        data.userId,
+        data.content,
+        data.rating,
+        data.images,
+        data.parentId
+      );
+    } catch (error) {
+      console.error('Error fetching comment:', error);
+      throw error;
+    }
   }
 
   async save(comment: Comment): Promise<void> {
@@ -167,12 +129,12 @@ export class CommentApi implements CommentRepository {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: comment.content,
-          rating: comment.rating,
+          content: comment.getContent(),
+          rating: comment.getRating(),
           userId: comment.userId,
           productId: comment.productId,
           parentId: comment.parentId,
-          images: comment.images
+          images: comment.getImages()
         }),
       });
       if (!response.ok) {
@@ -184,17 +146,17 @@ export class CommentApi implements CommentRepository {
     }
   }
 
-  async update(comment: Comment): Promise<void> {
+  async update(id: string, comment: Partial<Comment>): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/${comment.id}`, {
+      const response = await fetch(`${this.baseUrl}/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: comment.content,
-          rating: comment.rating,
-          images: comment.images
+          content: comment.getContent?.(),
+          rating: comment.getRating?.(),
+          images: comment.getImages?.()
         }),
       });
       if (!response.ok) {
