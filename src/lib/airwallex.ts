@@ -57,4 +57,23 @@ export async function getPaymentIntent(paymentIntentId: string): Promise<Airwall
   }
 
   return response.json();
+}
+
+export async function confirmPaymentIntent(paymentIntentId: string, paymentMethod: any): Promise<AirwallexPaymentIntent> {
+  const response = await fetch(`${AIRWALLEX_API_URL}/pa/payment_intents/${paymentIntentId}/confirm`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AIRWALLEX_API_KEY}`,
+    },
+    body: JSON.stringify({
+      payment_method: paymentMethod
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to confirm payment intent: ${response.statusText}`);
+  }
+
+  return response.json();
 } 
