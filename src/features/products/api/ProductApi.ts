@@ -1,5 +1,5 @@
-import { Product } from '../domain/Product';
-import { ProductRepository, ProductSearchParams, ProductSearchResult } from '../domain/ProductRepository';
+import { Product } from '@/core/domain/entities/Product';
+import { ProductRepository, ProductSearchParams, ProductSearchResult } from '@/core/application/interfaces/ProductRepository';
 import { Money } from '@/core/domain/value-objects/Money';
 
 export class ProductApi implements ProductRepository {
@@ -79,9 +79,9 @@ export class ProductApi implements ProductRepository {
     }
   }
 
-  async update(product: Product): Promise<void> {
+  async update(id: string, product: Product): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/${product.id}`, {
+      const response = await fetch(`${this.baseUrl}/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -127,38 +127,38 @@ export class ProductApi implements ProductRepository {
       if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice.toString());
       if (params.sortBy) queryParams.append('sortBy', params.sortBy);
       if (params.page) queryParams.append('page', params.page.toString());
-      if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+      if (params.limit) queryParams.append('limit', params.limit.toString());
 
       const response = await fetch(`${this.baseUrl}/search?${queryParams.toString()}`);
       if (!response.ok) {
         return {
-          products: [],
+          items: [],
           total: 0,
           page: params.page || 1,
-          pageSize: params.pageSize || 10,
+          limit: params.limit || 10,
           totalPages: 0
         };
       }
 
       const data = await response.json();
       return {
-        products: data.products.map((item: any) => Product.create({
+        items: data.items.map((item: any) => Product.create({
           ...item,
           price: Money.create(item.price),
           createdAt: new Date(item.createdAt)
         })),
         total: data.total,
         page: data.page,
-        pageSize: data.pageSize,
+        limit: data.limit,
         totalPages: data.totalPages
       };
     } catch (error) {
       console.error('Error searching products:', error);
       return {
-        products: [],
+        items: [],
         total: 0,
         page: params.page || 1,
-        pageSize: params.pageSize || 10,
+        limit: params.limit || 10,
         totalPages: 0
       };
     }
