@@ -1,7 +1,6 @@
 import { CommentAggregate } from '../../domain/CommentAggregate';
 import { CommentRepository } from '../../domain/CommentRepository';
 import { EventBus } from '@/shared/domain/events/EventBus';
-import { CommentLikedEvent } from '../../domain/events/CommentLikedEvent';
 
 export interface LikeCommentCommand {
   commentId: string;
@@ -28,8 +27,5 @@ export class LikeCommentUseCase {
     
     const events = aggregate.getDomainEvents();
     await this.eventBus.publishAll(events);
-
-    // 发布领域事件
-    this.eventBus.publish(new CommentLikedEvent(comment, userId));
   }
 } 
