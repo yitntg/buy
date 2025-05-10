@@ -1,50 +1,49 @@
 export class Money {
-  private constructor(
-    private readonly amount: number,
-    private readonly currency: string
-  ) {}
-
-  public static create(amount: number, currency: string = 'USD'): Money {
+  private constructor(private readonly amount: number) {
     if (amount < 0) {
-      throw new Error('Amount cannot be negative');
+      throw new Error('金额不能为负数');
     }
-    return new Money(amount, currency);
+  }
+
+  public static create(amount: number): Money {
+    return new Money(amount);
   }
 
   public getAmount(): number {
     return this.amount;
   }
 
-  public getCurrency(): string {
-    return this.currency;
+  public getFormattedAmount(): string {
+    return new Intl.NumberFormat('zh-CN', {
+      style: 'currency',
+      currency: 'CNY'
+    }).format(this.amount);
   }
 
-  public add(money: Money): Money {
-    if (this.currency !== money.currency) {
-      throw new Error('Cannot add money with different currencies');
-    }
-    return Money.create(this.amount + money.amount, this.currency);
+  public add(other: Money): Money {
+    return new Money(this.amount + other.getAmount());
   }
 
-  public subtract(money: Money): Money {
-    if (this.currency !== money.currency) {
-      throw new Error('Cannot subtract money with different currencies');
+  public subtract(other: Money): Money {
+    const result = this.amount - other.getAmount();
+    if (result < 0) {
+      throw new Error('金额不能为负数');
     }
-    if (this.amount < money.amount) {
-      throw new Error('Result cannot be negative');
-    }
-    return Money.create(this.amount - money.amount, this.currency);
+    return new Money(result);
   }
 
   public multiply(multiplier: number): Money {
-    return Money.create(this.amount * multiplier, this.currency);
+    if (multiplier < 0) {
+      throw new Error('乘数不能为负数');
+    }
+    return new Money(this.amount * multiplier);
   }
 
   public equals(money: Money): boolean {
-    return this.amount === money.amount && this.currency === money.currency;
+    return this.amount === money.amount;
   }
 
   public toString(): string {
-    return `${this.currency} ${this.amount.toFixed(2)}`;
+    return `${this.amount.toFixed(2)}`;
   }
 } 

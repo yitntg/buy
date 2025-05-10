@@ -171,4 +171,98 @@ npm start
 - 商品管理：添加、编辑、删除商品
 - 用户管理：查看用户信息，管理权限
 - 订单管理：查看和处理订单
-- 数据分析：查看销售和用户数据 
+- 数据分析：查看销售和用户数据
+
+# 评论系统
+
+一个基于领域驱动设计(DDD)的评论系统,支持评论的创建、更新、删除、点赞和回复功能。
+
+## 技术栈
+
+- 前端: React + TypeScript + Tailwind CSS
+- 后端: Node.js + Express + TypeScript
+- 数据库: PostgreSQL + Prisma
+- 缓存: Redis
+- 测试: Jest + React Testing Library
+- 部署: Docker + GitHub Actions
+
+## 功能特性
+
+- 评论的 CRUD 操作
+- 评论点赞功能
+- 评论回复功能
+- 图片上传
+- 评分系统
+- 实时更新
+- 缓存支持
+- 错误处理
+- 日志记录
+
+## 项目结构
+
+```
+src/
+  ├── features/           # 功能模块
+  │   └── products/      # 商品模块
+  │       ├── domain/    # 领域层
+  │       ├── application/# 应用层
+  │       ├── infrastructure/# 基础设施层
+  │       └── ui/        # 表现层
+  └── shared/            # 共享模块
+      ├── domain/        # 共享领域模型
+      └── infrastructure/# 共享基础设施
+```
+
+## 安装
+
+1. 克隆项目
+```bash
+git clone https://github.com/yourusername/comment-system.git
+cd comment-system
+```
+
+2. 安装依赖
+```bash
+npm install
+```
+
+3. 配置环境变量
+```bash
+cp .env.example .env
+```
+
+4. 启动开发服务器
+```bash
+npm run dev
+```
+
+## 测试
+
+运行单元测试:
+```bash
+npm test
+```
+
+运行集成测试:
+```bash
+npm run test:integration
+```
+
+## 部署
+
+使用 Docker 部署:
+```bash
+docker-compose up -d
+```
+
+## 贡献
+
+1. Fork 项目
+2. 创建特性分支
+3. 提交更改
+4. 推送到分支
+5. 创建 Pull Request
+
+## 许可证
+
+MIT 
