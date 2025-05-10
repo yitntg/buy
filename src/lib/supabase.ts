@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, PostgrestError } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -19,7 +19,8 @@ export async function backupDatabase() {
 
     return backup;
   } catch (error) {
-    console.error('数据库备份失败:', error);
+    const errorMessage = error instanceof PostgrestError ? error.message : '数据库备份失败';
+    console.error(errorMessage, error);
     throw error;
   }
 }
@@ -38,7 +39,8 @@ export async function restoreDatabase(backup: Record<string, any[]>) {
       }
     }
   } catch (error) {
-    console.error('数据库恢复失败:', error);
+    const errorMessage = error instanceof PostgrestError ? error.message : '数据库恢复失败';
+    console.error(errorMessage, error);
     throw error;
   }
 }
@@ -49,7 +51,8 @@ export async function checkDatabaseConnection() {
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error('数据库连接检查失败:', error);
+    const errorMessage = error instanceof PostgrestError ? error.message : '数据库连接检查失败';
+    console.error(errorMessage, error);
     return false;
   }
 } 

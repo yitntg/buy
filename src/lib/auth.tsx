@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User, AuthError } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
 export interface AuthContextType {
@@ -51,7 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败');
+      const errorMessage = err instanceof AuthError ? err.message : '登录失败';
+      setError(errorMessage);
       throw err;
     }
   };
@@ -62,7 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登出失败');
+      const errorMessage = err instanceof AuthError ? err.message : '登出失败';
+      setError(errorMessage);
       throw err;
     }
   };
@@ -73,7 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '注册失败');
+      const errorMessage = err instanceof AuthError ? err.message : '注册失败';
+      setError(errorMessage);
       throw err;
     }
   };
@@ -84,7 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.updateUser(data);
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '更新用户信息失败');
+      const errorMessage = err instanceof AuthError ? err.message : '更新用户信息失败';
+      setError(errorMessage);
       throw err;
     }
   };
