@@ -1,10 +1,10 @@
 // 用户相关类型
 export interface User {
   id: string;
-  email: string;
+  email?: string;
   name?: string;
-  role: 'admin' | 'user';
-  created_at: string;
+  role?: 'admin' | 'user';
+  created_at?: string;
 }
 
 // 产品相关类型
@@ -47,8 +47,7 @@ export interface PaymentIntent {
 // 认证相关类型
 export interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
 } 
