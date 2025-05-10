@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/app/context/AuthContext'
+import { useAuth } from '@/lib/auth'
 
 export default function SQLFunctionManager() {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
+  const isAuthenticated = !!user
   const [loading, setLoading] = useState(false)
   const [statusMessages, setStatusMessages] = useState<string[]>([])
   const [functionStatus, setFunctionStatus] = useState<{[key: string]: {success?: boolean; message?: string}}>({
