@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 // 评论类型定义
 interface Review {
@@ -17,152 +18,90 @@ interface Review {
   product_name?: string
 }
 
-// 分页信息类型定义
+// 分页信息类型
 interface PaginationInfo {
-  total: number
-  page: number
-  limit: number
+  currentPage: number
   totalPages: number
+  totalItems: number
+  itemsPerPage: number
 }
 
 export default function AdminReviews() {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
   const [reviews, setReviews] = useState<Review[]>([])
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
-    total: 0,
-    page: 1,
-    limit: 10,
-    totalPages: 0
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10
   })
   const [loading, setLoading] = useState(true)
-  const [selectedReviews, setSelectedReviews] = useState<number[]>([])
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterRating, setFilterRating] = useState<number | string>('all')
+  const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
   
   // 检查用户是否已登录并且是管理员
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!user) {
       router.push('/auth/login?redirect=/admin/reviews')
-    } else if (user?.role !== 'admin') {
+    } else if (user.role !== 'admin') {
       router.push('/') // 如果不是管理员，重定向到首页
     } else {
       fetchReviews()
     }
-  }, [isAuthenticated, user, router])
+  }, [user, router])
   
-  // 加载评论数据
+  // 获取评论列表
   const fetchReviews = async (page = 1) => {
     setLoading(true)
     try {
-      let url = `/api/admin/reviews?page=${page}&limit=${paginationInfo.limit}`
-      
-      if (searchTerm) {
-        url += `&search=${encodeURIComponent(searchTerm)}`
-      }
-      
-      if (filterRating !== 'all') {
-        url += `&rating=${filterRating}`
-      }
-      
-      const response = await fetch(url)
+      const response = await fetch(`/api/admin/reviews?page=${page}&limit=${paginationInfo.itemsPerPage}`)
       
       if (!response.ok) {
-        throw new Error('获取评论失败')
+        throw new Error('获取评论列表失败')
       }
       
       const data = await response.json()
-      setReviews(data.reviews || [])
+      setReviews(data.reviews)
       setPaginationInfo({
-        total: data.total || 0,
-        page: data.page || 1,
-        limit: data.limit || 10,
-        totalPages: data.totalPages || 0
+        currentPage: data.currentPage,
+        totalPages: data.totalPages,
+        totalItems: data.totalItems,
+        itemsPerPage: data.itemsPerPage
       })
-    } catch (error) {
-      console.error('加载评论数据出错:', error)
+    } catch (err: any) {
+      console.error('获取评论列表失败:', err)
+      setError(err.message || '获取评论列表失败')
     } finally {
       setLoading(false)
     }
   }
   
-  // 处理页码变化
-  const handlePageChange = (newPage: number) => {
-    if (newPage > 0 && newPage <= paginationInfo.totalPages) {
-      fetchReviews(newPage)
-    }
-  }
-  
-  // 处理选择评论
-  const handleSelectReview = (id: number) => {
-    setSelectedReviews(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(reviewId => reviewId !== id)
-      } else {
-        return [...prev, id]
-      }
-    })
-  }
-  
-  // 全选/取消全选
-  const handleSelectAll = () => {
-    if (selectedReviews.length === reviews.length) {
-      setSelectedReviews([])
-    } else {
-      setSelectedReviews(reviews.map(review => review.id))
-    }
-  }
-  
-  // 删除所选评论
-  const handleDeleteSelected = async () => {
-    if (selectedReviews.length === 0 || !confirm('确定要删除所选评论吗？此操作不可撤销。')) {
+  // 删除评论
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!confirm('确定要删除此评论吗？此操作不可撤销。')) {
       return
     }
     
-    setIsDeleting(true)
+    setIsDeleting(reviewId)
     
     try {
-      const response = await fetch('/api/admin/reviews/batch', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ ids: selectedReviews })
+      const response = await fetch(`/api/admin/reviews/${reviewId}`, {
+        method: 'DELETE'
       })
       
       if (!response.ok) {
         throw new Error('删除评论失败')
       }
       
-      // 重新加载评论
-      fetchReviews(paginationInfo.page)
-      setSelectedReviews([])
-      alert('评论已成功删除')
-    } catch (error) {
-      console.error('删除评论失败:', error)
-      alert('删除评论失败，请重试')
+      // 重新获取评论列表
+      await fetchReviews(paginationInfo.currentPage)
+    } catch (err: any) {
+      console.error('删除评论失败:', err)
+      alert(err.message || '删除评论失败，请重试')
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(null)
     }
-  }
-  
-  // 处理搜索
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    fetchReviews(1) // 搜索时重置到第一页
-  }
-  
-  // 处理评分筛选变化
-  const handleRatingFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFilterRating(e.target.value)
-    // 立即应用筛选
-    setTimeout(() => fetchReviews(1), 0)
-  }
-  
-  // 处理搜索输入变化
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
   }
   
   // 渲染星级评分
@@ -172,7 +111,7 @@ export default function AdminReviews() {
         {[1, 2, 3, 4, 5].map(star => (
           <svg
             key={star}
-            className={`w-4 h-4 ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+            className={`w-5 h-5 ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
             fill="currentColor"
             viewBox="0 0 20 20"
             xmlns="http://www.w3.org/2000/svg"
@@ -184,7 +123,7 @@ export default function AdminReviews() {
     )
   }
   
-  if (loading && reviews.length === 0) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="flex justify-center items-center py-12">
@@ -197,82 +136,44 @@ export default function AdminReviews() {
     )
   }
   
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-red-500">出错了</h1>
+            <Link href="/admin" className="text-primary hover:underline">
+              返回管理后台
+            </Link>
+          </div>
+          <p className="text-gray-700">{error}</p>
+        </div>
+      </div>
+    )
+  }
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">评论管理</h1>
-          <Link href="/admin/dashboard" className="text-primary hover:underline">
-            返回仪表盘
+          <Link href="/admin" className="text-primary hover:underline">
+            返回管理后台
           </Link>
         </div>
       </header>
       
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          {/* 工具栏 */}
-          <div className="p-4 border-b flex flex-col sm:flex-row justify-between space-y-4 sm:space-y-0">
-            {/* 搜索 */}
-            <form onSubmit={handleSearch} className="flex space-x-2">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={handleSearchInputChange}
-                placeholder="搜索用户名或评论内容"
-                className="px-3 py-2 border rounded w-full sm:w-64"
-              />
-              <button
-                type="submit"
-                className="bg-primary text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                搜索
-              </button>
-            </form>
-            
-            <div className="flex items-center space-x-4">
-              {/* 评分筛选 */}
-              <select
-                value={filterRating}
-                onChange={handleRatingFilterChange}
-                className="px-3 py-2 border rounded"
-              >
-                <option value="all">所有评分</option>
-                <option value="5">5星</option>
-                <option value="4">4星</option>
-                <option value="3">3星</option>
-                <option value="2">2星</option>
-                <option value="1">1星</option>
-              </select>
-              
-              {/* 删除按钮 */}
-              <button
-                onClick={handleDeleteSelected}
-                disabled={selectedReviews.length === 0 || isDeleting}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isDeleting ? '删除中...' : `删除 (${selectedReviews.length})`}
-              </button>
-            </div>
-          </div>
-          
-          {/* 评论列表 */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                    <input
-                      type="checkbox"
-                      checked={selectedReviews.length === reviews.length && reviews.length > 0}
-                      onChange={handleSelectAll}
-                      className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
-                    />
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    评论ID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    用户
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    商品
+                    用户名
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     评分
@@ -281,7 +182,7 @@ export default function AdminReviews() {
                     评论内容
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    时间
+                    评论时间
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     操作
@@ -289,116 +190,98 @@ export default function AdminReviews() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {reviews.length > 0 ? (
-                  reviews.map(review => (
-                    <tr key={review.id} className={selectedReviews.includes(review.id) ? 'bg-blue-50' : ''}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="checkbox"
-                          checked={selectedReviews.includes(review.id)}
-                          onChange={() => handleSelectReview(review.id)}
-                          className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{review.username}</div>
-                        <div className="text-xs text-gray-500">{review.user_id}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Link href={`/product/${review.product_id}`} className="text-sm text-primary hover:underline">
-                          {review.product_name || `商品 #${review.product_id}`}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {renderStars(review.rating)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 line-clamp-2">{review.comment}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {new Date(review.created_at).toLocaleDateString('zh-CN')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Link href={`/admin/reviews/${review.id}`} className="text-primary hover:underline mr-3">
+                {reviews.map(review => (
+                  <tr key={review.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {review.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {review.username}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {renderStars(review.rating)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                      {review.comment}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(review.created_at).toLocaleString('zh-CN')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-3">
+                        <Link
+                          href={`/admin/reviews/${review.id}`}
+                          className="text-primary hover:text-primary-dark"
+                        >
                           查看
                         </Link>
                         <button
-                          onClick={() => {
-                            if (confirm('确定要删除此评论吗？')) {
-                              handleSelectReview(review.id)
-                              setTimeout(handleDeleteSelected, 0)
-                            }
-                          }}
-                          className="text-red-500 hover:underline"
+                          onClick={() => handleDeleteReview(review.id)}
+                          disabled={isDeleting === review.id}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50"
                         >
-                          删除
+                          {isDeleting === review.id ? '删除中...' : '删除'}
                         </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                      {searchTerm || filterRating !== 'all' ? '没有找到匹配的评论' : '暂无评论'}
+                      </div>
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>
           
-          {/* 分页 */}
+          {/* 分页控件 */}
           {paginationInfo.totalPages > 1 && (
-            <div className="px-6 py-4 flex justify-center">
-              <nav className="flex items-center space-x-2">
+            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+              <div className="flex-1 flex justify-between sm:hidden">
                 <button
-                  onClick={() => handlePageChange(paginationInfo.page - 1)}
-                  disabled={paginationInfo.page === 1}
-                  className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50"
+                  onClick={() => fetchReviews(paginationInfo.currentPage - 1)}
+                  disabled={paginationInfo.currentPage === 1}
+                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                 >
                   上一页
                 </button>
-                
-                {Array.from({ length: paginationInfo.totalPages }, (_, i) => i + 1)
-                  .filter(page => {
-                    // 显示第一页、最后一页，以及当前页附近的页码
-                    return (
-                      page === 1 ||
-                      page === paginationInfo.totalPages ||
-                      Math.abs(page - paginationInfo.page) <= 1
-                    )
-                  })
-                  .map((page, index, array) => {
-                    // 如果页码不连续，添加省略号
-                    const showEllipsis = index > 0 && page - array[index - 1] > 1
-                    
-                    return (
-                      <div key={page} className="flex items-center">
-                        {showEllipsis && <span className="px-2">...</span>}
-                        <button
-                          onClick={() => handlePageChange(page)}
-                          className={`w-8 h-8 flex items-center justify-center rounded ${
-                            page === paginationInfo.page
-                              ? 'bg-primary text-white'
-                              : 'border border-gray-300'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      </div>
-                    )
-                  })}
-                
                 <button
-                  onClick={() => handlePageChange(paginationInfo.page + 1)}
-                  disabled={paginationInfo.page === paginationInfo.totalPages}
-                  className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50"
+                  onClick={() => fetchReviews(paginationInfo.currentPage + 1)}
+                  disabled={paginationInfo.currentPage === paginationInfo.totalPages}
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                 >
                   下一页
                 </button>
-              </nav>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    显示第 <span className="font-medium">{paginationInfo.currentPage}</span> 页，
+                    共 <span className="font-medium">{paginationInfo.totalPages}</span> 页，
+                    总计 <span className="font-medium">{paginationInfo.totalItems}</span> 条评论
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => fetchReviews(paginationInfo.currentPage - 1)}
+                      disabled={paginationInfo.currentPage === 1}
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <span className="sr-only">上一页</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => fetchReviews(paginationInfo.currentPage + 1)}
+                      disabled={paginationInfo.currentPage === paginationInfo.totalPages}
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <span className="sr-only">下一页</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              </div>
             </div>
           )}
         </div>
