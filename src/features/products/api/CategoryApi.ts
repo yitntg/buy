@@ -13,7 +13,7 @@ export class CategoryApi implements CategoryRepository {
       return Category.create({
         ...data,
         createdAt: new Date(data.createdAt),
-        updatedAt: new Date(data.updatedAt)
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : undefined
       });
     } catch (error) {
       console.error('Error fetching category:', error);
@@ -30,7 +30,7 @@ export class CategoryApi implements CategoryRepository {
       return data.map((item: CategoryProps) => Category.create({
         ...item,
         createdAt: new Date(item.createdAt),
-        updatedAt: new Date(item.updatedAt)
+        updatedAt: item.updatedAt ? new Date(item.updatedAt) : undefined
       }));
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -47,7 +47,7 @@ export class CategoryApi implements CategoryRepository {
       return data.map((item: CategoryProps) => Category.create({
         ...item,
         createdAt: new Date(item.createdAt),
-        updatedAt: new Date(item.updatedAt)
+        updatedAt: item.updatedAt ? new Date(item.updatedAt) : undefined
       }));
     } catch (error) {
       console.error('Error fetching categories by parent:', error);
@@ -64,7 +64,7 @@ export class CategoryApi implements CategoryRepository {
       return data.map((item: CategoryProps) => Category.create({
         ...item,
         createdAt: new Date(item.createdAt),
-        updatedAt: new Date(item.updatedAt)
+        updatedAt: item.updatedAt ? new Date(item.updatedAt) : undefined
       }));
     } catch (error) {
       console.error('Error fetching active categories:', error);
@@ -82,7 +82,7 @@ export class CategoryApi implements CategoryRepository {
         body: JSON.stringify({
           ...category,
           createdAt: category.createdAt.toISOString(),
-          updatedAt: category.updatedAt.toISOString()
+          updatedAt: category.updatedAt?.toISOString()
         })
       });
 
@@ -105,7 +105,7 @@ export class CategoryApi implements CategoryRepository {
         body: JSON.stringify({
           ...category,
           createdAt: category.createdAt.toISOString(),
-          updatedAt: category.updatedAt.toISOString()
+          updatedAt: category.updatedAt?.toISOString()
         })
       });
 
