@@ -79,4 +79,21 @@ export class SupabaseProductRepository implements ProductRepository {
 
     if (error) throw error;
   }
+
+  async update(product: Product): Promise<void> {
+    const { error } = await this.supabase
+      .from('products')
+      .update({
+        name: product.name,
+        description: product.description,
+        price: product.price.getAmount(),
+        images: product.images,
+        category_id: product.categoryId,
+        stock: product.stock,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', product.id);
+
+    if (error) throw error;
+  }
 } 
