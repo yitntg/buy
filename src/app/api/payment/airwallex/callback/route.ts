@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPaymentIntentStatus } from '@/lib/airwallex'
+import { getPaymentIntent } from '@/lib/airwallex'
 import { supabase } from '@/lib/supabase'
 
 /**
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     }
     
     // 验证支付状态 - 调用Airwallex API
-    const paymentIntent = await getPaymentIntentStatus(paymentIntentId)
+    const paymentIntent = await getPaymentIntent(paymentIntentId)
     
     // 检查支付状态
     if (paymentIntent.status === 'SUCCEEDED') {
