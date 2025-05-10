@@ -1,5 +1,5 @@
 import { Product } from '../domain/Product';
-import { ProductRepository } from '../domain/ProductRepository';
+import { ProductRepository, ProductSearchParams, ProductSearchResult } from '../domain/ProductRepository';
 import { Money } from '@/core/domain/value-objects/Money';
 
 export class ProductApi implements ProductRepository {
@@ -114,6 +114,53 @@ export class ProductApi implements ProductRepository {
     } catch (error) {
       console.error('Error deleting product:', error);
       throw error;
+    }
+  }
+
+  async search(params: ProductSearchParams): Promise<ProductSearchResult> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (params.query) queryParams.append('query', params.query);
+      if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+      if (params.minPrice) queryParams.append('minPrice', params.minPrice.toString());
+      if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice.toString());
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+
+      const response = await fetch(`${this.baseUrl}/search?${queryParams.toString()}`);
+      if (!response.ok) {
+        return {
+          products: [],
+          total: 0,
+          page: params.page || 1,
+          pageSize: params.pageSize || 10,
+          totalPages: 0
+        };
+      }
+
+      const data = await response.json();
+      return {
+        products: data.products.map((item: any) => Product.create({
+          ...item,
+          price: Money.create(item.price),
+          createdAt: new Date(item.createdAt)
+        })),
+        total: data.total,
+        page: data.page,
+        pageSize: data.pageSize,
+        totalPages: data.totalPages
+      };
+    } catch (error) {
+      console.error('Error searching products:', error);
+      return {
+        products: [],
+        total: 0,
+        page: params.page || 1,
+        pageSize: params.pageSize || 10,
+        totalPages: 0
+      };
     }
   }
 } 
