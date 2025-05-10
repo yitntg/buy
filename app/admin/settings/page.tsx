@@ -10,7 +10,7 @@ import { ThemeSettingsPreview, SpecificSettingPreview } from '@/app/components/T
 import ThemePresetManager from '@/app/components/ThemePresetManager'
 
 export default function AdminSettings() {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('general')
@@ -94,15 +94,15 @@ export default function AdminSettings() {
   
   // 检查用户是否已登录并且是管理员
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!user) {
       router.push('/auth/login?redirect=/admin/settings')
-    } else if (user?.role !== 'admin') {
+    } else if (user.role !== 'admin') {
       router.push('/') // 如果不是管理员，重定向到首页
     } else {
       // 获取系统设置（实际应用中从API获取）
       loadSystemSettings()
     }
-  }, [isAuthenticated, user, router])
+  }, [user, router])
   
   // 加载系统设置
   const loadSystemSettings = async () => {
@@ -328,7 +328,7 @@ export default function AdminSettings() {
     }));
   }, [theme]);
   
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!user || user.role !== 'admin') {
     return null // 未授权时返回空
   }
   
