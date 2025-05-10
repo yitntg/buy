@@ -30,6 +30,6 @@ export class LikeCommentUseCase {
     await this.eventBus.publishAll(events);
 
     // 发布领域事件
-    this.eventBus.publish(new CommentLikedEvent(commentId, userId));
+    this.eventBus.publish(new CommentLikedEvent(comment, userId));
   }
 } 
