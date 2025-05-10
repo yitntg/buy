@@ -13,7 +13,7 @@ const mockProducts = [
 ]
 
 // 不同布局的预览组件
-export default function ThemeSettingsPreview() {
+export function ThemeSettingsPreview() {
   const { theme, isDarkMode } = useTheme()
   const [mounted, setMounted] = useState(false)
   

@@ -6,8 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useTheme } from '../../context/ThemeContext'
-import ThemeSettingsPreview from '@/app/components/ThemeSettingsPreview'
-import { SpecificSettingPreview } from '@/app/components/ThemeSettingsPreview'
+import { ThemeSettingsPreview, SpecificSettingPreview } from '@/app/components/ThemeSettingsPreview'
 import ThemePresetManager from '@/app/components/ThemePresetManager'
 
 export default function AdminSettings() {
