@@ -12,7 +12,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
-    const sortField = searchParams.get('sortField') || 'createdAt';
+    const sortBy = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const rating = searchParams.get('rating') ? parseInt(searchParams.get('rating')!) : undefined;
     const hasImages = searchParams.get('hasImages') === 'true' ? true : 
@@ -21,8 +21,10 @@ export async function GET(
     const endDate = searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : undefined;
 
     const result = await commentRepository.findByProductId(params.productId, {
-      pagination: { page, pageSize },
-      sort: { field: sortField as any, order: sortOrder as any },
+      page,
+      pageSize,
+      sortBy,
+      sortOrder: sortOrder as 'asc' | 'desc',
       filter: { rating, hasImages, startDate, endDate }
     });
 
