@@ -28,7 +28,15 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const comment = Comment.create(body);
+    const comment = Comment.create(
+      'temp-' + Date.now(),
+      body.productId,
+      body.userId,
+      body.content,
+      body.rating,
+      body.images || [],
+      body.parentId
+    );
     await commentRepository.save(comment);
     return NextResponse.json(comment);
   } catch (error) {
@@ -57,7 +65,7 @@ export async function PUT(request: Request) {
       comment.updateImages(updateData.images);
     }
 
-    await commentRepository.update(comment);
+    await commentRepository.update(id, comment);
     return NextResponse.json(comment);
   } catch (error) {
     console.error('更新评论失败:', error);
