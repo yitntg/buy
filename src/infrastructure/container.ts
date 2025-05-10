@@ -12,6 +12,9 @@ import { GetUserCartUseCase } from '../core/application/use-cases/GetUserCart';
 import { GetUserOrdersUseCase } from '../core/application/use-cases/GetUserOrders';
 import { UpdateOrderStatusUseCase } from '../core/application/use-cases/UpdateOrderStatus';
 import { CreateOrderUseCase } from '../core/application/use-cases/CreateOrder';
+import { GetRepliesUseCase } from '../features/products/application/use-cases/GetRepliesUseCase';
+import { CommentRepository } from '../features/products/domain/CommentRepository';
+import { CommentRepositoryImpl } from './repositories/CommentRepositoryImpl';
 
 export class Container {
   private static instance: Container;
@@ -35,6 +38,7 @@ export class Container {
     this.repositories.set('ProductRepository', new ProductRepositoryImpl());
     this.repositories.set('CartRepository', new CartRepositoryImpl());
     this.repositories.set('OrderRepository', new OrderRepositoryImpl());
+    this.repositories.set('CommentRepository', new CommentRepositoryImpl());
   }
 
   private initializeUseCases(): void {
@@ -65,6 +69,10 @@ export class Container {
         this.repositories.get('CartRepository')
       )
     );
+    this.useCases.set(
+      'GetRepliesUseCase',
+      new GetRepliesUseCase(this.repositories.get('CommentRepository'))
+    );
   }
 
   public getRepository<T>(name: string): T {
@@ -74,4 +82,6 @@ export class Container {
   public getUseCase<T>(name: string): T {
     return this.useCases.get(name);
   }
-} 
+}
+
+export const container = Container.getInstance(); 
