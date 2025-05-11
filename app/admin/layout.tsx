@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth, AuthProvider } from '@/lib/auth'
-import { AdminAuthWrapper } from '@/lib/admin-auth-wrapper'
+import { useAuth } from '@/lib/auth'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
 // 移除所有配置，直接使用Next.js的默认行为
@@ -19,20 +18,16 @@ export default function AdminLayout({
   const [activeMenu, setActiveMenu] = useState('dashboard')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
-  // 渲染整个布局，将children包裹在AuthProvider中
+  // 直接渲染内容组件，不再使用认证包装器
   return (
-    <AuthProvider>
-      <AdminAuthWrapper>
-        <AdminLayoutContent 
-          children={children} 
-          activeMenu={activeMenu} 
-          setActiveMenu={setActiveMenu}
-          isMobileMenuOpen={isMobileMenuOpen}
-          setIsMobileMenuOpen={setIsMobileMenuOpen}
-          router={router}
-        />
-      </AdminAuthWrapper>
-    </AuthProvider>
+    <AdminLayoutContent 
+      children={children} 
+      activeMenu={activeMenu} 
+      setActiveMenu={setActiveMenu}
+      isMobileMenuOpen={isMobileMenuOpen}
+      setIsMobileMenuOpen={setIsMobileMenuOpen}
+      router={router}
+    />
   )
 }
 
@@ -147,17 +142,6 @@ function AdminLayoutContent({
     }
   }
   
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">正在验证用户权限...</p>
-        </div>
-      </div>
-    )
-  }
-  
   return (
     <div className="min-h-screen bg-gray-100 flex">
       {/* 侧边栏 - 桌面版 */}
@@ -234,8 +218,8 @@ function AdminLayoutContent({
                 </svg>
               </Link>
               <div className="text-sm">
-                <p className="font-medium text-gray-900">{user?.email}</p>
-                <p className="text-gray-500">管理员</p>
+                <p className="font-medium text-gray-900">{user?.email || '访客用户'}</p>
+                <p className="text-gray-500">{user?.role === 'admin' ? '管理员' : '游客模式'}</p>
               </div>
             </div>
           </div>
