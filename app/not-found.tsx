@@ -2,29 +2,29 @@ import Link from 'next/link'
 import Header from './components/Header'
 import Footer from './components/Footer'
 
+// 静态404页面
 export default function NotFound() {
   return (
     <div style={{ 
-      fontFamily: 'sans-serif', 
-      maxWidth: '800px', 
+      padding: '40px 20px', 
+      maxWidth: '600px', 
       margin: '0 auto', 
-      padding: '40px 20px',
-      textAlign: 'center' 
+      textAlign: 'center',
+      fontFamily: 'system-ui, sans-serif' 
     }}>
-      <h1 style={{ fontSize: '36px', marginBottom: '20px' }}>404 - 页面未找到</h1>
-      <p style={{ fontSize: '18px', marginBottom: '40px', color: '#666' }}>
-        您访问的页面不存在或已被移除
+      <h1 style={{ fontSize: '36px', marginBottom: '20px' }}>404 - 页面不存在</h1>
+      <p style={{ marginBottom: '30px', color: '#666' }}>
+        您请求的页面不存在或已被移除。
       </p>
-      
       <a 
-        href="/" 
-        style={{
+        href="/"
+        style={{ 
           display: 'inline-block',
-          padding: '10px 20px',
-          background: '#4A90E2',
+          background: '#0070f3',
           color: 'white',
-          textDecoration: 'none',
-          borderRadius: '4px'
+          padding: '10px 20px',
+          borderRadius: '5px',
+          textDecoration: 'none'
         }}
       >
         返回首页
