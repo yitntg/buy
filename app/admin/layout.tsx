@@ -10,11 +10,11 @@ import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wren
 // 强制动态渲染
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
+// 确保revalidate是一个数字
 export const revalidate = 0
 
-// 确保不会使用静态生成
-// 导入当前目录的no-static.js文件
-import './no-static.js'
+// 不再导入no-static.js文件，直接在这里设置所有需要的配置
+// import './no-static.js'
 
 export default function AdminLayout({
   children,
