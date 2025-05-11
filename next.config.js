@@ -25,6 +25,16 @@ const nextConfig = {
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   // 生产环境配置
   output: 'standalone',
+  // 明确指定只构建这些路径，排除有问题的页面
+  exportPathMap: async function () {
+    return {
+      '/': { page: '/' },
+      '/test-page': { page: '/test-page' },
+      '/info': { page: '/info' },
+      '/static-only': { page: '/static-only' },
+      '/api/health': { page: '/api/health' }
+    }
+  }
 }
 
 module.exports = nextConfig 
