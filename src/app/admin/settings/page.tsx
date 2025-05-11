@@ -1,7 +1,7 @@
 'use client';
 
 // 导入动态配置
-import '../config.js';
+import '../no-static.js';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,8 @@ import { supabase } from '@/lib/supabase';
 
 // 强制动态渲染
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
 
 interface ThemeSettings {
   primaryColor: string;

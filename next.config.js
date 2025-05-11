@@ -82,6 +82,18 @@ const nextConfig = {
       ],
     };
   },
+  // 禁用所有静态优化
+  swcMinify: true,
+  compress: true,
+  // 完全禁用静态导出
+  trailingSlash: false,
+  // 关闭静态页面生成
+  distDir: '.next',
+  generateEtags: false,
+  // 配置runtime
+  runtime: 'nodejs',
+  // 禁用静态页面生成
+  staticPageGenerationTimeout: 0,
 }
 
 module.exports = nextConfig 

@@ -4,10 +4,16 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth, AuthProvider } from '@/lib/auth'
+import { AdminAuthWrapper } from '@/lib/admin-auth-wrapper'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
 // 强制动态渲染
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const fetchCache = 'force-no-store'
+
+// 导入no-static确保不会静态生成
+import './no-static.js';
 
 export default function AdminLayout({
   children,
@@ -21,14 +27,16 @@ export default function AdminLayout({
   // 渲染整个布局，将children包裹在AuthProvider中
   return (
     <AuthProvider>
-      <AdminLayoutContent 
-        children={children} 
-        activeMenu={activeMenu} 
-        setActiveMenu={setActiveMenu}
-        isMobileMenuOpen={isMobileMenuOpen}
-        setIsMobileMenuOpen={setIsMobileMenuOpen}
-        router={router}
-      />
+      <AdminAuthWrapper>
+        <AdminLayoutContent 
+          children={children} 
+          activeMenu={activeMenu} 
+          setActiveMenu={setActiveMenu}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+          router={router}
+        />
+      </AdminAuthWrapper>
     </AuthProvider>
   )
 }
