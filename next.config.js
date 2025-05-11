@@ -3,7 +3,6 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     serverComponentsExternalPackages: ['postgres'],
-    appDir: true,
   },
   typescript: {
     // 忽略类型错误，确保构建成功
