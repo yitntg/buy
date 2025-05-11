@@ -7,25 +7,33 @@ import { useAuth, AuthProvider } from '@/lib/auth'
 import { AdminAuthWrapper } from '@/lib/admin-auth-wrapper'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
-// 从统一配置文件导入配置，避免重复定义
-import {
-  dynamic,
-  fetchCache,
-  revalidate,
-  dynamicParams,
-  preferredRegion,
-  runtime
-} from './admin-config'
+// 直接定义配置，而不是导入再导出
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
+export const dynamicParams = true
+export const preferredRegion = 'auto'
+export const runtime = 'nodejs'
 
-// 重新导出配置，使其在此布局下的所有页面生效
-export { 
-  dynamic,
-  fetchCache, 
-  revalidate, 
-  dynamicParams, 
-  preferredRegion,
-  runtime
-}
+// 不再导入配置文件
+// import {
+//   dynamic,
+//   fetchCache,
+//   revalidate,
+//   dynamicParams,
+//   preferredRegion,
+//   runtime
+// } from './admin-config'
+
+// 不再重新导出配置
+// export { 
+//   dynamic,
+//   fetchCache, 
+//   revalidate, 
+//   dynamicParams, 
+//   preferredRegion,
+//   runtime
+// }
 
 // 不再从这里导入
 // import './revalidate-config.js'
