@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { fetchWithRetry, fetchWithTimeout } from '@/lib/timeout'
 
 // 定义商品类型接口
 export interface Product {
@@ -24,22 +25,46 @@ export interface Category {
 export async function getFeaturedProducts(limit = 4) {
   try {
     console.log('正在获取精选商品数据...')
-    const { data, error } = await supabase
+    
+    // 设置请求超时
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Supabase请求超时')), 5000)
+    })
+    
+    // 创建请求Promise
+    const fetchPromise = supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit)
+    
+    // 使用Promise.race竞争，谁先完成返回谁
+    const result = await Promise.race([
+      fetchPromise,
+      timeoutPromise
+    ]) as any
+    
+    // 解构数据和错误
+    const { data, error } = result || { data: null, error: new Error('无响应') }
 
     if (error) {
       console.error('获取商品失败:', error)
-      // 返回一些模拟数据，确保UI能够正常渲染
+      console.warn('使用备用数据...')
       return getMockProducts(limit)
     }
 
     console.log(`成功获取${data?.length || 0}个精选商品`)
-    return data || []
+    
+    // 如果数据为空，也使用备用数据
+    if (!data || data.length === 0) {
+      console.warn('返回数据为空，使用备用数据...')
+      return getMockProducts(limit)
+    }
+    
+    return data
   } catch (error) {
     console.error('获取商品异常:', error)
+    console.warn('使用备用数据...')
     return getMockProducts(limit)
   }
 }
@@ -48,14 +73,36 @@ export async function getFeaturedProducts(limit = 4) {
 export async function getCategories() {
   try {
     console.log('正在获取分类数据...')
-    const { data, error } = await supabase
+    
+    // 设置请求超时
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Supabase请求超时')), 5000)
+    })
+    
+    // 创建请求Promise 
+    const fetchPromise = supabase
       .from('categories')
       .select('*')
       .order('id', { ascending: true })
+    
+    // 使用Promise.race竞争，谁先完成返回谁
+    const result = await Promise.race([
+      fetchPromise,
+      timeoutPromise
+    ]) as any
+    
+    // 解构数据和错误
+    const { data, error } = result || { data: null, error: new Error('无响应') }
 
     if (error) {
       console.error('获取分类失败:', error)
-      // 返回一些模拟数据，确保UI能够正常渲染
+      console.warn('使用备用数据...')
+      return getMockCategories()
+    }
+    
+    // 如果数据为空，使用备用数据
+    if (!data || data.length === 0) {
+      console.warn('返回数据为空，使用备用数据...')
       return getMockCategories()
     }
 
@@ -66,9 +113,10 @@ export async function getCategories() {
     }))
 
     console.log(`成功获取${data?.length || 0}个分类`)
-    return categoriesWithIcons || []
+    return categoriesWithIcons
   } catch (error) {
     console.error('获取分类异常:', error)
+    console.warn('使用备用数据...')
     return getMockCategories()
   }
 }
