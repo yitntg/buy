@@ -1,8 +1,6 @@
-'use client'
-
-// 明确指定此页面是静态的
+// 简单静态主页，无需客户端组件
 export const dynamic = 'force-static'
-export const revalidate = 3600
+export const revalidate = 31536000
 
 export default function Home() {
   return (
@@ -34,28 +32,29 @@ export default function Home() {
           <h2 style={{ marginTop: '0' }}>静态页面</h2>
           <p>超快速加载，没有服务器连接</p>
         </a>
-        <a href="/env-debug" style={{ 
+        
+        <a href="/test-page" style={{ 
           padding: '15px',
           border: '1px solid #ddd',
           borderRadius: '8px',
           textDecoration: 'none',
           color: '#333'
         }}>
-          <h2 style={{ marginTop: '0' }}>环境诊断</h2>
-          <p>检查系统配置和连接状态</p>
+          <h2 style={{ marginTop: '0' }}>测试页面</h2>
+          <p>测试页面，最简单配置</p>
         </a>
-
-        <a href="/deployment-info" style={{ 
+        
+        <a href="/info" style={{ 
           padding: '15px',
           border: '1px solid #ddd',
           borderRadius: '8px',
           textDecoration: 'none',
           color: '#333'
         }}>
-          <h2 style={{ marginTop: '0' }}>部署信息</h2>
-          <p>查看部署详情和服务器状态</p>
+          <h2 style={{ marginTop: '0' }}>信息页面</h2>
+          <p>超简版，排除一切问题</p>
         </a>
-
+        
         <a href="/api/health" style={{ 
           padding: '15px',
           border: '1px solid #ddd',
@@ -63,8 +62,8 @@ export default function Home() {
           textDecoration: 'none',
           color: '#333'
         }}>
-          <h2 style={{ marginTop: '0' }}>健康检查API</h2>
-          <p>不依赖数据库的API测试</p>
+          <h2 style={{ marginTop: '0' }}>健康API</h2>
+          <p>基本API测试</p>
         </a>
       </div>
       

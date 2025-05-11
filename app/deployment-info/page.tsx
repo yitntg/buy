@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+// 使用简单的字面量数字值
 export const dynamic = 'force-static'
 export const revalidate = 3600
 
