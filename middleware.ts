@@ -22,6 +22,14 @@ export function middleware(request: NextRequest) {
 
 // 配置匹配路径
 export const config = {
-  // 匹配所有路径
-  matcher: ['/']
+  // 匹配除静态页面外的所有路径
+  matcher: [
+    /*
+     * 匹配除静态页面外的所有路径
+     * (?!static-only|static-page) - 排除这些路径
+     * (?!_next) - 排除Next.js内部路径
+     * (?!favicon.ico) - 排除favicon
+     */
+    '/((?!static-only|static-page|_next|favicon.ico).*)'
+  ]
 } 

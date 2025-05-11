@@ -2,7 +2,7 @@
 
 // 明确指定此页面是静态的
 export const dynamic = 'force-static'
-export const revalidate = 3600 // 每小时重新验证一次
+export const revalidate = 3600 // 每小时重新验证一次，使用数字而非对象
 
 export default function Home() {
   return (
@@ -15,24 +15,57 @@ export default function Home() {
     }}>
       <h1 style={{ fontSize: '36px', marginBottom: '20px' }}>乐购商城</h1>
       <p style={{ fontSize: '18px', marginBottom: '40px', color: '#666' }}>
-        网站正在维护中，请稍后访问
+        简化版购物系统
       </p>
       
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: '1fr', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
         gap: '20px',
         marginBottom: '30px'
       }}>
-        <div style={{ 
+        <a href="/static-only" style={{ 
           padding: '15px',
           border: '1px solid #ddd',
-          borderRadius: '8px'
+          borderRadius: '8px',
+          textDecoration: 'none',
+          color: '#333'
         }}>
-          <h2 style={{ marginTop: '0' }}>临时维护通知</h2>
-          <p>我们正在进行系统升级，以提供更好的购物体验。</p>
-          <p style={{ marginBottom: '0' }}>预计恢复时间：尽快</p>
-        </div>
+          <h2 style={{ marginTop: '0' }}>静态页面</h2>
+          <p>超快速加载，没有服务器连接</p>
+        </a>
+        <a href="/env-debug" style={{ 
+          padding: '15px',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          textDecoration: 'none',
+          color: '#333'
+        }}>
+          <h2 style={{ marginTop: '0' }}>环境诊断</h2>
+          <p>检查系统配置和连接状态</p>
+        </a>
+
+        <a href="/deployment-info" style={{ 
+          padding: '15px',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          textDecoration: 'none',
+          color: '#333'
+        }}>
+          <h2 style={{ marginTop: '0' }}>部署信息</h2>
+          <p>查看部署详情和服务器状态</p>
+        </a>
+
+        <a href="/api/health" style={{ 
+          padding: '15px',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          textDecoration: 'none',
+          color: '#333'
+        }}>
+          <h2 style={{ marginTop: '0' }}>健康检查API</h2>
+          <p>不依赖数据库的API测试</p>
+        </a>
       </div>
       
       <div style={{ color: '#888', fontSize: '14px' }}>

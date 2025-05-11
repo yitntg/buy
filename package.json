@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/update-build-time.js && next build",
     "start": "next start",
     "lint": "next lint",
     "init-db": "node scripts/init-supabase.js",

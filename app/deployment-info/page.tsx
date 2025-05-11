@@ -1,120 +1,134 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
-export default function DeploymentInfoPage() {
-  const [isClient, setIsClient] = useState(false)
-  const [serverTime, setServerTime] = useState(new Date().toISOString())
-  
-  // 只在客户端更新状态
+export const dynamic = 'force-static'
+export const revalidate = 3600
+
+// 定义健康检查API的响应类型
+interface HealthData {
+  status: string;
+  timestamp: string;
+  environment: string;
+  region: string;
+}
+
+export default function DeploymentInfo() {
+  const [deployInfo, setDeployInfo] = useState({
+    buildTime: '',
+    clientTime: '',
+    userAgent: '',
+    screenSize: ''
+  })
+
   useEffect(() => {
-    setIsClient(true)
-    
-    // 更新服务器时间
-    const timer = setInterval(() => {
-      setServerTime(new Date().toISOString())
-    }, 1000)
-    
-    return () => clearInterval(timer)
+    setDeployInfo({
+      buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || '未知',
+      clientTime: new Date().toString(),
+      userAgent: navigator.userAgent,
+      screenSize: `${window.innerWidth}x${window.innerHeight}`
+    })
   }, [])
 
-  // 获取环境变量信息（只包括安全可展示的信息）
-  const envInfo = {
-    nodeEnv: process.env.NODE_ENV,
-    vercelEnv: process.env.VERCEL_ENV,
-    vercelRegion: process.env.VERCEL_REGION,
-    vercelUrl: process.env.VERCEL_URL,
-    hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  }
+  // 加载健康检查API数据
+  const [healthData, setHealthData] = useState<HealthData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  
+  useEffect(() => {
+    async function fetchHealthData() {
+      try {
+        setIsLoading(true)
+        const response = await fetch('/api/health')
+        if (response.ok) {
+          const data = await response.json()
+          setHealthData(data)
+        }
+      } catch (error) {
+        console.error('健康检查API请求失败', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchHealthData()
+  }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="px-6 py-8">
-            <h1 className="text-2xl font-bold mb-4">Vercel 部署信息</h1>
-            <p className="text-gray-600 mb-8">
-              此页面显示当前Vercel部署的基本信息，帮助排查部署问题
-            </p>
-            
-            <div className="grid gap-6 md:grid-cols-2 mb-8">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h2 className="font-semibold text-lg mb-2 text-blue-800">部署环境</h2>
-                <ul className="space-y-2">
-                  <li><span className="font-medium">渲染方式:</span> {isClient ? '客户端' : '服务端'}</li>
-                  <li><span className="font-medium">Node环境:</span> {envInfo.nodeEnv || '未知'}</li>
-                  <li><span className="font-medium">Vercel环境:</span> {envInfo.vercelEnv || '未知'}</li>
-                  <li><span className="font-medium">Vercel地区:</span> {envInfo.vercelRegion || '未知'}</li>
-                  <li><span className="font-medium">部署URL:</span> {envInfo.vercelUrl || '未知'}</li>
-                </ul>
-              </div>
-              
-              <div className="bg-green-50 rounded-lg p-4">
-                <h2 className="font-semibold text-lg mb-2 text-green-800">服务状态</h2>
-                <ul className="space-y-2">
-                  <li><span className="font-medium">客户端时间:</span> {new Date().toLocaleString()}</li>
-                  <li><span className="font-medium">服务器时间:</span> {new Date(serverTime).toLocaleString()}</li>
-                  <li>
-                    <span className="font-medium">Supabase URL:</span> 
-                    {envInfo.hasSupabaseUrl ? 
-                      <span className="text-green-600 ml-1">已配置</span> : 
-                      <span className="text-red-600 ml-1">未配置</span>
-                    }
-                  </li>
-                  <li>
-                    <span className="font-medium">Supabase Key:</span> 
-                    {envInfo.hasSupabaseKey ? 
-                      <span className="text-green-600 ml-1">已配置</span> : 
-                      <span className="text-red-600 ml-1">未配置</span>
-                    }
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-4 mb-8">
-              <h2 className="font-semibold text-lg mb-2">渲染测试</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                下面的内容显示静态内容是否正确渲染，这可以帮助判断网站问题的来源。
-              </p>
-              <div className="grid grid-cols-3 gap-4">
-                {Array(6).fill(0).map((_, i) => (
-                  <div key={i} className="aspect-square bg-gradient-to-br from-blue-100 to-blue-200 rounded flex items-center justify-center">
-                    <p className="text-xl">{i + 1}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="bg-yellow-50 rounded-lg p-4 mb-8">
-              <h2 className="font-semibold text-lg mb-2 text-yellow-800">可能的问题</h2>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Supabase环境变量配置错误</li>
-                <li>服务器响应超时</li>
-                <li>Prisma数据库连接问题</li>
-                <li>Vercel区域与Supabase之间的网络延迟</li>
-                <li>服务端渲染方式错误</li>
-              </ul>
-            </div>
-            
-            <div className="flex justify-between">
-              <Link 
-                href="/"
-                className="text-blue-600 hover:underline"
-              >
-                返回首页
-              </Link>
-              <Link 
-                href="/env-debug"
-                className="text-blue-600 hover:underline"
-              >
-                查看环境变量调试
-              </Link>
-            </div>
-          </div>
+    <div style={{ 
+      fontFamily: 'system-ui, sans-serif', 
+      maxWidth: '800px', 
+      margin: '0 auto', 
+      padding: '40px 20px' 
+    }}>
+      <h1 style={{ marginBottom: '20px' }}>部署信息</h1>
+      
+      <div style={{ 
+        display: 'grid', 
+        gap: '20px',
+        marginBottom: '30px' 
+      }}>
+        <div style={{ 
+          padding: '20px', 
+          borderRadius: '8px', 
+          border: '1px solid #eee',
+          background: '#f9f9f9' 
+        }}>
+          <h2 style={{ marginTop: 0 }}>客户端信息</h2>
+          <ul style={{ paddingLeft: '20px' }}>
+            <li>构建时间: {deployInfo.buildTime}</li>
+            <li>客户端时间: {deployInfo.clientTime}</li>
+            <li>浏览器: {deployInfo.userAgent}</li>
+            <li>屏幕尺寸: {deployInfo.screenSize}</li>
+          </ul>
         </div>
+        
+        <div style={{ 
+          padding: '20px', 
+          borderRadius: '8px', 
+          border: '1px solid #eee',
+          background: '#f9f9f9' 
+        }}>
+          <h2 style={{ marginTop: 0 }}>服务器状态</h2>
+          {isLoading ? (
+            <p>加载中...</p>
+          ) : healthData ? (
+            <ul style={{ paddingLeft: '20px' }}>
+              <li>状态: {healthData.status}</li>
+              <li>时间戳: {healthData.timestamp}</li>
+              <li>环境: {healthData.environment}</li>
+              <li>区域: {healthData.region}</li>
+            </ul>
+          ) : (
+            <p>无法连接到健康检查API</p>
+          )}
+        </div>
+      </div>
+      
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+        <a 
+          href="/" 
+          style={{ 
+            padding: '8px 16px', 
+            background: '#0070f3', 
+            color: 'white', 
+            borderRadius: '4px', 
+            textDecoration: 'none' 
+          }}
+        >
+          返回首页
+        </a>
+        <a 
+          href="/static-only" 
+          style={{ 
+            padding: '8px 16px', 
+            background: '#eaeaea', 
+            color: '#333', 
+            borderRadius: '4px', 
+            textDecoration: 'none' 
+          }}
+        >
+          访问静态页面
+        </a>
       </div>
     </div>
   )

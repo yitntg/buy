@@ -1,8 +1,8 @@
 // 通过强制静态生成和禁用服务端数据获取，确保极快的加载速度
 export const dynamic = 'force-static'
 export const fetchCache = 'force-cache'
-export const revalidate = false
-export const runtime = 'edge' // 使用边缘运行时进一步加速
+export const revalidate = 31536000 // 设置为一年，实际上是静态的
+// 移除edge运行时，因为它与force-static不兼容
 
 export default function StaticOnlyPage() {
   return (

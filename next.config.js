@@ -21,20 +21,10 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': require('path').resolve(__dirname, 'src'),
-    };
-    return config;
-  },
   // 基本配置
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   // 生产环境配置
   output: 'standalone',
-  // 启用压缩
-  swcMinify: true,
-  compress: true,
 }
 
 module.exports = nextConfig 
