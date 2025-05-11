@@ -1,7 +1,7 @@
 'use client';
 
 // 导入动态配置
-import '../no-static.js';
+import '../revalidate-config.js';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
