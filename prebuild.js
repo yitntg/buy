@@ -74,15 +74,15 @@ if (fs.existsSync(adminDir)) {
           console.log(`已添加动态渲染导出到：${fullPath}`);
         }
         
-        // 确保该文件导入no-static.js
-        if (!content.includes("import '../no-static.js'") && !content.includes("import '../../no-static.js'") && !content.includes("import './no-static.js'")) {
+        // 确保该文件导入revalidate-config.js
+        if (!content.includes("import '../revalidate-config.js'") && !content.includes("import '../../revalidate-config.js'") && !content.includes("import './revalidate-config.js'")) {
           // 计算相对路径
           let relativePath = path.relative(path.dirname(fullPath), adminDir).replace(/\\/g, '/');
           if (!relativePath) relativePath = '.';
           
           // 在'use client'后添加导入
-          content = content.replace("'use client';", `'use client';\n\n// 导入动态配置\nimport '${relativePath}/no-static.js';`);
-          console.log(`已添加no-static.js导入到：${fullPath}`);
+          content = content.replace("'use client';", `'use client';\n\n// 导入动态配置\nimport '${relativePath}/revalidate-config.js';`);
+          console.log(`已添加revalidate-config.js导入到：${fullPath}`);
         }
         
         fs.writeFileSync(fullPath, content);

@@ -13,8 +13,8 @@ export const fetchCache = 'force-no-store'
 // 确保revalidate是一个数字
 export const revalidate = 0
 
-// 不再导入no-static.js文件，直接在这里设置所有需要的配置
-// import './no-static.js'
+// 不再导入revalidate-config.js文件，直接在这里设置所有需要的配置
+// import './revalidate-config.js'
 
 export default function AdminLayout({
   children,
