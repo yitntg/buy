@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
+// 强制所有管理员页面在客户端渲染，因为它们需要AuthProvider
+export const dynamic = 'force-dynamic';
+
 // 评论类型定义
 interface Review {
   id: number

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+// 防止路由被静态生成
+export const dynamic = 'force-dynamic'
+
 // 获取所有评论（支持分页和过滤）
 export async function GET(request: NextRequest) {
   try {

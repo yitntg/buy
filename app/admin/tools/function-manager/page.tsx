@@ -1,5 +1,8 @@
 'use client'
 
+// 强制所有管理员页面在客户端渲染，因为它们需要AuthProvider
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+// 防止路由被静态生成
+export const dynamic = 'force-dynamic';
+
 // 获取库存不足的商品
 export async function GET(request: NextRequest) {
   try {

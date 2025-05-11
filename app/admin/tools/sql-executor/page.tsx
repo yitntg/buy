@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 
+// 强制所有管理员页面在客户端渲染，因为它们需要AuthProvider
+export const dynamic = 'force-dynamic'
+
 export default function SQLExecutorPage() {
   const { user } = useAuth()
   const isAuthenticated = !!user

@@ -1,5 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import pg from 'pg'
+import { supabase } from '@/lib/supabase'
+
+// 防止路由被静态生成
+export const dynamic = 'force-dynamic'
 
 // 添加示例数据API
 export async function GET(request: Request) {
