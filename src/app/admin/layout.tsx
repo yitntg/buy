@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic'
+
 export default function AdminLayout({
   children,
 }: {

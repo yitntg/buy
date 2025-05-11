@@ -6,6 +6,9 @@ import { useAuth } from '@/lib/auth';
 import { ThemeSettingsPreview, SpecificSettingPreview } from '@/app/components/ThemeSettingsPreview';
 import { supabase } from '@/lib/supabase';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 interface ThemeSettings {
   primaryColor: string;
   secondaryColor: string;
