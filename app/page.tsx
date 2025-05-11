@@ -1,4 +1,8 @@
-export const dynamic = 'force-static';
+'use client'
+
+// 明确指定此页面是静态的
+export const dynamic = 'force-static'
+export const revalidate = 3600 // 每小时重新验证一次
 
 export default function Home() {
   return (
