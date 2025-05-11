@@ -9,7 +9,6 @@ import { useAuth } from '@/lib/auth'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
-import { toast } from 'react-hot-toast'
 
 // 产品数据类型
 interface Product {
@@ -176,7 +175,8 @@ export default function EditProductPage() {
         throw new Error(errorData.error || '更新产品失败')
       }
       
-      toast.success('产品更新成功')
+      // 使用 alert 替代 toast
+      alert('产品更新成功')
       // 更新成功后返回产品列表
       router.push('/admin/products')
     } catch (err) {
@@ -203,7 +203,7 @@ export default function EditProductPage() {
         throw new Error(errorData.error || '删除产品失败')
       }
       
-      toast.success('产品已删除')
+      alert('产品已删除')
       router.push('/admin/products')
     } catch (err) {
       console.error('删除产品失败:', err)
