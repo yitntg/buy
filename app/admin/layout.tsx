@@ -7,13 +7,8 @@ import { useAuth, AuthProvider } from '@/lib/auth'
 import { AdminAuthWrapper } from '@/lib/admin-auth-wrapper'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
-// 直接在此处定义所有配置，不导入任何外部配置
-// 确保这些配置只出现在这一个文件中
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-// 移除所有导入和再导出的配置
-// 只保留最必要的配置
+// 移除所有配置，直接使用Next.js的默认行为
+// Next.js 14+会自动处理admin目录下页面的动态性
 
 export default function AdminLayout({
   children,
