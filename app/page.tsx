@@ -1,33 +1,20 @@
-import { Suspense } from 'react'
-import HeroBanner from './components/HeroBanner'
-import CategorySection from './components/CategorySection'
-import FeaturedProducts from './components/FeaturedProducts'
-import FeatureSection from './components/FeatureSection'
-import { getFeaturedProducts, getCategories } from './services/productService'
-
-export const dynamic = 'force-dynamic'
-export const revalidate = 3600 // 1小时重新验证
-
-export default async function Home() {
-  // 从数据库获取数据
-  const [featuredProducts, categories] = await Promise.all([
-    getFeaturedProducts(),
-    getCategories()
-  ])
-
+export default function Home() {
   return (
-    <>
-      <HeroBanner />
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+      <h1 className="text-3xl font-bold mb-4">乐购商城</h1>
+      <p className="text-xl mb-8">网站维护中，请稍后再试</p>
       
-      <Suspense fallback={<div className="py-12 text-center">加载分类中...</div>}>
-        <CategorySection categories={categories} />
-      </Suspense>
-      
-      <Suspense fallback={<div className="py-12 text-center">加载热门商品中...</div>}>
-        <FeaturedProducts products={featuredProducts} />
-      </Suspense>
-      
-      <FeatureSection />
-    </>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl w-full">
+        <a href="/static-page" className="border border-blue-500 rounded-lg p-4 hover:bg-blue-50 transition-colors">
+          <h2 className="text-xl font-semibold mb-2 text-blue-700">维护页面</h2>
+          <p className="text-gray-600">查看详细的维护信息和服务状态</p>
+        </a>
+        
+        <a href="/deployment-info" className="border border-green-500 rounded-lg p-4 hover:bg-green-50 transition-colors">
+          <h2 className="text-xl font-semibold mb-2 text-green-700">部署信息</h2>
+          <p className="text-gray-600">检查服务器状态和环境配置</p>
+        </a>
+      </div>
+    </div>
   )
 } 

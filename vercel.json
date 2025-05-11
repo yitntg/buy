@@ -1,11 +1,6 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "installCommand": "npm install critters && npm install",
-  "framework": "nextjs",
-  "env": {
-    "DISABLE_CRITTERS": "true",
-    "NEXT_FORCE_DYNAMIC": "1",
-    "NEXT_DISABLE_PRERENDER": "1"
-  }
+  "installCommand": "npm install",
+  "framework": "nextjs"
 } 
