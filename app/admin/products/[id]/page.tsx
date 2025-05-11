@@ -1,6 +1,6 @@
 'use client'
 
-// 移除导入动态配置，依赖layout中的全局配置
+// 移除对配置文件的导入，统一从layout继承配置
 // import '../../revalidate-config.js';
 
 import { useState, useEffect } from 'react'

@@ -7,14 +7,27 @@ import { useAuth, AuthProvider } from '@/lib/auth'
 import { AdminAuthWrapper } from '@/lib/admin-auth-wrapper'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
-// 强制动态渲染 - 这里统一设置admin所有页面的配置
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
-export const revalidate = 0
-export const dynamicParams = true
-export const preferredRegion = 'auto'
+// 从统一配置文件导入配置，避免重复定义
+import {
+  dynamic,
+  fetchCache,
+  revalidate,
+  dynamicParams,
+  preferredRegion,
+  runtime
+} from './admin-config'
 
-// 不再导入revalidate-config.js文件，直接在这里设置所有需要的配置
+// 重新导出配置，使其在此布局下的所有页面生效
+export { 
+  dynamic,
+  fetchCache, 
+  revalidate, 
+  dynamicParams, 
+  preferredRegion,
+  runtime
+}
+
+// 不再从这里导入
 // import './revalidate-config.js'
 
 export default function AdminLayout({

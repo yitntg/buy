@@ -1,9 +1,9 @@
-// 管理后台页面的全局配置
-// 强制动态渲染，不使用静态生成
+// admin页面的统一配置文件 - 所有配置都从这里导出
+
+// 使用确定的数字值而不是对象
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 export const revalidate = 0
 export const dynamicParams = true
 export const preferredRegion = 'auto'
-
-// 这个文件会被导入到所有admin页面中，确保它们都使用动态渲染 
+export const runtime = 'nodejs' 

@@ -1,8 +1,9 @@
 'use client'
 
-// 导入动态配置
-import '../revalidate-config.js';
+// 移除对配置文件的导入，统一从layout继承配置
+// import '../revalidate-config.js';
 
+import { useState } from 'react'
 import Link from 'next/link'
 
 export default function AdminToolsPage() {

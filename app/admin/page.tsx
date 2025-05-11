@@ -1,12 +1,12 @@
 'use client'
 
-// 移除导入并直接在此文件中设置配置
+// 移除对配置文件的导入，统一从layout继承配置
 // import './revalidate-config.js';
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-// 依赖layout中的全局配置
+// 注意：所有配置均从layout.tsx继承，不在此处重复定义
 
 // 定义统计数据类型
 interface DashboardStats {
