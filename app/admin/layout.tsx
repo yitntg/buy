@@ -172,7 +172,16 @@ function AdminLayoutContent({
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200">
         {/* 管理后台 Logo */}
         <div className="p-4 border-b">
-          <Link href="/admin" className="text-xl font-bold text-primary flex items-center">
+          <Link 
+            href="/admin" 
+            className="text-xl font-bold text-primary flex items-center"
+            onClick={(e) => {
+              // 防止默认导航行为
+              e.preventDefault()
+              // 明确使用路由导航到admin页面
+              router.push('/admin')
+            }}
+          >
             <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
             </svg>
@@ -256,7 +265,13 @@ function AdminLayoutContent({
             <div className="relative flex flex-col w-4/5 max-w-xs h-full bg-white">
               {/* 管理后台 Logo */}
               <div className="p-4 border-b">
-                <div className="text-xl font-bold text-primary flex items-center">
+                <div
+                  className="text-xl font-bold text-primary flex items-center cursor-pointer"
+                  onClick={() => {
+                    router.push('/admin')
+                    setIsMobileMenuOpen(false)
+                  }}
+                >
                   <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                   </svg>
