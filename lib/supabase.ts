@@ -4,14 +4,85 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-// 创建Supabase客户端
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
+// 创建模拟客户端的功能
+function createMockClient() {
+  console.warn('使用模拟Supabase客户端 - 所有操作将返回空数据')
+  
+  // 返回一个模拟对象，所有方法都返回空数据
+  return {
+    from: () => ({
+      select: () => ({
+        order: () => ({
+          limit: () => Promise.resolve({ data: [], error: null }),
+          eq: () => Promise.resolve({ data: [], error: null }),
+          in: () => Promise.resolve({ data: [], error: null }),
+          single: () => Promise.resolve({ data: null, error: null }),
+        }),
+        eq: () => Promise.resolve({ data: [], error: null }),
+        in: () => Promise.resolve({ data: [], error: null }),
+        limit: () => Promise.resolve({ data: [], error: null }),
+        single: () => Promise.resolve({ data: null, error: null }),
+      }),
+      insert: () => Promise.resolve({ data: null, error: null }),
+      update: () => ({
+        eq: () => Promise.resolve({ data: null, error: null }),
+        match: () => Promise.resolve({ data: null, error: null }),
+      }),
+      delete: () => ({
+        eq: () => Promise.resolve({ data: null, error: null }),
+        match: () => Promise.resolve({ data: null, error: null }),
+      }),
+    }),
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+      signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: null, error: null }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+      }),
+    },
   }
-})
+}
+
+// 创建Supabase客户端或模拟客户端
+export const supabase = (!supabaseUrl || !supabaseKey) 
+  ? createMockClient() 
+  : createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    })
+
+// 简化的诊断信息（只在开发环境下输出详细信息）
+if (process.env.NODE_ENV === 'development') {
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('=== Supabase配置警告 ===')
+    console.warn('未配置Supabase环境变量，使用模拟客户端')
+    console.warn('所有数据库操作将返回空数据')
+    console.warn('如需连接真实数据库，请配置以下环境变量:')
+    console.warn('- NEXT_PUBLIC_SUPABASE_URL')
+    console.warn('- NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  } else {
+    console.log('Supabase已配置，使用实际客户端')
+  }
+}
+
+// 导出增强型客户端（也使用模拟客户端机制）
+export const supabaseEnhanced = (!supabaseUrl || !supabaseKey)
+  ? createMockClient()
+  : createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    })
 
 // 检查环境变量是否已配置
 if (!supabaseUrl || !supabaseKey) {
