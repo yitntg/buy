@@ -1,34 +1,11 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next",
-      "config": {
-        "installCommand": "npm install critters && npm install"
-      }
-    }
-  ],
+  "buildCommand": "npm run build",
+  "installCommand": "npm install critters && npm install",
+  "framework": "nextjs",
   "env": {
     "DISABLE_CRITTERS": "true",
     "NEXT_FORCE_DYNAMIC": "1",
-    "NEXT_DISABLE_PRERENDER": "1",
-    "NEXT_DISABLE_ETAG": "1",
-    "NODE_TLS_REJECT_UNAUTHORIZED": "1"
-  },
-  "routes": [
-    {
-      "src": "/admin/(.*)",
-      "headers": {
-        "Cache-Control": "no-store, max-age=0, must-revalidate",
-        "x-use-dynamic": "true"
-      }
-    }
-  ],
-  "functions": {
-    "src/app/admin/**": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
+    "NEXT_DISABLE_PRERENDER": "1"
   }
 } 
