@@ -13,15 +13,15 @@ export async function GET(
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     const getRepliesUseCase = container.getUseCase<GetRepliesUseCase>('GetRepliesUseCase');
-    const result = await getRepliesUseCase.execute({
-      commentId: params.parentId,
-      params: {
+    const result = await getRepliesUseCase.execute(
+      params.parentId,
+      {
         page,
         pageSize,
         sortBy,
         sortOrder: sortOrder as 'asc' | 'desc'
       }
-    });
+    );
     return Response.json(result);
   } catch (error) {
     console.error('Error getting replies:', error);

@@ -3,52 +3,57 @@ import { EventStore } from '@/shared/domain/events/EventStore';
 import { PrismaClient } from '@prisma/client';
 
 export class PrismaEventStore implements EventStore {
-  private prisma: PrismaClient;
+  constructor(private readonly prisma: PrismaClient) {}
 
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
-
-  async save(event: DomainEvent): Promise<void> {
-    await this.prisma.event.create({
+  async saveEvent(event: DomainEvent): Promise<void> {
+    await this.prisma.domainEvent.create({
       data: {
-        id: crypto.randomUUID(),
-        name: event.eventName(),
-        data: JSON.stringify(event),
-        occurredOn: event.occurredOn
+        eventId: event.eventId,
+        aggregateId: event.aggregateId,
+        eventType: event.eventType,
+        timestamp: event.occurredOn,
+        data: JSON.stringify(event.toPrimitive())
       }
     });
   }
 
-  async saveAll(events: DomainEvent[]): Promise<void> {
-    await this.prisma.event.createMany({
-      data: events.map(event => ({
-        id: crypto.randomUUID(),
-        name: event.eventName(),
-        data: JSON.stringify(event),
-        occurredOn: event.occurredOn
-      }))
+  async saveEvents(events: DomainEvent[]): Promise<void> {
+    const data = events.map(event => ({
+      eventId: event.eventId,
+      aggregateId: event.aggregateId,
+      eventType: event.eventType,
+      timestamp: event.occurredOn,
+      data: JSON.stringify(event.toPrimitive())
+    }));
+
+    await this.prisma.domainEvent.createMany({
+      data
     });
   }
 
-  async findByName(name: string): Promise<DomainEvent[]> {
-    const events = await this.prisma.event.findMany({
-      where: { name },
-      orderBy: { occurredOn: 'asc' }
+  async findEventsByAggregateId(aggregateId: string): Promise<DomainEvent[]> {
+    const events = await this.prisma.domainEvent.findMany({
+      where: {
+        aggregateId
+      },
+      orderBy: {
+        timestamp: 'asc'
+      }
     });
 
-    return events.map(event => JSON.parse(event.data));
+    return events.map((event: any) => JSON.parse(event.data));
   }
 
-  async findAll(): Promise<DomainEvent[]> {
-    const events = await this.prisma.event.findMany({
-      orderBy: { occurredOn: 'asc' }
+  async findEventsByType(eventType: string): Promise<DomainEvent[]> {
+    const events = await this.prisma.domainEvent.findMany({
+      where: {
+        eventType
+      },
+      orderBy: {
+        timestamp: 'asc'
+      }
     });
 
-    return events.map(event => JSON.parse(event.data));
-  }
-
-  async clear(): Promise<void> {
-    await this.prisma.event.deleteMany();
+    return events.map((event: any) => JSON.parse(event.data));
   }
 } 

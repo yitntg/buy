@@ -56,7 +56,7 @@ export class CommentDomainService {
     content?: string;
     rating?: number;
     images?: string[];
-  }): Promise<void> {
+  }): Promise<Comment> {
     const comment = await this.commentRepository.findById(params.commentId);
     if (!comment) {
       throw new Error('评论不存在');
@@ -166,7 +166,8 @@ export class CommentDomainService {
     }
 
     // 获取回复
-    const replies = await this.commentRepository.findByParentId(commentId);
+    const repliesResult = await this.commentRepository.findByParentId(commentId);
+    const replies = repliesResult.items; // 使用items属性获取评论数组
 
     // 获取回复数量
     const replyCount = await this.commentRepository.getReplyCount(commentId);

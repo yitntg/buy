@@ -26,14 +26,6 @@ export interface CommentQueryParams {
   filter?: Record<string, any>;
 }
 
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
-
 export interface CommentRepository {
   findById(id: string): Promise<Comment | null>;
   findByProductId(productId: string, params?: CommentQueryParams): Promise<PaginatedResult<Comment>>;

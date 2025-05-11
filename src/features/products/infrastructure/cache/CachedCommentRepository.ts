@@ -1,6 +1,7 @@
 import { Comment } from '../../domain/Comment';
-import { CommentRepository, CommentQueryParams, PaginatedResult } from '../../domain/CommentRepository';
+import { CommentRepository, CommentQueryParams } from '../../domain/CommentRepository';
 import { Redis } from 'ioredis';
+import { PaginatedResult } from '@/shared/domain/PaginatedResult';
 
 export class CachedCommentRepository implements CommentRepository {
   private readonly redis: Redis;
@@ -23,6 +24,10 @@ export class CachedCommentRepository implements CommentRepository {
 
   private getParentRepliesKey(parentId: string): string {
     return `comment:${parentId}:replies`;
+  }
+
+  private getUserCommentsKey(userId: string): string {
+    return `user:${userId}:comments`;
   }
 
   async save(comment: Comment): Promise<void> {
@@ -84,10 +89,67 @@ export class CachedCommentRepository implements CommentRepository {
     return result;
   }
 
+  async findByUserId(
+    userId: string, 
+    params?: CommentQueryParams
+  ): Promise<PaginatedResult<Comment>> {
+    const cacheKey = this.getUserCommentsKey(userId);
+    const cached = await this.redis.get(cacheKey);
+
+    if (cached && !params) {
+      return JSON.parse(cached);
+    }
+
+    const result = await this.repository.findByUserId(userId, params);
+    if (!params) {
+      await this.redis.setex(cacheKey, this.TTL, JSON.stringify(result));
+    }
+
+    return result;
+  }
+
+  async findByProductIdAndUserId(
+    productId: string,
+    userId: string
+  ): Promise<Comment | null> {
+    // 这种查询较为特殊，不做缓存处理
+    return this.repository.findByProductIdAndUserId(productId, userId);
+  }
+
+  async update(id: string, comment: Partial<Comment>): Promise<void> {
+    await this.repository.update(id, comment);
+    
+    // 查找完整评论以便无效化缓存
+    const fullComment = await this.repository.findById(id);
+    if (fullComment) {
+      await this.invalidateCache(fullComment);
+    }
+  }
+
   async delete(id: string): Promise<void> {
     const comment = await this.repository.findById(id);
     if (comment) {
       await this.repository.delete(id);
+      await this.invalidateCache(comment);
+    }
+  }
+
+  async likeComment(commentId: string, userId: string): Promise<void> {
+    await this.repository.likeComment(commentId, userId);
+    
+    // 无效化评论缓存
+    const comment = await this.repository.findById(commentId);
+    if (comment) {
+      await this.invalidateCache(comment);
+    }
+  }
+
+  async unlikeComment(commentId: string, userId: string): Promise<void> {
+    await this.repository.unlikeComment(commentId, userId);
+    
+    // 无效化评论缓存
+    const comment = await this.repository.findById(commentId);
+    if (comment) {
       await this.invalidateCache(comment);
     }
   }
@@ -103,7 +165,8 @@ export class CachedCommentRepository implements CommentRepository {
   private async invalidateCache(comment: Comment): Promise<void> {
     const keys = [
       this.getCacheKey(comment.id),
-      this.getProductCommentsKey(comment.productId)
+      this.getProductCommentsKey(comment.productId),
+      this.getUserCommentsKey(comment.userId)
     ];
 
     if (comment.parentId) {
