@@ -49,7 +49,7 @@ export default function RootLayout({
         <AppProviders>
           <ErrorBoundary>
             <Header />
-            <main className="pt-20">
+            <main className="pt-20 pb-96">
               <Suspense fallback={<LoadingFallback />}>
                 {children}
               </Suspense>
