@@ -12,10 +12,9 @@ import ErrorBoundary from './components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  title: '乐购商城 - 现代化电商网站',
-  description: '提供各种优质商品，包含商品上传系统的现代化电商平台',
-  keywords: '电商,购物,在线商城,乐购',
+export const metadata = {
+  title: '乐购商城',
+  description: '现代化电商平台',
 }
 
 // 组合Context Providers简化嵌套
@@ -38,29 +37,26 @@ const LoadingFallback = () => (
   </div>
 )
 
+// 修改为使用全局页眉页脚的布局
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
-        <ErrorBoundary>
-          <AppProviders>
+    <html lang="zh">
+      <body className={inter.className}>
+        <AppProviders>
+          <ErrorBoundary>
             <Header />
-            <main className="flex-1">
+            <main>
               <Suspense fallback={<LoadingFallback />}>
                 {children}
               </Suspense>
             </main>
             <Footer />
-          </AppProviders>
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </AppProviders>
       </body>
     </html>
   )
