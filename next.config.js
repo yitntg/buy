@@ -6,7 +6,8 @@ const nextConfig = {
     // 设置禁止静态生成的路径模式
     // 这会阻止Next.js尝试预渲染这些路径
     ppr: false,
-    optimizeCss: true,
+    // 禁用CSS优化以避免critters相关错误
+    optimizeCss: false,
   },
   typescript: {
     // ⚠️ 暂时忽略类型错误，以便能够构建
@@ -44,6 +45,42 @@ const nextConfig = {
     maxInactiveAge: 600 * 1000,
     // 同时存在内存中的页面数量
     pagesBufferLength: 5,
+  },
+  // 禁用静态优化，特别是admin路径
+  poweredByHeader: false,
+  // 配置路由处理
+  async headers() {
+    return [
+      {
+        // 对所有admin路径应用这些头部
+        source: '/admin/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0',
+          },
+        ],
+      },
+    ];
+  },
+  // 重写规则，确保admin路径总是动态渲染
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // 确保所有admin路径总是动态加载
+        {
+          source: '/admin/:path*',
+          has: [
+            {
+              type: 'header',
+              key: 'x-use-dynamic',
+              value: 'true',
+            },
+          ],
+          destination: '/admin/:path*',
+        },
+      ],
+    };
   },
 }
 

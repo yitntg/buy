@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth'
+import { useAuth, AuthProvider } from '@/lib/auth'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
 // 强制动态渲染
@@ -14,10 +14,42 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [activeMenu, setActiveMenu] = useState('dashboard')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  
+  // 渲染整个布局，将children包裹在AuthProvider中
+  return (
+    <AuthProvider>
+      <AdminLayoutContent 
+        children={children} 
+        activeMenu={activeMenu} 
+        setActiveMenu={setActiveMenu}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+        router={router}
+      />
+    </AuthProvider>
+  )
+}
+
+// 分离布局内容为单独组件
+function AdminLayoutContent({
+  children,
+  activeMenu,
+  setActiveMenu,
+  isMobileMenuOpen,
+  setIsMobileMenuOpen,
+  router
+}: {
+  children: React.ReactNode
+  activeMenu: string
+  setActiveMenu: (id: string) => void
+  isMobileMenuOpen: boolean
+  setIsMobileMenuOpen: (isOpen: boolean) => void
+  router: any
+}) {
+  const { user, isAuthenticated } = useAuth()
   
   // 验证用户是否管理员
   useEffect(() => {
