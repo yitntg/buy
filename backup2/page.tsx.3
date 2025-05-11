@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-// Header import removed
-// Footer import removed
+import Header from '../../components/Header'
+import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
 
 // 优惠券数据类型
@@ -126,7 +126,9 @@ export default function CouponsPage() {
   const memberSince = '2023年10月'
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50 py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl font-bold mb-6">我的账户</h1>
           
@@ -272,5 +274,7 @@ export default function CouponsPage() {
           </div>
         </div>
       </main>
+      <Footer />
+    </>
   )
 } 

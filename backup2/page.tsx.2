@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-// Header import removed
-// Footer import removed
+import Header from '../../components/Header'
+import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
 
 // 模拟地址数据类型
@@ -125,7 +125,9 @@ export default function AddressesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50 py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl font-bold mb-6">我的账户</h1>
           
@@ -375,5 +377,7 @@ export default function AddressesPage() {
           </div>
         </div>
       </main>
+      <Footer />
+    </>
   )
 } 

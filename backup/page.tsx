@@ -1,10 +1,12 @@
 import Link from 'next/link'
-// Header import removed
-// Footer import removed
+import Header from '../components/Header'
+import Footer from '../components/Footer'
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50 py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
             <div className="flex items-center justify-between mb-8">
@@ -48,5 +50,7 @@ export default function TermsPage() {
           </div>
         </div>
       </main>
+      <Footer />
+    </>
   )
 } 

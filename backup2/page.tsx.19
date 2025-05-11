@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-// Header import removed
-// Footer import removed
+import Header from '../../components/Header'
+import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
 
 // 热门商品类型
@@ -224,7 +224,9 @@ export default function AnalyticsPage() {
   
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gray-50 py-12">
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50 py-12">
           <div className="container mx-auto px-4 flex justify-center items-center">
             <div className="flex flex-col items-center">
               <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -235,11 +237,15 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </main>
+        <Footer />
+      </>
     )
   }
   
   return (
-    <main className="min-h-screen bg-gray-50 py-8">
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4">
           {/* 面包屑导航 */}
           <div className="mb-6 flex items-center text-sm">
@@ -494,5 +500,7 @@ export default function AnalyticsPage() {
           )}
         </div>
       </main>
+      <Footer />
+    </>
   )
 } 

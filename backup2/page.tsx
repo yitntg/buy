@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
-// Header import removed
-// Footer import removed
+import Header from '../components/Header'
+import Footer from '../components/Footer'
 
 export default function AboutPage() {
   // 团队成员数据
@@ -33,7 +33,9 @@ export default function AboutPage() {
   ]
   
   return (
-    <main className="min-h-screen bg-gray-50">
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50">
         {/* 公司简介 */}
         <section className="py-16 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="container mx-auto px-4">
@@ -127,5 +129,7 @@ export default function AboutPage() {
           </div>
         </section>
       </main>
+      <Footer />
+    </>
   )
 } 
