@@ -7,11 +7,12 @@ import { useAuth, AuthProvider } from '@/lib/auth'
 import { AdminAuthWrapper } from '@/lib/admin-auth-wrapper'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
-// 强制动态渲染
+// 强制动态渲染 - 这里统一设置admin所有页面的配置
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
-// 确保revalidate是一个数字
 export const revalidate = 0
+export const dynamicParams = true
+export const preferredRegion = 'auto'
 
 // 不再导入revalidate-config.js文件，直接在这里设置所有需要的配置
 // import './revalidate-config.js'

@@ -1,15 +1,12 @@
 'use client'
 
-// 导入动态配置
-import './revalidate-config.js';
+// 移除导入并直接在此文件中设置配置
+// import './revalidate-config.js';
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-// 强制动态渲染
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
-export const revalidate = 0
+// 依赖layout中的全局配置
 
 // 定义统计数据类型
 interface DashboardStats {

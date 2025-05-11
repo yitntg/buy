@@ -1,16 +1,16 @@
 'use client';
 
-// 导入动态配置
-import '../../revalidate-config.js';
+// 移除导入动态配置，依赖layout中的全局配置
+// import '../../revalidate-config.js';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 
-// 强制动态渲染
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+// 移除本地revalidate配置，依赖layout中的全局设置
+// export const dynamic = 'force-dynamic'
+// export const fetchCache = 'force-no-store'
+// export const revalidate = 0;
 
 export default function FunctionManagerPage() {
   const [isClient, setIsClient] = useState(false);
