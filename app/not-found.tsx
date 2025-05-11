@@ -4,28 +4,31 @@ import Footer from './components/Footer'
 
 export default function NotFound() {
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-gray-50 py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto text-center">
-            <div className="text-6xl font-bold text-primary mb-6">404</div>
-            <h1 className="text-3xl font-bold mb-4">页面未找到</h1>
-            <p className="text-lg text-gray-600 mb-8">
-              您访问的页面不存在或已被移除。
-            </p>
-            <div className="flex justify-center space-x-4">
-              <Link href="/" className="bg-primary text-white px-6 py-3 rounded-md hover:bg-blue-600">
-                返回首页
-              </Link>
-              <Link href="/contact" className="border border-primary text-primary px-6 py-3 rounded-md hover:bg-blue-50">
-                联系我们
-              </Link>
-            </div>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </>
+    <div style={{ 
+      fontFamily: 'sans-serif', 
+      maxWidth: '800px', 
+      margin: '0 auto', 
+      padding: '40px 20px',
+      textAlign: 'center' 
+    }}>
+      <h1 style={{ fontSize: '36px', marginBottom: '20px' }}>404 - 页面未找到</h1>
+      <p style={{ fontSize: '18px', marginBottom: '40px', color: '#666' }}>
+        您访问的页面不存在或已被移除
+      </p>
+      
+      <a 
+        href="/" 
+        style={{
+          display: 'inline-block',
+          padding: '10px 20px',
+          background: '#4A90E2',
+          color: 'white',
+          textDecoration: 'none',
+          borderRadius: '4px'
+        }}
+      >
+        返回首页
+      </a>
+    </div>
   )
 } 
