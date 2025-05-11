@@ -3,22 +3,43 @@
 // 导入动态配置
 import '../../no-static.js';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 
 // 强制动态渲染
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
 export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 export default function FunctionManagerPage() {
-  const { user } = useAuth();
+  const [isClient, setIsClient] = useState(false);
   const [functionName, setFunctionName] = useState('');
   const [functionBody, setFunctionBody] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // 确保在客户端渲染时调用useAuth
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  // 使用条件渲染
+  if (!isClient) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">数据库函数管理器</h1>
+        <div className="animate-pulse">
+          <div className="h-48 bg-gray-200 rounded mb-6"></div>
+          <div className="h-10 w-32 bg-gray-200 rounded mb-6"></div>
+        </div>
+      </div>
+    );
+  }
+  
+  // 以下代码只会在客户端执行
+  const { user } = useAuth();
   
   const createFunction = async () => {
     if (!functionName.trim() || !functionBody.trim()) {
