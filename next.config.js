@@ -3,13 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     serverComponentsExternalPackages: ['postgres'],
-    // 允许动态导入admin路径
-    unstable_allowDynamic: [
-      '/src/app/admin/**/*.js',
-      '/src/app/admin/**/*.ts',
-      '/src/app/admin/**/*.tsx',
-    ],
-    // 禁用CSS优化以避免critters相关错误
+    // 删除不支持的配置并使用标准支持的配置
+    appDir: true,
     optimizeCss: false,
   },
   typescript: {
@@ -21,7 +16,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['picsum.photos', 'pzjhupjfojvlbthnsgqt.supabase.co'],
+    domains: ['picsum.photos', 'pzjhupjfojvlbthnsgqt.supabase.co', 'placehold.co'],
     remotePatterns: [
       {
         protocol: 'https',
