@@ -7,36 +7,13 @@ import { useAuth, AuthProvider } from '@/lib/auth'
 import { AdminAuthWrapper } from '@/lib/admin-auth-wrapper'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
-// 直接定义配置，而不是导入再导出
+// 直接在此处定义所有配置，不导入任何外部配置
+// 确保这些配置只出现在这一个文件中
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
 export const revalidate = 0
-export const dynamicParams = true
-export const preferredRegion = 'auto'
-export const runtime = 'nodejs'
 
-// 不再导入配置文件
-// import {
-//   dynamic,
-//   fetchCache,
-//   revalidate,
-//   dynamicParams,
-//   preferredRegion,
-//   runtime
-// } from './admin-config'
-
-// 不再重新导出配置
-// export { 
-//   dynamic,
-//   fetchCache, 
-//   revalidate, 
-//   dynamicParams, 
-//   preferredRegion,
-//   runtime
-// }
-
-// 不再从这里导入
-// import './revalidate-config.js'
+// 移除所有导入和再导出的配置
+// 只保留最必要的配置
 
 export default function AdminLayout({
   children,
