@@ -1,5 +1,8 @@
 'use client';
 
+// 导入动态配置
+import '../config.js';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
