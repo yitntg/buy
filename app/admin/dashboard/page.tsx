@@ -1,5 +1,8 @@
 'use client'
 
+// 导入动态配置
+import '../revalidate-config.js';
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'

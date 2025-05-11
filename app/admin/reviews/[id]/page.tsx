@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import '../../revalidate-config.js';
 
 interface Review {
   id: string;

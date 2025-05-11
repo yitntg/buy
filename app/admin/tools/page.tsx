@@ -1,5 +1,8 @@
 'use client'
 
+// 导入动态配置
+import '../revalidate-config.js';
+
 import Link from 'next/link'
 
 export default function AdminToolsPage() {
