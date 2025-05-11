@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth'
+import { useAuth, AuthProvider } from '@/lib/auth'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
 // 移除所有配置，直接使用Next.js的默认行为
@@ -18,16 +18,18 @@ export default function AdminLayout({
   const [activeMenu, setActiveMenu] = useState('dashboard')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
-  // 直接渲染内容组件，不再使用认证包装器
+  // 添加回AuthProvider但不需要AdminAuthWrapper
   return (
-    <AdminLayoutContent 
-      children={children} 
-      activeMenu={activeMenu} 
-      setActiveMenu={setActiveMenu}
-      isMobileMenuOpen={isMobileMenuOpen}
-      setIsMobileMenuOpen={setIsMobileMenuOpen}
-      router={router}
-    />
+    <AuthProvider>
+      <AdminLayoutContent 
+        children={children} 
+        activeMenu={activeMenu} 
+        setActiveMenu={setActiveMenu}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+        router={router}
+      />
+    </AuthProvider>
   )
 }
 
