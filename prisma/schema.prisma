@@ -72,4 +72,17 @@ model OrderItem {
   price     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model DomainEvent {
+  id          String   @id @default(uuid())
+  eventId     String   @unique
+  aggregateId String
+  eventType   String
+  timestamp   DateTime
+  data        String
+  createdAt   DateTime @default(now())
+
+  @@index([aggregateId])
+  @@index([eventType])
 } 
