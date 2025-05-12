@@ -22,6 +22,7 @@ interface ThemeSettings {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [settings, setSettings] = useState<ThemeSettings>({
     primaryColor: '#000000',
@@ -33,42 +34,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // 确保在客户端渲染时调用useAuth
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // 使用条件渲染
-  if (!isClient) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">主题设置</h1>
-        <div className="animate-pulse">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div className="h-10 bg-gray-200 rounded mb-4"></div>
-              <div className="h-10 bg-gray-200 rounded mb-4"></div>
-              <div className="h-10 bg-gray-200 rounded mb-4"></div>
-            </div>
-            <div className="bg-gray-200 h-64 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 以下代码只会在客户端执行
-  const { user, isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    loadSettings();
-  }, [isAuthenticated, router]);
-
+  // 加载设置
   const loadSettings = async () => {
     try {
       const { data, error } = await supabase
@@ -87,6 +53,22 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+
+  // 客户端渲染检查
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // 认证检查和数据加载
+  useEffect(() => {
+    if (isClient) {
+      if (!isAuthenticated) {
+        router.push('/login');
+        return;
+      }
+      loadSettings();
+    }
+  }, [isClient, isAuthenticated, router]);
 
   const saveSettings = async () => {
     setSaving(true);
@@ -114,10 +96,26 @@ export default function SettingsPage() {
     }));
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
+  // 加载状态
+  if (!isClient || loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">主题设置</h1>
+        <div className="animate-pulse">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="h-10 bg-gray-200 rounded mb-4"></div>
+              <div className="h-10 bg-gray-200 rounded mb-4"></div>
+              <div className="h-10 bg-gray-200 rounded mb-4"></div>
+            </div>
+            <div className="bg-gray-200 h-64 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
+  // 主要内容渲染
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">主题设置</h1>
