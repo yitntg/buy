@@ -72,7 +72,10 @@ async function initStorage() {
       console.log('头像存储桶已就绪');
       
       // 应用头像存储桶策略
-      const { error: policyError } = await supabase.query(AVATAR_POLICY);
+      const { error: policyError } = await supabase.rpc('apply_storage_policy', {
+        bucket_name: STORAGE_BUCKETS.AVATARS,
+        policy: AVATAR_POLICY
+      });
       if (policyError) {
         console.error('应用头像存储桶策略失败:', policyError);
       } else {
@@ -95,9 +98,12 @@ async function initStorage() {
       console.log('产品存储桶已就绪');
       
       // 应用产品存储桶策略
-      const { error: policyError } = await supabase.query(PRODUCT_POLICY);
-      if (policyError) {
-        console.error('应用产品存储桶策略失败:', policyError);
+      const { error: productPolicyError } = await supabase.rpc('apply_storage_policy', {
+        bucket_name: STORAGE_BUCKETS.PRODUCTS,
+        policy: PRODUCT_POLICY
+      });
+      if (productPolicyError) {
+        console.error('应用产品存储桶策略失败:', productPolicyError);
       } else {
         console.log('产品存储桶策略已应用');
       }
