@@ -12,6 +12,7 @@ import ProductDescription from '../../components/ProductDescription'
 import ProductRecommendations from '../../components/ProductRecommendations'
 import ProductVariants from '../../components/ProductVariants'
 import StarRating from '../../components/StarRating'
+import UserAvatar from '../../components/UserAvatar'
 import { Share2, Heart } from 'lucide-react'
 import { useFavorites } from '../../context/FavoritesContext'
 
@@ -381,16 +382,13 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   reviews.map(review => (
                     <div key={review.id} className="border-b pb-6">
                       <div className="flex items-start">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                          {review.userAvatar ? (
-                            <img 
-                              src={review.userAvatar} 
-                              alt={review.userName} 
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-gray-500">{review.userName.slice(0, 1)}</span>
-                          )}
+                        <div className="mr-3">
+                          <UserAvatar 
+                            reviewMode={true}
+                            review={review}
+                            size={40}
+                            useImgTag={true}
+                          />
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between items-center">

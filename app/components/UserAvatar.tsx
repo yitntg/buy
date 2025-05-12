@@ -29,7 +29,7 @@ const textColors = {
 export type AvatarShape = 'circle' | 'square' | 'rounded';
 
 interface UserAvatarProps {
-  user: {
+  user?: {
     username: string;
     avatar?: string;
   } | null;
@@ -40,6 +40,14 @@ interface UserAvatarProps {
   status?: 'online' | 'offline' | 'away' | 'busy';
   border?: boolean;
   borderColor?: string;
+  // 新增：评论模式，接受review类型对象
+  reviewMode?: boolean;
+  review?: {
+    userName: string;
+    userAvatar?: string;
+  };
+  // 新增：使用普通img而非Next.js Image组件
+  useImgTag?: boolean;
 }
 
 export default function UserAvatar({ 
@@ -50,7 +58,10 @@ export default function UserAvatar({
   showStatusIndicator = false,
   status = 'offline',
   border = false,
-  borderColor = 'white'
+  borderColor = 'white',
+  reviewMode = false,
+  review,
+  useImgTag = false
 }: UserAvatarProps) {
   const [mounted, setMounted] = useState(false);
   
@@ -60,7 +71,13 @@ export default function UserAvatar({
   }, []);
   
   if (!mounted) return null;
-  if (!user) return null;
+  if (!user && !reviewMode) return null;
+  
+  // 获取用户名和头像URL（根据普通模式或评论模式）
+  const username = reviewMode ? review?.userName : user?.username;
+  const avatarUrl = reviewMode ? review?.userAvatar : user?.avatar;
+  
+  if (!username) return null;
   
   // 获取随机但固定的颜色（基于用户名）
   const getAvatarColor = (username: string) => {
@@ -128,7 +145,7 @@ export default function UserAvatar({
   };
   
   // 如果用户有头像，显示头像图片
-  if (user.avatar) {
+  if (avatarUrl) {
     return (
       <div 
         className={`relative inline-block ${className}`}
@@ -140,12 +157,20 @@ export default function UserAvatar({
           border: border ? `2px solid ${borderColor}` : 'none'
         }}
       >
-        <Image
-          src={user.avatar}
-          alt={user.username || '用户'}
-          fill
-          className="object-cover"
-        />
+        {useImgTag ? (
+          <img
+            src={avatarUrl}
+            alt={username || '用户'}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <Image
+            src={avatarUrl}
+            alt={username || '用户'}
+            fill
+            className="object-cover"
+          />
+        )}
         
         {showStatusIndicator && (
           <span 
@@ -163,9 +188,9 @@ export default function UserAvatar({
   }
   
   // 为没有头像的用户生成字母头像
-  const backgroundColor = getAvatarColor(user.username);
+  const backgroundColor = getAvatarColor(username);
   const textColor = getTextColor(backgroundColor);
-  const initials = getInitials(user.username);
+  const initials = getInitials(username);
   
   return (
     <div

@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import UserAvatar from '../../components/UserAvatar'
 
 // 用户类型定义
 interface User {
@@ -324,13 +325,15 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="relative h-10 w-10 rounded-full overflow-hidden mr-3">
-                            <Image 
-                              src={user.avatar || 'https://api.dicebear.com/6.x/avataaars/svg?seed=default'} 
-                              alt={user.username} 
-                              width={40}
-                              height={40}
-                              className="object-cover"
+                          <div className="relative mr-3">
+                            <UserAvatar 
+                              user={{
+                                username: user.username,
+                                avatar: user.avatar || 'https://api.dicebear.com/6.x/avataaars/svg?seed=default'
+                              }}
+                              size={40}
+                              border={true}
+                              borderColor="#f9fafb"
                             />
                           </div>
                           <div className="min-w-0">

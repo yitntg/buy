@@ -7,6 +7,7 @@ import Image from 'next/image'
 // Footer import removed
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
+import UserAvatar from '../components/UserAvatar'
 
 export default function AccountPage() {
   const { user, logout, updateUser } = useAuth()
@@ -174,12 +175,15 @@ export default function AccountPage() {
             <div className="lg:w-1/4">
               <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                 <div className="flex items-center mb-6">
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden">
-                    <Image
-                      src={previewURL || userData.avatar}
-                      alt={userData.name}
-                      fill
-                      className="object-cover"
+                  <div className="relative">
+                    <UserAvatar 
+                      user={{
+                        username: userData.name,
+                        avatar: previewURL || userData.avatar
+                      }}
+                      size={64}
+                      border={true}
+                      borderColor="#f0f0f0"
                     />
                   </div>
                   <div className="ml-4">
@@ -278,12 +282,15 @@ export default function AccountPage() {
                         头像
                       </label>
                       <div className="flex items-center">
-                        <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
-                          <Image
-                            src={previewURL || userData.avatar}
-                            alt={userData.name}
-                            fill
-                            className="object-cover"
+                        <div className="relative mr-4">
+                          <UserAvatar 
+                            user={{
+                              username: userData.name,
+                              avatar: previewURL || userData.avatar
+                            }}
+                            size={48}
+                            border={true}
+                            borderColor="#f0f0f0"
                           />
                         </div>
                         <input 
