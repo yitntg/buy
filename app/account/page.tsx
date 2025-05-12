@@ -9,13 +9,13 @@ import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
 import UserAvatar from '../components/UserAvatar'
 import AccountSidebar from '../components/AccountSidebar'
+import AvatarUploader from '../components/AvatarUploader'
 
 export default function AccountPage() {
   const { user, logout, updateUser } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
-  const [avatar, setAvatar] = useState<File | null>(null)
   const [previewURL, setPreviewURL] = useState<string>('')
   
   // 使用useEffect在用户数据加载后更新表单
@@ -123,31 +123,6 @@ export default function AccountPage() {
     }
   }
   
-  // 处理头像上传
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files && files.length > 0) {
-      const file = files[0]
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const result = reader.result
-        if (typeof result === 'string') {
-          setPreviewURL(result)
-        }
-      }
-      reader.readAsDataURL(file)
-      setAvatar(file)
-    }
-  }
-  
-  // 触发文件选择
-  const triggerFileInput = () => {
-    const fileInput = document.getElementById('avatarInput') as HTMLInputElement
-    if (fileInput) {
-      fileInput.click()
-    }
-  }
-  
   // 如果用户未登录，显示加载状态或重定向到登录页面
   if (!user) {
     // 简单的检查以避免页面闪烁
@@ -234,33 +209,16 @@ export default function AccountPage() {
                       <label htmlFor="avatar" className="block text-sm font-medium text-gray-700 mb-1">
                         头像
                       </label>
-                      <div className="flex items-center">
-                        <div className="relative mr-4">
-                          <UserAvatar 
-                            user={{
-                              username: userData.name,
-                              avatar: previewURL || userData.avatar
-                            }}
-                            size={48}
-                            border={true}
-                            borderColor="#f0f0f0"
-                          />
-                        </div>
-                        <input 
-                          type="file" 
-                          id="avatarInput" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={handleAvatarChange}
-                        />
-                        <button
-                          type="button"
-                          className="text-sm text-primary border border-primary px-3 py-1 rounded-md hover:bg-blue-50"
-                          onClick={triggerFileInput}
-                        >
-                          更换头像
-                        </button>
-                      </div>
+                      <AvatarUploader 
+                        user={{
+                          username: userData.name,
+                          avatar: userData.avatar
+                        }}
+                        onAvatarChange={(url) => {
+                          setPreviewURL(url);
+                        }}
+                        size={48}
+                      />
                     </div>
                   </div>
                   

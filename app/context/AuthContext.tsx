@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { AvatarService } from '@/utils/avatarUtils';
 
 // 用户类型
 export interface User {
@@ -142,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: userData.username,
         email: userData.email,
         password: userData.password || '123456', // 默认密码，实际项目应该要求用户设置密码
-        avatar: useDefaultAvatar ? `https://api.dicebear.com/6.x/avataaars/svg?seed=${Date.now()}` : undefined
+        avatar: useDefaultAvatar ? AvatarService.getDefaultAvatarUrl(userData.username) : undefined
       };
       
       // 调用注册API

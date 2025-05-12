@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "node scripts/update-build-time.js && next build",
+    "dev": "node scripts/init-storage.js && next dev",
+    "build": "node scripts/update-build-time.js && node scripts/init-storage.js && next build",
     "start": "next start",
     "lint": "next lint",
     "init-db": "node scripts/init-supabase.js",
     "init-db-local": "node -r dotenv/config scripts/init-supabase.js",
-    "direct-init": "node scripts/direct-init.js"
+    "direct-init": "node scripts/direct-init.js",
+    "init-storage": "node scripts/init-storage.js"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
