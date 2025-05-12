@@ -46,14 +46,14 @@ export default function CategoriesPage() {
     setError(null)
     
     try {
-      const response = await fetch('/api/admin/categories')
+      const response = await fetch('/api/categories')
       
       if (!response.ok) {
         throw new Error('获取分类数据失败')
       }
       
       const data = await response.json()
-      setCategories(data)
+      setCategories(data.categories || [])
     } catch (err) {
       console.error('获取分类失败:', err)
       setError(err instanceof Error ? err.message : '获取分类数据时发生未知错误')
@@ -73,7 +73,7 @@ export default function CategoriesPage() {
     
     try {
       // 确保只发送名称和描述，不指定id
-      const response = await fetch('/api/admin/categories', {
+      const response = await fetch('/api/categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export default function CategoriesPage() {
       
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || '添加分类失败')
+        throw new Error(errorData.error || errorData.message || '添加分类失败')
       }
       
       // 重置表单
@@ -113,7 +113,7 @@ export default function CategoriesPage() {
     }
     
     try {
-      const response = await fetch(`/api/admin/categories/${editingCategory.id}`, {
+      const response = await fetch(`/api/categories/${editingCategory.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ export default function CategoriesPage() {
       
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || '更新分类失败')
+        throw new Error(errorData.error || errorData.message || '更新分类失败')
       }
       
       // 重置表单
@@ -146,13 +146,13 @@ export default function CategoriesPage() {
     }
     
     try {
-      const response = await fetch(`/api/admin/categories/${id}`, {
+      const response = await fetch(`/api/categories/${id}`, {
         method: 'DELETE',
       })
       
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || '删除分类失败')
+        throw new Error(errorData.error || errorData.message || '删除分类失败')
       }
       
       // 重新获取分类列表

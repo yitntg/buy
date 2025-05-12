@@ -98,14 +98,20 @@ export class AvatarService {
   // 上传头像到Supabase存储
   static async uploadAvatar(file: File): Promise<string> {
     try {
-      // 验证文件
-      if (!file.type.startsWith('image/')) {
-        throw new Error('请上传图片文件');
+      // 检查认证状态
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      if (authError) {
+        throw new Error('认证错误，请重新登录');
       }
+      if (!session) {
+        throw new Error('请先登录');
+      }
+
+      // 验证文件
+      this.validateFile(file);
       
       // 生成文件名
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = this.generateUniqueFileName(file);
       
       // 上传文件
       const { data, error: uploadError } = await supabase.storage
@@ -116,7 +122,10 @@ export class AvatarService {
       
       if (uploadError) {
         console.error('上传错误:', uploadError);
-        throw new Error('头像上传失败');
+        if (uploadError.message.includes('Unauthorized')) {
+          throw new Error('没有权限上传文件，请确保已登录');
+        }
+        throw new Error('头像上传失败，请稍后重试');
       }
       
       // 获取公开URL
@@ -146,20 +155,20 @@ export class AvatarService {
   // 验证文件
   private static validateFile(file: File): void {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 2 * 1024 * 1024; // 2MB
     
     if (!allowedTypes.includes(file.type)) {
       throw new Error('不支持的文件类型，请上传JPG、PNG、WEBP或GIF图片');
     }
     
     if (file.size > maxSize) {
-      throw new Error('文件大小超过限制，最大支持5MB');
+      throw new Error('文件大小超过限制，最大支持2MB');
     }
   }
   
   // 生成唯一文件名
-  private static generateUniqueFileName(file: File, userId: string): string {
+  private static generateUniqueFileName(file: File): string {
     const fileExt = file.name.split('.').pop() || 'jpg';
-    return `avatar-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    return `${Date.now()}.${fileExt}`;
   }
 } 

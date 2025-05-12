@@ -16,6 +16,41 @@ const STORAGE_BUCKETS = {
   PRODUCTS: 'products'
 };
 
+// SQL策略
+const AVATAR_POLICY = `
+  CREATE POLICY "允许所有用户上传头像" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (
+    bucket_id = 'avatars'
+  );
+  
+  CREATE POLICY "允许所有用户查看头像" ON storage.objects
+  FOR SELECT TO public USING (
+    bucket_id = 'avatars'
+  );
+  
+  CREATE POLICY "允许用户更新自己的头像" ON storage.objects
+  FOR UPDATE TO authenticated USING (
+    bucket_id = 'avatars'
+  );
+  
+  CREATE POLICY "允许用户删除自己的头像" ON storage.objects
+  FOR DELETE TO authenticated USING (
+    bucket_id = 'avatars'
+  );
+`;
+
+const PRODUCT_POLICY = `
+  CREATE POLICY "允许认证用户上传产品图片" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (
+    bucket_id = 'products'
+  );
+  
+  CREATE POLICY "允许所有人查看产品图片" ON storage.objects
+  FOR SELECT TO public USING (
+    bucket_id = 'products'
+  );
+`;
+
 /**
  * 执行存储初始化
  * 此脚本可以在项目启动前运行，确保存储桶已正确配置
@@ -35,6 +70,14 @@ async function initStorage() {
       console.error('创建头像存储桶失败:', avatarsError);
     } else {
       console.log('头像存储桶已就绪');
+      
+      // 应用头像存储桶策略
+      const { error: policyError } = await supabase.query(AVATAR_POLICY);
+      if (policyError) {
+        console.error('应用头像存储桶策略失败:', policyError);
+      } else {
+        console.log('头像存储桶策略已应用');
+      }
     }
 
     // 创建产品图片存储桶
@@ -50,6 +93,14 @@ async function initStorage() {
       console.error('创建产品存储桶失败:', productsError);
     } else {
       console.log('产品存储桶已就绪');
+      
+      // 应用产品存储桶策略
+      const { error: policyError } = await supabase.query(PRODUCT_POLICY);
+      if (policyError) {
+        console.error('应用产品存储桶策略失败:', policyError);
+      } else {
+        console.log('产品存储桶策略已应用');
+      }
     }
 
   } catch (error) {
