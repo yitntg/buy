@@ -4,6 +4,7 @@
 // import '../revalidate-config.js';
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -16,6 +17,7 @@ interface Category {
 }
 
 export default function CategoriesPage() {
+  const { user } = useAuth()
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,8 +30,10 @@ export default function CategoriesPage() {
   const [description, setDescription] = useState('')
   
   useEffect(() => {
-    fetchCategories()
-  }, [])
+    if (user?.role === 'admin') {
+      fetchCategories()
+    }
+  }, [user])
   
   // 获取所有分类
   const fetchCategories = async () => {
