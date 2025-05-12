@@ -31,13 +31,26 @@ export default function CategoriesPage() {
   
   // 检查用户是否已登录并且是管理员
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login?redirect=/admin/categories')
-    } else if (user?.role !== 'admin') {
-      router.push('/') // 如果不是管理员，重定向到首页
-    } else {
-      fetchCategories() // 获取分类数据
+    const checkAuth = async () => {
+      try {
+        if (!isAuthenticated) {
+          router.push('/auth/login?redirect=/admin/categories')
+          return
+        }
+        
+        if (user?.role !== 'admin') {
+          router.push('/')
+          return
+        }
+        
+        await fetchCategories()
+      } catch (err) {
+        console.error('权限检查失败:', err)
+        setError(err instanceof Error ? err.message : '权限检查失败')
+      }
     }
+    
+    checkAuth()
   }, [isAuthenticated, user, router])
   
   // 获取所有分类

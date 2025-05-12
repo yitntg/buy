@@ -16,53 +16,48 @@ export default function GlobalError({
   return (
     <html lang="zh">
       <body>
-        <div style={{ 
-          fontFamily: 'sans-serif', 
-          maxWidth: '800px', 
-          margin: '0 auto', 
-          padding: '40px 20px',
-          textAlign: 'center' 
-        }}>
-          <h1 style={{ fontSize: '36px', marginBottom: '20px', color: '#E53E3E' }}>系统错误</h1>
-          <p style={{ fontSize: '18px', marginBottom: '20px', color: '#666' }}>
-            抱歉，系统遇到了意外错误
-          </p>
-          
-          <div style={{ 
-            padding: '15px',
-            margin: '0 auto 30px',
-            maxWidth: '500px',
-            background: '#F7FAFC',
-            border: '1px solid #E2E8F0',
-            borderRadius: '6px',
-            textAlign: 'left'
-          }}>
-            <p style={{ margin: '0 0 5px', fontWeight: 'bold' }}>错误信息:</p>
-            <p style={{ margin: '0', wordBreak: 'break-word', color: '#718096' }}>
-              {error.message || '未知错误'}
-            </p>
-            {error.digest && (
-              <p style={{ margin: '10px 0 0', fontSize: '12px', color: '#A0AEC0' }}>
-                错误ID: {error.digest}
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+            <div className="text-center">
+              <svg
+                className="mx-auto h-12 w-12 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              
+              <h2 className="mt-4 text-xl font-semibold text-gray-900">
+                页面加载失败
+              </h2>
+              
+              <p className="mt-2 text-gray-600">
+                抱歉，页面暂时无法访问，请稍后再试
               </p>
-            )}
+            </div>
+
+            <div className="mt-8 flex justify-center space-x-4">
+              <button
+                onClick={() => reset()}
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+              >
+                重试
+              </button>
+              
+              <a
+                href="/"
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                返回首页
+              </a>
+            </div>
           </div>
-          
-          <button
-            onClick={() => reset()}
-            style={{
-              display: 'inline-block',
-              padding: '10px 20px',
-              background: '#4A90E2',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '16px'
-            }}
-          >
-            重试
-          </button>
         </div>
       </body>
     </html>
