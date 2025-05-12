@@ -27,22 +27,13 @@ export class AvatarService {
       this.validateFile(file);
       console.log('文件验证通过');
       
-      // 尝试确保存储桶存在
-      try {
-        const bucketExists = await this.ensureAvatarBucketExists();
-        console.log('存储桶检查结果:', bucketExists ? '存在' : '不存在');
-      } catch (bucketError) {
-        console.error('确保存储桶存在时出错:', bucketError);
-        // 继续尝试上传，以防存储桶已存在但权限问题导致检查失败
-      }
-      
       // 生成唯一文件名
       const fileName = this.generateUniqueFileName(file);
       
       console.log(`准备上传头像文件: ${fileName}, 大小: ${file.size} 字节, 类型: ${file.type}`);
       
       // 上传到Supabase
-      let uploadResult = await supabase.storage
+      const uploadResult = await supabase.storage
         .from(this.AVATAR_BUCKET)
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -50,33 +41,8 @@ export class AvatarService {
         });
         
       if (uploadResult.error) {
-        console.error('Supabase存储上传错误:', uploadResult.error);
-        
-        // 如果是存储桶不存在的错误，尝试创建并重新上传
-        if (uploadResult.error.message === 'Bucket not found') {
-          console.log('尝试创建存储桶并重新上传...');
-          const bucketCreated = await this.createAvatarBucket();
-          
-          if (bucketCreated) {
-            console.log('存储桶创建成功，重新尝试上传');
-            uploadResult = await supabase.storage
-              .from(this.AVATAR_BUCKET)
-              .upload(fileName, file, {
-                cacheControl: '3600',
-                upsert: true
-              });
-              
-            if (uploadResult.error) {
-              console.error('重试上传仍然失败:', uploadResult.error);
-              throw uploadResult.error;
-            }
-          } else {
-            console.error('创建存储桶失败，无法上传头像');
-            throw uploadResult.error;
-          }
-        } else {
-          throw uploadResult.error;
-        }
+        console.error('头像上传失败:', uploadResult.error);
+        throw uploadResult.error;
       }
       
       if (!uploadResult.data) {
@@ -130,59 +96,5 @@ export class AvatarService {
   private static generateUniqueFileName(file: File): string {
     const fileExt = file.name.split('.').pop() || 'jpg';
     return `avatar-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-  }
-  
-  // 确保头像存储桶存在
-  private static async ensureAvatarBucketExists(): Promise<boolean> {
-    try {
-      // 检查存储桶是否存在
-      const { data: buckets, error } = await supabase.storage.listBuckets();
-      
-      if (error) {
-        console.error('无法列出存储桶:', error);
-        return false;
-      }
-      
-      const avatarBucket = buckets?.find(b => b.name === this.AVATAR_BUCKET);
-      
-      if (!avatarBucket) {
-        return await this.createAvatarBucket();
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('检查存储桶时出错:', error);
-      return false;
-    }
-  }
-  
-  // 创建头像存储桶
-  private static async createAvatarBucket(): Promise<boolean> {
-    try {
-      console.log(`尝试创建存储桶: ${this.AVATAR_BUCKET}`);
-      
-      // 创建存储桶
-      const { error: createError } = await supabase.storage.createBucket(this.AVATAR_BUCKET, {
-        public: true,
-        fileSizeLimit: 5242880, // 5MB
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-      });
-      
-      if (createError) {
-        console.error('创建存储桶失败:', createError);
-        return false;
-      }
-      
-      console.log(`存储桶 ${this.AVATAR_BUCKET} 创建成功`);
-      return true;
-    } catch (error) {
-      console.error('创建存储桶时出错:', error);
-      return false;
-    }
-  }
-  
-  // 初始化头像存储桶（系统启动时调用）
-  static async initializeAvatarStorage(): Promise<boolean> {
-    return this.ensureAvatarBucketExists();
   }
 } 
