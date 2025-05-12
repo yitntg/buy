@@ -1,4 +1,4 @@
-import { supabase } from './lib/supabase';
+import { supabase, getCurrentUser } from './lib/supabase';
 import { StorageError } from '@supabase/storage-js';
 
 export interface AvatarOptions {
@@ -25,10 +25,10 @@ export class AvatarService {
       console.log('开始上传头像...', new Date().toISOString());
       
       // 检查用户会话
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error('获取用户信息失败:', userError);
-        throw new Error('请先登录后再上传头像');
+      const user = await getCurrentUser();
+      if (!user) {
+        console.error('用户未登录');
+        return this.getDefaultAvatarUrl('default');
       }
       
       // 验证文件类型和大小
@@ -37,13 +37,14 @@ export class AvatarService {
       
       // 生成唯一文件名 - 使用用户ID作为前缀
       const fileName = this.generateUniqueFileName(file, user.id);
+      const filePath = `${user.id}/${fileName}`;
       
-      console.log(`准备上传头像文件: ${fileName}, 大小: ${file.size} 字节, 类型: ${file.type}`);
+      console.log(`准备上传头像文件: ${filePath}, 大小: ${file.size} 字节, 类型: ${file.type}`);
       
       // 上传到Supabase
       const uploadResult = await supabase.storage
         .from(this.AVATAR_BUCKET)
-        .upload(`${user.id}/${fileName}`, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -63,15 +64,21 @@ export class AvatarService {
       // 获取公开URL
       const { data: { publicUrl } } = supabase.storage
         .from(this.AVATAR_BUCKET)
-        .getPublicUrl(`${user.id}/${uploadResult.data.path}`);
+        .getPublicUrl(filePath);
       
       console.log('头像上传成功，URL:', publicUrl);
       return publicUrl;
     } catch (error) {
       console.error('头像上传失败:', error);
       
-      // 如果失败，返回默认头像
-      const defaultAvatar = this.getDefaultAvatarUrl(Date.now().toString());
+      // 如果是未登录错误，直接返回null，避免使用默认头像
+      if (error instanceof Error && error.message.includes('请先登录')) {
+        return '';
+      }
+      
+      // 如果是其他错误，返回当前用户的默认头像
+      const user = await getCurrentUser();
+      const defaultAvatar = this.getDefaultAvatarUrl(user?.email || 'default');
       console.log('使用默认头像:', defaultAvatar);
       return defaultAvatar;
     }

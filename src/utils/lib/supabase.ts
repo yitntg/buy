@@ -18,11 +18,38 @@ export const getSupabase = () => {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storageKey: 'supabase.auth.token'
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storageKey: 'supabase.auth.token',
+        flowType: 'pkce'
       }
     });
   }
   return supabaseInstance;
 };
 
-export const supabase = getSupabase(); 
+// 导出单例实例
+export const supabase = getSupabase();
+
+// 获取当前用户会话
+export const getCurrentSession = async () => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return session;
+  } catch (error) {
+    console.error('获取会话失败:', error);
+    return null;
+  }
+};
+
+// 获取当前用户
+export const getCurrentUser = async () => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return user;
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+    return null;
+  }
+}; 
