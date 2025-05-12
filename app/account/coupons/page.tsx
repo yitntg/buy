@@ -6,7 +6,7 @@ import Link from 'next/link'
 // Footer import removed
 import { useAuth } from '../../context/AuthContext'
 import { useRouter } from 'next/navigation'
-import UserAvatar from '../../components/UserAvatar'
+import AccountSidebar from '../../components/AccountSidebar'
 
 // 优惠券数据类型
 interface Coupon {
@@ -52,17 +52,6 @@ export default function CouponsPage() {
   ]);
   const [couponCode, setCouponCode] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
-
-  // 账户菜单项
-  const menuItems = [
-    { label: '个人信息', href: '/account', active: false },
-    { label: '我的订单', href: '/account/orders', active: false },
-    { label: '收货地址', href: '/account/addresses', active: false },
-    { label: '支付方式', href: '/account/payment', active: false },
-    { label: '优惠券', href: '/account/coupons', active: true },
-    { label: '消息通知', href: '/account/notifications', active: false },
-    { label: '账户安全', href: '/account/security', active: false },
-  ];
 
   // 领取优惠券
   const handleRedeemCoupon = (e: React.FormEvent) => {
@@ -133,53 +122,8 @@ export default function CouponsPage() {
           <h1 className="text-2xl font-bold mb-6">我的账户</h1>
           
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* 侧边栏菜单 */}
-            <div className="lg:w-1/4">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div className="flex items-center mb-6">
-                  <div className="relative">
-                    <UserAvatar 
-                      user={{
-                        username: user?.username || '用户',
-                        avatar: user?.avatar
-                      }}
-                      size={64}
-                      border={true}
-                      borderColor="#f0f0f0"
-                    />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="font-medium">{user?.username || '用户'}</h3>
-                    <p className="text-sm text-gray-500">会员自 {memberSince}</p>
-                  </div>
-                </div>
-                
-                <nav>
-                  <ul className="space-y-2">
-                    {menuItems.map((item) => (
-                      <li key={item.label}>
-                        <Link
-                          href={item.href}
-                          className={`block px-3 py-2 rounded-md ${
-                            item.active
-                              ? 'bg-primary text-white'
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          {item.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <Link href="/" className="w-full text-red-500 hover:text-red-600 text-sm font-medium block text-center">
-                  退出登录
-                </Link>
-              </div>
-            </div>
+            {/* 使用全局侧边栏组件 */}
+            <AccountSidebar activePage="coupons" />
             
             {/* 主内容区 */}
             <div className="lg:w-3/4">

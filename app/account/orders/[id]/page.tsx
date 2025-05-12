@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 // Footer import removed
 import { useAuth } from '../../../context/AuthContext'
 import UserAvatar from '../../../components/UserAvatar'
+import AccountSidebar from '../../../components/AccountSidebar'
 
 // 定义订单类型
 interface OrderItem {

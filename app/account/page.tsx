@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
 import UserAvatar from '../components/UserAvatar'
+import AccountSidebar from '../components/AccountSidebar'
 
 export default function AccountPage() {
   const { user, logout, updateUser } = useAuth()
@@ -171,56 +172,8 @@ export default function AccountPage() {
           <h1 className="text-2xl font-bold mb-6">我的账户</h1>
           
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* 侧边栏菜单 */}
-            <div className="lg:w-1/4">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div className="flex items-center mb-6">
-                  <div className="relative">
-                    <UserAvatar 
-                      user={{
-                        username: userData.name,
-                        avatar: previewURL || userData.avatar
-                      }}
-                      size={64}
-                      border={true}
-                      borderColor="#f0f0f0"
-                    />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="font-medium">{userData.name}</h3>
-                    <p className="text-sm text-gray-500">会员自 {userData.memberSince}</p>
-                  </div>
-                </div>
-                
-                <nav>
-                  <ul className="space-y-2">
-                    {menuItems.map((item) => (
-                      <li key={item.label}>
-                        <Link
-                          href={item.href}
-                          className={`block px-3 py-2 rounded-md ${
-                            item.active
-                              ? 'bg-primary text-white'
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          {item.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <button 
-                  onClick={handleLogout}
-                  className="w-full text-red-500 hover:text-red-600 text-sm font-medium"
-                >
-                  退出登录
-                </button>
-              </div>
-            </div>
+            {/* 使用全局侧边栏组件 */}
+            <AccountSidebar activePage="profile" />
             
             {/* 主内容区 */}
             <div className="lg:w-3/4">
