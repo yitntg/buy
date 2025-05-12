@@ -2,6 +2,7 @@
   "name": "modern-ecommerce",
   "version": "0.1.0",
   "private": true,
+  "keywords": ["ecommerce", "nextjs", "react", "typescript", "supabase"],
   "scripts": {
     "dev": "node scripts/init-storage.js && next dev",
     "build": "node scripts/init-storage.js && next build",
