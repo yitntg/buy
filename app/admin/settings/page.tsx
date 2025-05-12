@@ -22,7 +22,7 @@ interface ThemeSettings {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [settings, setSettings] = useState<ThemeSettings>({
     primaryColor: '#000000',
@@ -34,7 +34,18 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // 确保在客户端渲染
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // 加载设置
+  useEffect(() => {
+    if (isClient && user?.role === 'admin') {
+      loadSettings();
+    }
+  }, [isClient, user]);
+
   const loadSettings = async () => {
     try {
       const { data, error } = await supabase
@@ -53,22 +64,6 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
-
-  // 客户端渲染检查
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // 认证检查和数据加载
-  useEffect(() => {
-    if (isClient) {
-      if (!isAuthenticated) {
-        router.push('/login');
-        return;
-      }
-      loadSettings();
-    }
-  }, [isClient, isAuthenticated, router]);
 
   const saveSettings = async () => {
     setSaving(true);
