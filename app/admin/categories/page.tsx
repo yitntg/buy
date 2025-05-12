@@ -46,7 +46,7 @@ export default function CategoriesPage() {
     setError(null)
     
     try {
-      const response = await fetch('/api/categories')
+      const response = await fetch('/api/admin/categories')
       
       if (!response.ok) {
         throw new Error('获取分类数据失败')
@@ -73,7 +73,7 @@ export default function CategoriesPage() {
     
     try {
       // 确保只发送名称和描述，不指定id
-      const response = await fetch('/api/categories', {
+      const response = await fetch('/api/admin/categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ export default function CategoriesPage() {
     }
     
     try {
-      const response = await fetch(`/api/categories/${editingCategory.id}`, {
+      const response = await fetch(`/api/admin/categories/${editingCategory.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ export default function CategoriesPage() {
     }
     
     try {
-      const response = await fetch(`/api/categories/${id}`, {
+      const response = await fetch(`/api/admin/categories/${id}`, {
         method: 'DELETE',
       })
       
