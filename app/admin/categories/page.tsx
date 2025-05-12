@@ -48,7 +48,7 @@ export default function CategoriesPage() {
       }
       
       const data = await response.json()
-      setCategories(data.categories || [])
+      setCategories(data || [])
     } catch (err) {
       console.error('获取分类失败:', err)
       setError(err instanceof Error ? err.message : '获取分类数据时发生未知错误')
