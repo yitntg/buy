@@ -17,13 +17,19 @@ const nextConfig = {
       'picsum.photos', 
       'pzjhupjfojvlbthnsgqt.supabase.co', 
       'placehold.co',
-      'api.dicebear.com'
+      'api.dicebear.com',
+      'buy-nrqajqppn-yitntgs-projects.vercel.app'
     ],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'pzjhupjfojvlbthnsgqt.supabase.co',
+        pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**.vercel.app',
+      }
     ],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
