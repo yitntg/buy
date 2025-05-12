@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 // Header import removed
 // Footer import removed
 import { useAuth } from '../../../context/AuthContext'
+import UserAvatar from '../../../components/UserAvatar'
 
 // 定义订单类型
 interface OrderItem {

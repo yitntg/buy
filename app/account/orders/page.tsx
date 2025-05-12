@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 // Header import removed
 // Footer import removed
 import { useAuth } from '../../context/AuthContext'
+import UserAvatar from '../../components/UserAvatar'
 
 // 定义订单类型
 interface Order {
@@ -208,21 +209,16 @@ export default function OrdersPage() {
             <div className="lg:w-1/4">
               <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                 <div className="flex items-center mb-6">
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200">
-                    {user?.avatar ? (
-                      <Image 
-                        src={user.avatar} 
-                        alt={user.username || "用户头像"}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                    )}
+                  <div className="relative">
+                    <UserAvatar 
+                      user={{
+                        username: user?.username || '用户',
+                        avatar: user?.avatar
+                      }}
+                      size={64}
+                      border={true}
+                      borderColor="#f0f0f0"
+                    />
                   </div>
                   <div className="ml-4">
                     <h3 className="font-medium">{user?.username || '用户'}</h3>
