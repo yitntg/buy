@@ -13,7 +13,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: '乐购商城',
+  title: '乐购商城-测试版本e835f8c',
   description: '现代化电商平台',
 }
 
