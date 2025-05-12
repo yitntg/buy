@@ -1,4 +1,5 @@
 import { supabase } from './lib/supabase';
+import { StorageError } from '@supabase/storage-js';
 
 export interface AvatarOptions {
   size?: number;
@@ -23,6 +24,13 @@ export class AvatarService {
     try {
       console.log('开始上传头像...', new Date().toISOString());
       
+      // 检查用户会话
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error('用户未登录或会话已过期:', sessionError);
+        throw new Error('请先登录后再上传头像');
+      }
+      
       // 验证文件类型和大小
       this.validateFile(file);
       console.log('文件验证通过');
@@ -42,6 +50,9 @@ export class AvatarService {
         
       if (uploadResult.error) {
         console.error('头像上传失败:', uploadResult.error);
+        if ((uploadResult.error as any).statusCode === '403') {
+          throw new Error('没有权限上传头像，请确保已登录并刷新页面');
+        }
         throw uploadResult.error;
       }
       
