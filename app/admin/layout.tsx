@@ -173,10 +173,14 @@ function AdminLayoutContent({
                       ? 'bg-primary bg-opacity-10 text-primary border-r-4 border-primary'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
                   }`}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault();
-                    setActiveMenu(item.id);
-                    router.push(item.path);
+                    try {
+                      await router.push(item.path);
+                      setActiveMenu(item.id);
+                    } catch (error) {
+                      console.error('导航错误:', error);
+                    }
                   }}
                 >
                   {renderIcon(item.icon)}
@@ -265,11 +269,14 @@ function AdminLayoutContent({
                             ? 'bg-primary bg-opacity-10 text-primary border-r-4 border-primary'
                             : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
                         }`}
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
-                          setActiveMenu(item.id);
-                          router.push(item.path);
-                          setIsMobileMenuOpen(false);
+                          try {
+                            await router.push(item.path);
+                            setActiveMenu(item.id);
+                          } catch (error) {
+                            console.error('导航错误:', error);
+                          }
                         }}
                       >
                         {renderIcon(item.icon)}
