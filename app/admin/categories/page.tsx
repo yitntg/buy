@@ -4,7 +4,6 @@
 // import '../revalidate-config.js';
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -17,7 +16,6 @@ interface Category {
 }
 
 export default function CategoriesPage() {
-  const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,29 +27,9 @@ export default function CategoriesPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   
-  // 检查用户是否已登录并且是管理员
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        if (!isAuthenticated) {
-          router.push('/auth/login?redirect=/admin/categories')
-          return
-        }
-        
-        if (user?.role !== 'admin') {
-          router.push('/')
-          return
-        }
-        
-        await fetchCategories()
-      } catch (err) {
-        console.error('权限检查失败:', err)
-        setError(err instanceof Error ? err.message : '权限检查失败')
-      }
-    }
-    
-    checkAuth()
-  }, [isAuthenticated, user, router])
+    fetchCategories()
+  }, [])
   
   // 获取所有分类
   const fetchCategories = async () => {
@@ -198,10 +176,6 @@ export default function CategoriesPage() {
     setName('')
     setDescription('')
     setShowAddForm(true)
-  }
-  
-  if (!isAuthenticated || user?.role !== 'admin') {
-    return null // 未授权时返回空
   }
   
   return (
