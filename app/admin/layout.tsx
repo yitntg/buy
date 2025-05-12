@@ -173,7 +173,11 @@ function AdminLayoutContent({
                       ? 'bg-primary bg-opacity-10 text-primary border-r-4 border-primary'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
                   }`}
-                  onClick={() => setActiveMenu(item.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveMenu(item.id);
+                    router.push(item.path);
+                  }}
                 >
                   {renderIcon(item.icon)}
                   <span className="ml-3">{item.name}</span>
@@ -261,8 +265,10 @@ function AdminLayoutContent({
                             ? 'bg-primary bg-opacity-10 text-primary border-r-4 border-primary'
                             : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
                         }`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
                           setActiveMenu(item.id);
+                          router.push(item.path);
                           setIsMobileMenuOpen(false);
                         }}
                       >
