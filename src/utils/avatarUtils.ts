@@ -98,17 +98,6 @@ export class AvatarService {
   // 上传头像到Supabase存储
   static async uploadAvatar(file: File): Promise<string> {
     try {
-      // 获取当前会话
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        throw new Error(`认证错误: ${sessionError.message}`);
-      }
-      
-      if (!session?.user) {
-        throw new Error('请先登录后再上传头像');
-      }
-      
       // 验证文件
       if (!file.type.startsWith('image/')) {
         throw new Error('请上传图片文件');
@@ -116,7 +105,7 @@ export class AvatarService {
       
       // 生成文件名
       const fileExt = file.name.split('.').pop();
-      const fileName = `${session.user.id}_${Date.now()}.${fileExt}`;
+      const fileName = `avatar_${Date.now()}.${fileExt}`;
       
       // 上传文件
       const { data, error: uploadError } = await supabase.storage
@@ -127,10 +116,7 @@ export class AvatarService {
       
       if (uploadError) {
         console.error('上传错误:', uploadError);
-        if (uploadError.message.includes('bucket') || uploadError.message.includes('not found')) {
-          throw new Error('存储桶未找到，请联系管理员');
-        }
-        throw uploadError;
+        throw new Error('头像上传失败，请稍后重试');
       }
       
       // 获取公开URL
