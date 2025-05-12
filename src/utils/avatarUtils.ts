@@ -25,9 +25,9 @@ export class AvatarService {
       console.log('开始上传头像...', new Date().toISOString());
       
       // 检查用户会话
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        console.error('用户未登录或会话已过期:', sessionError);
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('获取用户信息失败:', userError);
         throw new Error('请先登录后再上传头像');
       }
       
@@ -35,15 +35,15 @@ export class AvatarService {
       this.validateFile(file);
       console.log('文件验证通过');
       
-      // 生成唯一文件名
-      const fileName = this.generateUniqueFileName(file);
+      // 生成唯一文件名 - 使用用户ID作为前缀
+      const fileName = this.generateUniqueFileName(file, user.id);
       
       console.log(`准备上传头像文件: ${fileName}, 大小: ${file.size} 字节, 类型: ${file.type}`);
       
       // 上传到Supabase
       const uploadResult = await supabase.storage
         .from(this.AVATAR_BUCKET)
-        .upload(fileName, file, {
+        .upload(`${user.id}/${fileName}`, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -63,7 +63,7 @@ export class AvatarService {
       // 获取公开URL
       const { data: { publicUrl } } = supabase.storage
         .from(this.AVATAR_BUCKET)
-        .getPublicUrl(uploadResult.data.path);
+        .getPublicUrl(`${user.id}/${uploadResult.data.path}`);
       
       console.log('头像上传成功，URL:', publicUrl);
       return publicUrl;
@@ -104,7 +104,7 @@ export class AvatarService {
   }
   
   // 生成唯一文件名
-  private static generateUniqueFileName(file: File): string {
+  private static generateUniqueFileName(file: File, userId: string): string {
     const fileExt = file.name.split('.').pop() || 'jpg';
     return `avatar-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
   }

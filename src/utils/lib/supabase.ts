@@ -8,5 +8,21 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn('缺少Supabase配置，存储服务可能无法正常工作');
 }
 
-// 创建Supabase客户端
-export const supabase = createClient(supabaseUrl, supabaseKey); 
+// 创建单例Supabase客户端
+let supabaseInstance: any = null;
+
+export const getSupabase = () => {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'supabase.auth.token'
+      }
+    });
+  }
+  return supabaseInstance;
+};
+
+export const supabase = getSupabase(); 

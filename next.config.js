@@ -13,13 +13,20 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['picsum.photos', 'pzjhupjfojvlbthnsgqt.supabase.co', 'placehold.co'],
+    domains: [
+      'picsum.photos', 
+      'pzjhupjfojvlbthnsgqt.supabase.co', 
+      'placehold.co',
+      'api.dicebear.com'
+    ],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**',
       },
     ],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // 基本配置
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
