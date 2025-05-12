@@ -1,5 +1,5 @@
 import { supabase, getCurrentUser } from './lib/supabase';
-import { StorageError } from '@supabase/storage-js';
+import { StorageError, Bucket } from '@supabase/storage-js';
 
 export interface AvatarOptions {
   size?: number;
@@ -17,42 +17,67 @@ export class AvatarService {
     bucketExists: boolean;
     error?: string;
     bucketInfo?: any;
+    authStatus?: any;
   }> {
     try {
-      // 1. 检查存储桶是否存在
+      // 1. 检查认证状态
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError) {
+        return {
+          bucketExists: false,
+          error: `认证错误: ${authError.message}`,
+          authStatus: { error: authError.message }
+        };
+      }
+
+      if (!session) {
+        return {
+          bucketExists: false,
+          error: '未登录，请先登录',
+          authStatus: { error: 'No session' }
+        };
+      }
+
+      // 2. 检查存储桶是否存在
       const { data: buckets, error: listError } = await supabase.storage.listBuckets();
       
       if (listError) {
-        console.error('获取存储桶列表失败:', listError);
         return {
           bucketExists: false,
-          error: `获取存储桶列表失败: ${listError.message}`
+          error: `获取存储桶列表失败: ${listError.message}`,
+          authStatus: { session: session.user.email }
         };
       }
       
-      const avatarBucket = buckets?.find(b => b.name === this.AVATAR_BUCKET);
+      const avatarBucket = buckets?.find((bucket: Bucket) => bucket.name === this.AVATAR_BUCKET);
       
       if (!avatarBucket) {
         return {
           bucketExists: false,
-          error: '头像存储桶不存在'
+          error: '头像存储桶不存在',
+          authStatus: { session: session.user.email },
+          bucketInfo: { availableBuckets: buckets.map((b: Bucket) => b.name) }
         };
       }
       
-      // 2. 尝试获取存储桶信息
+      // 3. 尝试获取存储桶信息
       const { data: bucketInfo, error: bucketError } = await supabase.storage
         .getBucket(this.AVATAR_BUCKET);
       
       if (bucketError) {
         return {
           bucketExists: true,
-          error: `获取存储桶信息失败: ${bucketError.message}`
+          error: `获取存储桶信息失败: ${bucketError.message}`,
+          authStatus: { session: session.user.email },
+          bucketInfo: avatarBucket
         };
       }
       
       return {
         bucketExists: true,
-        bucketInfo
+        bucketInfo,
+        authStatus: { session: session.user.email }
       };
     } catch (error) {
       console.error('检查存储状态失败:', error);
