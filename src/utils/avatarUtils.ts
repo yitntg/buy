@@ -1,4 +1,4 @@
-import { supabase } from './lib/supabase';
+import { supabase, STORAGE_BUCKETS } from '../lib/supabase-client';
 import { StorageError, Bucket } from '@supabase/storage-js';
 
 export interface AvatarOptions {
@@ -105,23 +105,23 @@ export class AvatarService {
       
       // 生成文件名
       const fileExt = file.name.split('.').pop();
-      const fileName = `avatar_${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}.${fileExt}`;
       
       // 上传文件
       const { data, error: uploadError } = await supabase.storage
-        .from(this.AVATAR_BUCKET)
+        .from(STORAGE_BUCKETS.AVATARS)
         .upload(fileName, file, {
           upsert: true
         });
       
       if (uploadError) {
         console.error('上传错误:', uploadError);
-        throw new Error('头像上传失败，请稍后重试');
+        throw new Error('头像上传失败');
       }
       
       // 获取公开URL
       const { data: { publicUrl } } = supabase.storage
-        .from(this.AVATAR_BUCKET)
+        .from(STORAGE_BUCKETS.AVATARS)
         .getPublicUrl(fileName);
       
       return publicUrl;

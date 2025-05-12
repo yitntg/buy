@@ -1,41 +1,65 @@
-const { execSync } = require('child_process');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('错误: 缺少Supabase配置');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const STORAGE_BUCKETS = {
+  AVATARS: 'avatars',
+  PRODUCTS: 'products'
+};
 
 /**
  * 执行存储初始化
  * 此脚本可以在项目启动前运行，确保存储桶已正确配置
  */
-async function main() {
+async function initStorage() {
   try {
-    console.log('正在初始化存储服务...');
-    
-    // 在开发模式下，通过调用API初始化存储
-    // 在生产环境中可能会通过其他方式初始化
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const initUrl = `${baseUrl}/api/storage/init`;
-    
-    // 使用curl或fetch调用初始化API
-    try {
-      if (process.platform === 'win32') {
-        // Windows环境
-        execSync(`curl -s ${initUrl}`);
-      } else {
-        // Linux/macOS环境
-        execSync(`curl -s ${initUrl}`);
-      }
-      console.log('存储初始化API调用成功');
-    } catch (error) {
-      console.error('存储初始化API调用失败，可能需要手动初始化:', error);
+    // 创建头像存储桶
+    const { data: avatarsBucket, error: avatarsError } = await supabase
+      .storage
+      .createBucket(STORAGE_BUCKETS.AVATARS, {
+        public: true,
+        fileSizeLimit: 1024 * 1024 * 2, // 2MB
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif']
+      });
+
+    if (avatarsError && !avatarsError.message.includes('already exists')) {
+      console.error('创建头像存储桶失败:', avatarsError);
+    } else {
+      console.log('头像存储桶已就绪');
     }
-    
-    console.log('存储初始化完成');
+
+    // 创建产品图片存储桶
+    const { data: productsBucket, error: productsError } = await supabase
+      .storage
+      .createBucket(STORAGE_BUCKETS.PRODUCTS, {
+        public: true,
+        fileSizeLimit: 1024 * 1024 * 5, // 5MB
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif']
+      });
+
+    if (productsError && !productsError.message.includes('already exists')) {
+      console.error('创建产品存储桶失败:', productsError);
+    } else {
+      console.log('产品存储桶已就绪');
+    }
+
   } catch (error) {
-    console.error('存储初始化失败:', error);
+    console.error('初始化存储失败:', error);
     process.exit(1);
   }
 }
 
 // 执行主函数
-main().catch(error => {
+initStorage().catch(error => {
   console.error('存储初始化脚本运行失败:', error);
   process.exit(1);
 }); 
