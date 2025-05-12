@@ -21,12 +21,16 @@ export class AvatarService {
   // 上传头像到Supabase存储
   static async uploadAvatar(file: File): Promise<string> {
     try {
+      console.log('开始上传头像...', new Date().toISOString());
+      
       // 验证文件类型和大小
       this.validateFile(file);
+      console.log('文件验证通过');
       
       // 尝试确保存储桶存在
       try {
-        await this.ensureAvatarBucketExists();
+        const bucketExists = await this.ensureAvatarBucketExists();
+        console.log('存储桶检查结果:', bucketExists ? '存在' : '不存在');
       } catch (bucketError) {
         console.error('确保存储桶存在时出错:', bucketError);
         // 继续尝试上传，以防存储桶已存在但权限问题导致检查失败
