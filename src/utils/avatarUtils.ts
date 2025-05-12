@@ -1,4 +1,4 @@
-import { supabase, getCurrentUser } from './lib/supabase';
+import { supabase } from './lib/supabase';
 import { StorageError, Bucket } from '@supabase/storage-js';
 
 export interface AvatarOptions {
@@ -98,36 +98,49 @@ export class AvatarService {
   // 上传头像到Supabase存储
   static async uploadAvatar(file: File): Promise<string> {
     try {
-      // 简化的用户会话检查
-      const user = await getCurrentUser();
-      if (!user) throw new Error('请先登录');
+      // 获取当前会话
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      // 简单的文件验证
+      if (sessionError) {
+        throw new Error(`认证错误: ${sessionError.message}`);
+      }
+      
+      if (!session?.user) {
+        throw new Error('请先登录后再上传头像');
+      }
+      
+      // 验证文件
       if (!file.type.startsWith('image/')) {
         throw new Error('请上传图片文件');
       }
       
       // 生成文件名
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+      const fileName = `${session.user.id}_${Date.now()}.${fileExt}`;
       
-      // 直接上传
-      const { data, error } = await supabase.storage
+      // 上传文件
+      const { data, error: uploadError } = await supabase.storage
         .from(this.AVATAR_BUCKET)
         .upload(fileName, file, {
           upsert: true
         });
-        
-      if (error) throw error;
       
-      // 获取URL
+      if (uploadError) {
+        console.error('上传错误:', uploadError);
+        if (uploadError.message.includes('bucket') || uploadError.message.includes('not found')) {
+          throw new Error('存储桶未找到，请联系管理员');
+        }
+        throw uploadError;
+      }
+      
+      // 获取公开URL
       const { data: { publicUrl } } = supabase.storage
         .from(this.AVATAR_BUCKET)
         .getPublicUrl(fileName);
       
       return publicUrl;
     } catch (error) {
-      console.error('上传失败:', error);
+      console.error('头像上传失败:', error);
       throw error;
     }
   }
