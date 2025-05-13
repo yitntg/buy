@@ -48,8 +48,8 @@ export default function ProductsPage() {
       const response = await fetch('/api/categories')
       const data = await response.json()
       
-      if (response.ok && data) {
-        setCategories(data.categories || [])
+      if (response.ok) {
+        setCategories(Array.isArray(data) ? data : [])
       } else {
         console.error('获取分类失败:', data.error || '未知错误')
       }
