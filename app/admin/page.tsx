@@ -5,6 +5,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/app/context/AuthContext'
+import { redirect } from 'next/navigation'
 
 // 注意：所有配置均从layout.tsx继承，不在此处重复定义
 
@@ -39,6 +41,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('week')
+  const auth = useAuth()
   
   // 获取仪表盘数据
   useEffect(() => {
@@ -137,6 +140,18 @@ export default function AdminDashboardPage() {
     
     fetchDashboardStats()
   }, [timeRange])
+  
+  useEffect(() => {
+    if (!auth.loading) {
+      if (!auth.user || auth.user.role !== 'admin') {
+        redirect('/login')
+      }
+    }
+  }, [auth.loading, auth.user])
+  
+  if (auth.loading) {
+    return null
+  }
   
   // 渲染订单状态标签
   const renderOrderStatus = (status: string) => {
