@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/app/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { LayoutDashboard, ShoppingBag, Users } from 'lucide-react'
 import { AuthProvider } from '@/context/AuthContext'
 
@@ -14,21 +14,19 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user, status } = useAuth()
   const [activeMenu, setActiveMenu] = useState('dashboard')
   
   // 权限检查
   useEffect(() => {
-    if (!isLoading) {
-      // 检查是否为管理员
-      if (!isAuthenticated || user?.role !== 'admin') {
-        router.push('/login')
-      }
+    // 检查是否为管理员
+    if (status !== 'authenticated' || user?.role !== 'admin') {
+      router.push('/login')
     }
-  }, [isAuthenticated, user, isLoading, router])
+  }, [status, user, router])
 
-  // 如果正在加载或没有权限，返回null
-  if (isLoading || !isAuthenticated || user?.role !== 'admin') {
+  // 如果没有权限，返回null
+  if (status !== 'authenticated' || user?.role !== 'admin') {
     return null
   }
 
