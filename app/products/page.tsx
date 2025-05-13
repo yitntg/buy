@@ -321,7 +321,7 @@ export default function ProductsPage() {
         <div className="mb-8">
           {/* 商品页标题栏和筛选栏合并为一行 */}
           <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
               {/* 标题 */}
               <h1 className="text-xl font-bold flex items-center whitespace-nowrap">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -587,7 +587,7 @@ export default function ProductsPage() {
               </div>
 
               {/* 搜索栏 */}
-              <div className="w-64">
+              <div className="flex-1 max-w-xl ml-auto">
                 <form onSubmit={handleSearch} className="flex">
                   <input
                     type="text"
