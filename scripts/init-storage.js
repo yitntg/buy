@@ -1,122 +1,70 @@
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('错误: 缺少Supabase配置');
-  process.exit(1);
-}
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const STORAGE_BUCKETS = {
-  AVATARS: 'avatars',
-  PRODUCTS: 'products'
-};
-
-// SQL策略
-const AVATAR_POLICY = `
-  CREATE POLICY IF NOT EXISTS "允许所有用户上传头像" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (
-    bucket_id = 'avatars'
-  );
-  
-  CREATE POLICY IF NOT EXISTS "允许所有用户查看头像" ON storage.objects
-  FOR SELECT TO public USING (
-    bucket_id = 'avatars'
-  );
-  
-  CREATE POLICY IF NOT EXISTS "允许用户更新自己的头像" ON storage.objects
-  FOR UPDATE TO authenticated USING (
-    bucket_id = 'avatars'
-  );
-  
-  CREATE POLICY IF NOT EXISTS "允许用户删除自己的头像" ON storage.objects
-  FOR DELETE TO authenticated USING (
-    bucket_id = 'avatars'
-  );
-`;
-
-const PRODUCT_POLICY = `
-  CREATE POLICY IF NOT EXISTS "允许认证用户上传产品图片" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (
-    bucket_id = 'products'
-  );
-  
-  CREATE POLICY IF NOT EXISTS "允许所有人查看产品图片" ON storage.objects
-  FOR SELECT TO public USING (
-    bucket_id = 'products'
-  );
-`;
-
-/**
- * 执行存储初始化
- * 此脚本可以在项目启动前运行，确保存储桶已正确配置
- */
-async function initStorage() {
+async function initStorageBuckets() {
   try {
-    // 创建头像存储桶
-    const { data: avatarsBucket, error: avatarsError } = await supabase
-      .storage
-      .createBucket(STORAGE_BUCKETS.AVATARS, {
-        public: true,
-        fileSizeLimit: 1024 * 1024 * 2, // 2MB
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif']
-      });
+    console.log('初始化存储桶...');
 
-    if (avatarsError && !avatarsError.message.includes('already exists')) {
-      console.error('创建头像存储桶失败:', avatarsError);
+    // 头像存储桶
+    const { data: avatarBucket, error: avatarBucketError } = await supabase.storage.createBucket('avatars', {
+      public: false,
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif'],
+      fileSizeLimit: 1024 * 1024 * 5 // 5MB
+    });
+
+    if (avatarBucketError) {
+      console.warn('头像存储桶已存在或创建失败:', avatarBucketError);
     } else {
       console.log('头像存储桶已就绪');
-      
-      // 直接执行策略SQL
-      const { error: policyError } = await supabase.rpc('apply_storage_policy', {
-        bucket_name: STORAGE_BUCKETS.AVATARS,
-        policy: AVATAR_POLICY.replace(/\n/g, ' ').replace(/\s+/g, ' ')
-      });
-      if (policyError) {
-        console.error('应用头像存储桶策略失败:', policyError);
-      } else {
-        console.log('头像存储桶策略已应用');
-      }
     }
 
-    // 创建产品图片存储桶
-    const { data: productsBucket, error: productsError } = await supabase
-      .storage
-      .createBucket(STORAGE_BUCKETS.PRODUCTS, {
-        public: true,
-        fileSizeLimit: 1024 * 1024 * 5, // 5MB
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif']
-      });
+    // 应用头像存储桶策略
+    await supabase.rpc('apply_storage_policy', {
+      bucket_name: 'avatars',
+      policy: JSON.stringify({
+        type: 'rls',
+        action: 'select',
+        role: 'authenticated',
+        condition: 'auth.uid() = owner'
+      })
+    });
 
-    if (productsError && !productsError.message.includes('already exists')) {
-      console.error('创建产品存储桶失败:', productsError);
+    // 产品存储桶
+    const { data: productBucket, error: productBucketError } = await supabase.storage.createBucket('products', {
+      public: false,
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      fileSizeLimit: 1024 * 1024 * 10 // 10MB
+    });
+
+    if (productBucketError) {
+      console.warn('产品存储桶已存在或创建失败:', productBucketError);
     } else {
       console.log('产品存储桶已就绪');
-      
-      // 直接执行策略SQL
-      const { error: productPolicyError } = await supabase.rpc('apply_storage_policy', {
-        bucket_name: STORAGE_BUCKETS.PRODUCTS,
-        policy: PRODUCT_POLICY.replace(/\n/g, ' ').replace(/\s+/g, ' ')
-      });
-      if (productPolicyError) {
-        console.error('应用产品存储桶策略失败:', productPolicyError);
-      } else {
-        console.log('产品存储桶策略已应用');
-      }
     }
 
+    // 应用产品存储桶策略
+    await supabase.rpc('apply_storage_policy', {
+      bucket_name: 'products',
+      policy: JSON.stringify({
+        type: 'rls',
+        action: 'select',
+        role: 'authenticated',
+        condition: 'auth.role() IN (\'admin\', \'seller\')'
+      })
+    });
+
+    console.log('存储桶初始化完成');
   } catch (error) {
-    console.error('初始化存储失败:', error);
+    console.error('存储桶初始化失败:', error);
     process.exit(1);
   }
 }
 
-// 执行主函数
-initStorage().catch(error => {
-  console.error('存储初始化脚本运行失败:', error);
-  process.exit(1);
-}); 
+initStorageBuckets(); 
