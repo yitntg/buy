@@ -31,19 +31,21 @@ export default function CategoriesPage() {
   const [description, setDescription] = useState('')
   
   useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchCategories()
-    }
+    console.log('用户状态:', user)
+    // 移除角色检查，因为用户可能还在加载中
+    fetchCategories()
   }, [user])
   
   // 获取所有分类
   const fetchCategories = async () => {
+    console.log('开始获取分类数据...')
     setLoading(true)
     setError(null)
     
     try {
       // 使用新的URL对象来构建请求URL
       const url = new URL('/api/categories', window.location.origin)
+      console.log('请求URL:', url.toString())
       
       const response = await fetch(url.toString(), {
         // 添加no-cache以确保获取最新数据
@@ -53,8 +55,12 @@ export default function CategoriesPage() {
         }
       })
       
+      console.log('API响应状态:', response.status)
+      
       if (!response.ok) {
-        throw new Error('获取分类数据失败')
+        const errorData = await response.json()
+        console.error('API错误响应:', errorData)
+        throw new Error(errorData.error || '获取分类数据失败')
       }
       
       const data = await response.json()
@@ -196,6 +202,11 @@ export default function CategoriesPage() {
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
       <div className="p-6 border-b">
+        {/* 添加调试信息 */}
+        <div className="mb-4 text-sm text-gray-500">
+          {user ? `当前用户: ${user.email} (${user.role})` : '未登录'}
+        </div>
+        
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">分类管理</h1>
           {!showAddForm && !editingCategory && (
