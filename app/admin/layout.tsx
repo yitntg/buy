@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth, AuthProvider } from '@/lib/auth'
+import { useAuth } from '@/lib/auth'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
 // 移除所有配置，直接使用Next.js的默认行为
@@ -15,19 +15,21 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { user, isAuthenticated, isAdmin } = useAuth()
+  const { user, isAuthenticated, loading, isAdmin } = useAuth()
   const [activeMenu, setActiveMenu] = useState('dashboard')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
   // 权限检查
   useEffect(() => {
-    if (!isAuthenticated || !isAdmin()) {
-      router.push('/login')
+    if (!loading) {
+      if (!isAuthenticated || !isAdmin()) {
+        router.push('/login')
+      }
     }
-  }, [isAuthenticated, isAdmin, router])
+  }, [isAuthenticated, isAdmin, loading, router])
 
-  // 如果没有权限，返回null
-  if (!isAuthenticated || !isAdmin()) {
+  // 如果正在加载或没有权限，返回null
+  if (loading || !isAuthenticated || !isAdmin()) {
     return null
   }
 
@@ -59,7 +61,7 @@ function AdminLayoutContent({
   setIsMobileMenuOpen: (isOpen: boolean) => void
   router: any
 }) {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
   
   // 添加 useEffect 来初始化存储桶
   useEffect(() => {
