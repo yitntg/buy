@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     // 应用头像存储桶策略
     const { error: policyError } = await supabase.rpc('apply_storage_policy', {
       bucket_name: STORAGE_BUCKETS.AVATARS,
-      policy: AVATAR_POLICY
+      policy: AVATAR_POLICY.replace(/\n/g, ' ').replace(/\s+/g, ' ')
     });
 
     if (policyError) {
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // 应用产品存储桶策略
     const { error: productPolicyError } = await supabase.rpc('apply_storage_policy', {
       bucket_name: STORAGE_BUCKETS.PRODUCTS,
-      policy: PRODUCT_POLICY
+      policy: PRODUCT_POLICY.replace(/\n/g, ' ').replace(/\s+/g, ' ')
     });
 
     if (productPolicyError) {

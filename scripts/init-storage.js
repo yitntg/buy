@@ -18,34 +18,34 @@ const STORAGE_BUCKETS = {
 
 // SQL策略
 const AVATAR_POLICY = `
-  CREATE POLICY "允许所有用户上传头像" ON storage.objects
+  CREATE POLICY IF NOT EXISTS "允许所有用户上传头像" ON storage.objects
   FOR INSERT TO authenticated WITH CHECK (
     bucket_id = 'avatars'
   );
   
-  CREATE POLICY "允许所有用户查看头像" ON storage.objects
+  CREATE POLICY IF NOT EXISTS "允许所有用户查看头像" ON storage.objects
   FOR SELECT TO public USING (
     bucket_id = 'avatars'
   );
   
-  CREATE POLICY "允许用户更新自己的头像" ON storage.objects
+  CREATE POLICY IF NOT EXISTS "允许用户更新自己的头像" ON storage.objects
   FOR UPDATE TO authenticated USING (
     bucket_id = 'avatars'
   );
   
-  CREATE POLICY "允许用户删除自己的头像" ON storage.objects
+  CREATE POLICY IF NOT EXISTS "允许用户删除自己的头像" ON storage.objects
   FOR DELETE TO authenticated USING (
     bucket_id = 'avatars'
   );
 `;
 
 const PRODUCT_POLICY = `
-  CREATE POLICY "允许认证用户上传产品图片" ON storage.objects
+  CREATE POLICY IF NOT EXISTS "允许认证用户上传产品图片" ON storage.objects
   FOR INSERT TO authenticated WITH CHECK (
     bucket_id = 'products'
   );
   
-  CREATE POLICY "允许所有人查看产品图片" ON storage.objects
+  CREATE POLICY IF NOT EXISTS "允许所有人查看产品图片" ON storage.objects
   FOR SELECT TO public USING (
     bucket_id = 'products'
   );
@@ -71,10 +71,10 @@ async function initStorage() {
     } else {
       console.log('头像存储桶已就绪');
       
-      // 应用头像存储桶策略
+      // 直接执行策略SQL
       const { error: policyError } = await supabase.rpc('apply_storage_policy', {
         bucket_name: STORAGE_BUCKETS.AVATARS,
-        policy: AVATAR_POLICY
+        policy: AVATAR_POLICY.replace(/\n/g, ' ').replace(/\s+/g, ' ')
       });
       if (policyError) {
         console.error('应用头像存储桶策略失败:', policyError);
@@ -97,10 +97,10 @@ async function initStorage() {
     } else {
       console.log('产品存储桶已就绪');
       
-      // 应用产品存储桶策略
+      // 直接执行策略SQL
       const { error: productPolicyError } = await supabase.rpc('apply_storage_policy', {
         bucket_name: STORAGE_BUCKETS.PRODUCTS,
-        policy: PRODUCT_POLICY
+        policy: PRODUCT_POLICY.replace(/\n/g, ' ').replace(/\s+/g, ' ')
       });
       if (productPolicyError) {
         console.error('应用产品存储桶策略失败:', productPolicyError);

@@ -1,7 +1,41 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { 
+  createContext, 
+  useContext, 
+  useState, 
+  useEffect, 
+  ReactNode, 
+  useCallback 
+} from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { AvatarService } from '@/utils/avatarUtils';
+
+// 认证状态枚举
+export enum AuthStatus {
+  INITIAL = 'initial',
+  AUTHENTICATED = 'authenticated',
+  UNAUTHENTICATED = 'unauthenticated',
+  ERROR = 'error'
+}
+
+// 权限枚举
+export enum Permission {
+  READ = 'read',
+  WRITE = 'write',
+  DELETE = 'delete',
+  ADMIN = 'admin'
+}
+
+// 权限映射类型
+export interface PermissionMap {
+  [resource: string]: {
+    read: boolean;
+    write: boolean;
+    delete: boolean;
+    admin: boolean;
+  }
+}
 
 // 用户类型
 export interface User {
@@ -12,244 +46,265 @@ export interface User {
   lastName?: string;
   avatar?: string;
   role?: 'user' | 'admin';
-  phone?: string; // 添加电话号码字段
-  join_date?: string; // 加入日期
-  last_login?: string; // 最后登录时间
+  phone?: string;
+  join_date?: string;
+  last_login?: string;
 }
+
+// 认证错误类
+export class AuthError extends Error {
+  constructor(
+    public code: string, 
+    message: string
+  ) {
+    super(message);
+    this.name = 'AuthError';
+  }
+}
+
+// Supabase 客户端初始化
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// 默认权限配置
+const DEFAULT_PERMISSIONS: PermissionMap = {
+  users: {
+    read: false,
+    write: false,
+    delete: false,
+    admin: false
+  },
+  products: {
+    read: false,
+    write: false,
+    delete: false,
+    admin: false
+  }
+};
+
+// 角色权限映射
+const ROLE_PERMISSIONS: Record<string, PermissionMap> = {
+  admin: {
+    users: { read: true, write: true, delete: true, admin: true },
+    products: { read: true, write: true, delete: true, admin: false }
+  },
+  user: {
+    users: { read: false, write: false, delete: false, admin: false },
+    products: { read: true, write: false, delete: false, admin: false }
+  }
+};
 
 // 认证上下文类型
 interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (email: string, password: string, useDefaultAvatar?: boolean) => Promise<void>;
-  register: (userData: any, useDefaultAvatar?: boolean) => Promise<void>;
-  logout: () => void;
-  updateUser: (userData: Partial<User>) => Promise<void>; // 更新为异步方法
+  status: AuthStatus;
   error: string | null;
-  isAdmin: () => boolean; // 添加 isAdmin 方法
+  
+  // 认证方法
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: Partial<User>, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
+  
+  // 权限方法
+  can: (resource: string, action: string) => boolean;
+  getPermissions: () => PermissionMap;
 }
 
 // 创建上下文
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 检查是否在浏览器环境
-const isBrowser = typeof window !== 'undefined';
+// 获取用户权限
+async function fetchUserPermissions(user: User): Promise<PermissionMap> {
+  // 根据用户角色获取权限
+  const rolePermissions = ROLE_PERMISSIONS[user.role || 'user'] || DEFAULT_PERMISSIONS;
+  return rolePermissions;
+}
 
-// 存储用户列表键名
-const USER_STORAGE_KEY = 'user';
-const USER_PROFILES_KEY = 'userProfiles';
-const CURRENT_USER_KEY = 'currentUser';
+// 错误处理工具
+function handleAuthError(error: any): AuthError {
+  const errorMap: Record<string, [string, string]> = {
+    'auth/invalid-credential': ['INVALID_CREDENTIALS', '用户名或密码错误'],
+    'auth/user-disabled': ['USER_DISABLED', '用户已被禁用'],
+    'auth/email-already-in-use': ['EMAIL_IN_USE', '邮箱已被注册'],
+    'auth/weak-password': ['WEAK_PASSWORD', '密码强度不够']
+  };
+
+  const [code, message] = errorMap[error.code] || ['UNKNOWN_ERROR', '发生未知错误'];
+  return new AuthError(code, message);
+}
 
 // 认证提供者组件
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // 从本地存储加载用户数据
-  useEffect(() => {
-    const loadUser = () => {
-      if (isBrowser) {
-        try {
-          // 加载当前用户ID
-          const currentUserId = localStorage.getItem(CURRENT_USER_KEY);
-          
-          if (currentUserId) {
-            // 从用户配置文件列表加载用户数据
-            const userProfiles = JSON.parse(localStorage.getItem(USER_PROFILES_KEY) || '{}');
-            const userData = userProfiles[currentUserId];
-            
-            if (userData) {
-              setUser(userData);
-            }
-          }
-        } catch (err) {
-          console.error('Failed to parse user from localStorage:', err);
-        }
-      }
-      setIsLoading(false);
-    };
-    
-    loadUser();
-  }, []);
-  
-  // 保存用户到本地存储
-  const saveUserToStorage = (userData: User) => {
-    if (!isBrowser) return;
-    
-    try {
-      // 保存当前用户ID
-      localStorage.setItem(CURRENT_USER_KEY, userData.id);
-      
-      // 更新用户配置文件列表
-      const userProfiles = JSON.parse(localStorage.getItem(USER_PROFILES_KEY) || '{}');
-      userProfiles[userData.id] = userData;
-      localStorage.setItem(USER_PROFILES_KEY, JSON.stringify(userProfiles));
-      
-      // 兼容旧版本：保存当前用户到原来的位置
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
-    } catch (err) {
-      console.error('Failed to save user to localStorage:', err);
-    }
-  };
-  
+  const [authState, setAuthState] = useState<{
+    user: User | null;
+    status: AuthStatus;
+    error: string | null;
+    permissions: PermissionMap;
+  }>({
+    user: null,
+    status: AuthStatus.INITIAL,
+    error: null,
+    permissions: DEFAULT_PERMISSIONS
+  });
+
+  // 权限检查方法
+  const can = useCallback((resource: string, action: string) => {
+    const permissions = authState.permissions[resource];
+    return permissions ? permissions[action] : false;
+  }, [authState.permissions]);
+
   // 登录方法
-  const login = async (email: string, password: string, useDefaultAvatar = false) => {
-    setIsLoading(true);
-    setError(null);
-    
+  const login = async (email: string, password: string) => {
     try {
-      // 调用登录API
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      setAuthState(prev => ({ 
+        ...prev, 
+        status: AuthStatus.INITIAL,
+        error: null 
+      }));
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '登录失败');
-      }
-      
-      const data = await response.json();
-      const userData = data.user;
-      
-      // 设置用户状态
-      setUser(userData);
-      
-      // 保存到本地存储
-      saveUserToStorage(userData);
-      
-      console.log('登录成功:', userData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败，请稍后重试');
-      console.error('Login error:', err);
-      throw err; // 重新抛出以便调用者处理
-    } finally {
-      setIsLoading(false);
+
+      if (error) throw handleAuthError(error);
+
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user?.id)
+        .single();
+
+      if (userError) throw handleAuthError(userError);
+
+      const permissions = await fetchUserPermissions(userData);
+
+      setAuthState({
+        user: userData,
+        status: AuthStatus.AUTHENTICATED,
+        error: null,
+        permissions
+      });
+    } catch (error) {
+      setAuthState({
+        user: null,
+        status: AuthStatus.UNAUTHENTICATED,
+        error: error instanceof AuthError ? error.message : '登录失败',
+        permissions: DEFAULT_PERMISSIONS
+      });
+      throw error;
     }
   };
-  
+
   // 注册方法
-  const register = async (userData: any, useDefaultAvatar = false) => {
-    setIsLoading(true);
-    setError(null);
-    
+  const register = async (userData: Partial<User>, password: string) => {
     try {
-      // 构建注册数据
-      const registerData = {
-        username: userData.username,
-        email: userData.email,
-        password: userData.password || '123456', // 默认密码，实际项目应该要求用户设置密码
-        avatar: useDefaultAvatar ? AvatarService.getDefaultAvatarUrl(userData.username) : undefined
-      };
+      setAuthState(prev => ({ 
+        ...prev, 
+        status: AuthStatus.INITIAL,
+        error: null 
+      }));
       
-      // 调用注册API
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registerData),
+      // 注册认证用户
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email!,
+        password
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '注册失败');
-      }
-      
-      const data = await response.json();
-      const createdUser = data.user;
-      
-      // 设置用户状态
-      setUser(createdUser);
-      
-      // 保存到本地存储
-      saveUserToStorage(createdUser);
-      
-      console.log('注册成功:', createdUser);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '注册失败，请稍后重试');
-      console.error('Register error:', err);
-      throw err; // 重新抛出以便调用者处理
-    } finally {
-      setIsLoading(false);
+
+      if (authError) throw handleAuthError(authError);
+
+      // 在 users 表中创建用户记录
+      const { data: userRecord, error: userError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user?.id,
+          username: userData.username,
+          email: userData.email,
+          avatar: userData.avatar || AvatarService.getDefaultAvatarUrl(userData.username!),
+          role: 'user'
+        })
+        .select()
+        .single();
+
+      if (userError) throw handleAuthError(userError);
+
+      const permissions = await fetchUserPermissions(userRecord);
+
+      setAuthState({
+        user: userRecord,
+        status: AuthStatus.AUTHENTICATED,
+        error: null,
+        permissions
+      });
+    } catch (error) {
+      setAuthState({
+        user: null,
+        status: AuthStatus.UNAUTHENTICATED,
+        error: error instanceof AuthError ? error.message : '注册失败',
+        permissions: DEFAULT_PERMISSIONS
+      });
+      throw error;
     }
   };
-  
+
   // 退出登录方法
-  const logout = () => {
-    setUser(null);
-    
-    if (isBrowser) {
-      // 仅移除当前用户标记，但不删除用户数据
-      localStorage.removeItem(CURRENT_USER_KEY);
-      // 为兼容性移除旧键
-      localStorage.removeItem(USER_STORAGE_KEY);
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setAuthState({
+        user: null,
+        status: AuthStatus.UNAUTHENTICATED,
+        error: null,
+        permissions: DEFAULT_PERMISSIONS
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
-  
+
   // 更新用户信息方法
   const updateUser = async (userData: Partial<User>) => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    
+    if (!authState.user) return;
+
     try {
-      // 构建更新数据
-      const updateData = {
-        id: user.id,
-        ...userData
-      };
-      
-      // 调用API更新用户资料
-      const response = await fetch('/api/auth/update-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '更新资料失败');
-      }
-      
-      const data = await response.json();
-      const updatedUser = data.user;
-      
-      // 更新用户状态
-      setUser(updatedUser);
-      
-      // 保存到本地存储
-      saveUserToStorage(updatedUser);
-      
-      console.log('用户资料更新成功:', updatedUser);
-    } catch (err) {
-      console.error('更新用户资料失败:', err);
-      throw err; // 重新抛出以便调用者处理
-    } finally {
-      setIsLoading(false);
+      const { data, error } = await supabase
+        .from('users')
+        .update(userData)
+        .eq('id', authState.user.id)
+        .select()
+        .single();
+
+      if (error) throw handleAuthError(error);
+
+      setAuthState(prev => ({
+        ...prev,
+        user: data
+      }));
+    } catch (error) {
+      console.error('更新用户资料失败:', error);
+      throw error;
     }
   };
-  
+
+  // 获取权限方法
+  const getPermissions = () => authState.permissions;
+
   // 提供上下文值
   const value = {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
+    user: authState.user,
+    status: authState.status,
+    error: authState.error,
     login,
     register,
     logout,
     updateUser,
-    error,
-    isAdmin: () => user?.role === 'admin' || false
+    can,
+    getPermissions
   };
-  
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
@@ -266,14 +321,14 @@ export function useAuth() {
 
 // 管理员权限检查钩子
 export function useAdminAuth() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, status } = useAuth();
   
   const isAdmin = user?.role === 'admin';
+  const isAuthenticated = status === AuthStatus.AUTHENTICATED;
   
   return {
     isAdmin,
     isAuthenticated,
-    isLoading,
     user
   };
 } 

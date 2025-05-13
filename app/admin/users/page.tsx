@@ -7,6 +7,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import UserAvatar from '../../components/UserAvatar'
+import { useAuth } from '@/app/context/AuthContext'
+import { redirect } from 'next/navigation'
 
 // 用户类型定义
 interface User {
@@ -23,6 +25,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
+  const auth = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
@@ -33,6 +36,18 @@ export default function AdminUsersPage() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   
+  useEffect(() => {
+    if (!auth.loading) {
+      if (!auth.user || auth.user.role !== 'admin') {
+        redirect('/login')
+      }
+    }
+  }, [auth.loading, auth.user])
+  
+  if (auth.loading) {
+    return null
+  }
+
   // 获取用户数据
   useEffect(() => {
     fetchUsers()

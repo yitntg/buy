@@ -6,6 +6,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useAuth } from '@/app/context/AuthContext'
+import { redirect } from 'next/navigation'
 
 // 商品类型定义
 interface Product {
@@ -28,8 +30,9 @@ interface PaginationParams {
 }
 
 export default function AdminProductsPage() {
+  const auth = useAuth()
   const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
   const [pagination, setPagination] = useState<PaginationParams>({
     page: 1,
     limit: 10,
@@ -39,49 +42,57 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   
+  useEffect(() => {
+    if (!auth.loading) {
+      if (!auth.user || auth.user.role !== 'admin') {
+        redirect('/login')
+      }
+    }
+  }, [auth.loading, auth.user])
+  
+  if (auth.loading) {
+    return null
+  }
+  
   // 初始化加载商品数据
   useEffect(() => {
-    fetchProducts()
-  }, [pagination.page])
-  
-  // 获取商品数据
-  const fetchProducts = async () => {
-    setLoading(true)
-    
-    try {
-      // 构建查询参数
-      const params = new URLSearchParams()
-      params.append('page', pagination.page.toString())
-      params.append('limit', pagination.limit.toString())
-      if (searchQuery) {
-        params.append('keyword', searchQuery)
+    const fetchProducts = async () => {
+      try {
+        // 构建查询参数
+        const params = new URLSearchParams()
+        params.append('page', pagination.page.toString())
+        params.append('limit', pagination.limit.toString())
+        if (searchQuery) {
+          params.append('keyword', searchQuery)
+        }
+        
+        // 发送请求获取商品数据
+        const res = await fetch(`/api/products?${params.toString()}`)
+        
+        if (!res.ok) {
+          throw new Error('获取商品列表失败')
+        }
+        
+        const data = await res.json()
+        setProducts(data.products)
+        setPagination(prev => ({
+          ...prev,
+          total: data.total
+        }))
+      } catch (error) {
+        console.error('获取商品失败:', error)
+      } finally {
+        setIsLoading(false)
       }
-      
-      // 发送请求获取商品数据
-      const res = await fetch(`/api/products?${params.toString()}`)
-      
-      if (!res.ok) {
-        throw new Error('获取商品列表失败')
-      }
-      
-      const data = await res.json()
-      setProducts(data.products)
-      setPagination(prev => ({
-        ...prev,
-        total: data.total
-      }))
-    } catch (error) {
-      console.error('获取商品失败:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+    
+    fetchProducts()
+  }, [pagination.page, searchQuery])
   
   // 搜索商品
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setPagination(prev => ({ ...prev, page: 1 }))
-    fetchProducts()
   }
   
   // 分页处理
@@ -129,7 +140,7 @@ export default function AdminProductsPage() {
       )
       
       // 更新商品列表
-      fetchProducts()
+      handleSearch({} as React.FormEvent)
       // 清空选中
       setSelectedProducts([])
     } catch (error) {
@@ -201,7 +212,7 @@ export default function AdminProductsPage() {
       
       {/* 商品列表 */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {loading ? (
+        {isLoading ? (
           <div className="p-8 text-center">
             <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-gray-500">加载商品数据...</p>
