@@ -122,7 +122,7 @@ export default function Header() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
     }
   }
   
@@ -131,7 +131,7 @@ export default function Header() {
     if (e.key === 'Enter') {
       e.preventDefault()
       if (searchQuery.trim()) {
-        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+        router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
       }
     }
   }
