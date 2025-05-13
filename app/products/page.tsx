@@ -354,6 +354,21 @@ export default function ProductsPage() {
 
               {/* 筛选按钮组 */}
               <div className="flex items-center gap-2">
+                {/* 排序选项 */}
+                <div className="relative inline-block">
+                  <select 
+                    className="rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary"
+                    value={sortBy}
+                    onChange={handleSortChange}
+                  >
+                    <option value="recommend">推荐</option>
+                    <option value="newest">最新</option>
+                    <option value="price-asc">价格由低到高</option>
+                    <option value="price-desc">价格由高到低</option>
+                    <option value="rating">评分</option>
+                  </select>
+                </div>
+
                 {/* 分类筛选下拉菜单 */}
                 <div className="relative inline-block text-left">
                   <button 
