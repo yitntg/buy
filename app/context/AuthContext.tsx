@@ -27,6 +27,7 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (userData: Partial<User>) => Promise<void>; // 更新为异步方法
   error: string | null;
+  isAdmin: () => boolean; // 添加 isAdmin 方法
 }
 
 // 创建上下文
@@ -245,7 +246,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     updateUser,
-    error
+    error,
+    isAdmin: () => user?.role === 'admin' || false
   };
   
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -254,8 +256,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 // 自定义hook来使用认证上下文
 export function useAuth() {
   const context = useContext(AuthContext);
+  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
   return context;
+}
+
+// 管理员权限检查钩子
+export function useAdminAuth() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  
+  const isAdmin = user?.role === 'admin';
+  
+  return {
+    isAdmin,
+    isAuthenticated,
+    isLoading,
+    user
+  };
 } 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/app/context/AuthContext'
 import { LayoutDashboard, ShoppingBag, ListTodo, FileText, Users, Settings, Wrench } from 'lucide-react'
 
 // 移除所有配置，直接使用Next.js的默认行为
@@ -69,16 +69,20 @@ function AdminLayoutContent({
     const initStorage = async () => {
       try {
         const response = await fetch('/api/storage/init', {
-          method: 'GET',
+          method: 'POST',
           cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache' 
+          }
         });
         
+        const result = await response.json();
+        
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('初始化存储失败:', errorData);
+          console.error('初始化存储失败:', result);
         } else {
-          console.log('存储初始化成功');
+          console.log('存储初始化成功', result);
         }
       } catch (error) {
         console.error('请求初始化存储时出错:', error);
