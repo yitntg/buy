@@ -3,6 +3,7 @@
 // 移除对配置文件的导入，统一从layout继承配置
 // import '../revalidate-config.js';
 
+// 分类管理页面 - 支持添加、编辑、删除分类
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
