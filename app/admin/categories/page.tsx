@@ -42,13 +42,23 @@ export default function CategoriesPage() {
     setError(null)
     
     try {
-      const response = await fetch('/api/categories')
+      // 使用新的URL对象来构建请求URL
+      const url = new URL('/api/categories', window.location.origin)
+      
+      const response = await fetch(url.toString(), {
+        // 添加no-cache以确保获取最新数据
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
       
       if (!response.ok) {
         throw new Error('获取分类数据失败')
       }
       
       const data = await response.json()
+      console.log('获取到的分类数据:', data)
       setCategories(data || [])
     } catch (err) {
       console.error('获取分类失败:', err)
