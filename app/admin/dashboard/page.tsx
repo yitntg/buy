@@ -4,7 +4,7 @@
 // import '../revalidate-config.js';
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -17,7 +17,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const { user, isAuthenticated } = useAuth()
+  const { user, status } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
@@ -31,12 +31,12 @@ export default function AdminDashboard() {
   
   // 检查用户是否已登录，如果未登录则重定向到登录页面
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (status !== 'authenticated') {
       router.push('/auth/login?redirect=/admin/dashboard')
     } else {
       fetchDashboardData()
     }
-  }, [isAuthenticated, router])
+  }, [status, router])
   
   // 获取仪表盘数据
   const fetchDashboardData = async () => {
