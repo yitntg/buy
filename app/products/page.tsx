@@ -354,21 +354,6 @@ export default function ProductsPage() {
 
               {/* 筛选按钮组 */}
               <div className="flex items-center gap-2">
-                {/* 排序选项 */}
-                <div className="relative inline-block">
-                  <select 
-                    className="rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary"
-                    value={sortBy}
-                    onChange={handleSortChange}
-                  >
-                    <option value="recommend">推荐</option>
-                    <option value="newest">最新</option>
-                    <option value="price-asc">价格由低到高</option>
-                    <option value="price-desc">价格由高到低</option>
-                    <option value="rating">评分</option>
-                  </select>
-                </div>
-
                 {/* 分类筛选下拉菜单 */}
                 <div className="relative inline-block text-left">
                   <button 
@@ -576,6 +561,48 @@ export default function ProductsPage() {
                         </button>
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* 排序选项 */}
+                <div className="relative inline-block text-left">
+                  <button 
+                    id="sort-button"
+                    type="button" 
+                    className={`inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary`}
+                    onClick={() => toggleDropdown('sort')}
+                    aria-expanded={openDropdown === 'sort'}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                  </button>
+                  <div 
+                    id="sort-dropdown" 
+                    className={`${openDropdown === 'sort' ? 'block' : 'hidden'} origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10`} 
+                    role="menu"
+                  >
+                    <div className="py-1" role="none">
+                      {[
+                        { value: 'recommend', label: '推荐' },
+                        { value: 'newest', label: '最新' },
+                        { value: 'price-asc', label: '价格由低到高' },
+                        { value: 'price-desc', label: '价格由高到低' },
+                        { value: 'rating', label: '评分' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          className={`${sortBy === option.value ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block w-full text-left px-4 py-2 text-sm hover:bg-gray-50`}
+                          onClick={() => {
+                            handleSortChange({ target: { value: option.value } } as any);
+                            setOpenDropdown(null);
+                          }}
+                          role="menuitem"
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
