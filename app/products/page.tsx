@@ -19,6 +19,13 @@ interface Product {
   specifications?: Record<string, string | number>
 }
 
+// 定义分类类型
+interface Category {
+  id: number
+  name: string
+  description?: string
+}
+
 // 定义分页类型
 interface Pagination {
   total: number
@@ -31,15 +38,32 @@ export default function ProductsPage() {
   // 获取主题设置
   const { theme, updateTheme } = useTheme()
 
-  // 分类数据
-  const categories = [
-    { id: 1, name: '电子产品' },
-    { id: 2, name: '家居用品' },
-    { id: 3, name: '服装鞋帽' },
-    { id: 4, name: '美妆护肤' },
-    { id: 5, name: '食品饮料' },
-    { id: 6, name: '运动户外' }
-  ]
+  // 分类数据状态
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
+  
+  // 加载分类数据
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      const data = await response.json()
+      
+      if (response.ok && data) {
+        setCategories(data.categories || [])
+      } else {
+        console.error('获取分类失败:', data.error || '未知错误')
+      }
+    } catch (err) {
+      console.error('获取分类列表出错:', err)
+    } finally {
+      setLoadingCategories(false)
+    }
+  }
+
+  // 初始加载分类数据
+  useEffect(() => {
+    fetchCategories()
+  }, [])
   
   // 价格区间
   const priceRanges = [
@@ -357,23 +381,36 @@ export default function ProductsPage() {
                     role="menu"
                   >
                     <div className="py-1 p-2 max-h-60 overflow-y-auto" role="none">
-                      {categories.map(category => (
-                        <div key={category.id} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
-                          <input 
-                            type="checkbox" 
-                            id={`category-${category.id}`}
-                            checked={selectedCategories.includes(category.id)}
-                            onChange={() => handleCategoryChange(category.id)}
-                            className="h-4 w-4 text-primary rounded focus:ring-primary"
-                          />
-                          <label 
-                            htmlFor={`category-${category.id}`}
-                            className="ml-2 text-sm text-gray-700 block w-full cursor-pointer flex justify-between"
-                          >
-                            <span>{category.name}</span>
-                          </label>
+                      {loadingCategories ? (
+                        <div className="flex justify-center items-center py-4">
+                          <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
                         </div>
-                      ))}
+                      ) : categories.length === 0 ? (
+                        <div className="text-center py-4 text-gray-500">
+                          暂无分类数据
+                        </div>
+                      ) : (
+                        categories.map(category => (
+                          <div key={category.id} className="flex items-center p-2 hover:bg-gray-100 rounded-md">
+                            <input 
+                              type="checkbox" 
+                              id={`category-${category.id}`}
+                              checked={selectedCategories.includes(category.id)}
+                              onChange={() => handleCategoryChange(category.id)}
+                              className="h-4 w-4 text-primary rounded focus:ring-primary"
+                            />
+                            <label 
+                              htmlFor={`category-${category.id}`}
+                              className="ml-2 text-sm text-gray-700 block w-full cursor-pointer flex justify-between"
+                            >
+                              <span>{category.name}</span>
+                            </label>
+                          </div>
+                        ))
+                      )}
                     </div>
                     {selectedCategories.length > 0 && (
                       <div className="border-t border-gray-100 p-2">
