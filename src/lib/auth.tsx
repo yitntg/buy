@@ -11,6 +11,7 @@ export interface AuthContextType {
   register: (email: string, password: string) => Promise<void>;
   updateUser: (data: Partial<User>) => Promise<void>;
   error: string | null;
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -101,7 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     register,
     updateUser,
-    error
+    error,
+    isAdmin: () => !!user && user.user_metadata?.role === 'admin'
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -112,5 +114,14 @@ export function useAuth(): AuthContextType {
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context;
+
+  // 添加管理员角色判断
+  const isAdmin = () => {
+    return context.user?.user_metadata?.role === 'admin';
+  }
+
+  return {
+    ...context,
+    isAdmin
+  };
 } 

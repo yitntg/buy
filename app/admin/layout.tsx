@@ -15,21 +15,31 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const { user, isAuthenticated, isAdmin } = useAuth()
   const [activeMenu, setActiveMenu] = useState('dashboard')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
-  // 添加回AuthProvider但不需要AdminAuthWrapper
+  // 权限检查
+  useEffect(() => {
+    if (!isAuthenticated || !isAdmin()) {
+      router.push('/login')
+    }
+  }, [isAuthenticated, isAdmin, router])
+
+  // 如果没有权限，返回null
+  if (!isAuthenticated || !isAdmin()) {
+    return null
+  }
+
   return (
-    <AuthProvider>
-      <AdminLayoutContent 
-        children={children} 
-        activeMenu={activeMenu} 
-        setActiveMenu={setActiveMenu}
-        isMobileMenuOpen={isMobileMenuOpen}
-        setIsMobileMenuOpen={setIsMobileMenuOpen}
-        router={router}
-      />
-    </AuthProvider>
+    <AdminLayoutContent 
+      children={children} 
+      activeMenu={activeMenu} 
+      setActiveMenu={setActiveMenu}
+      isMobileMenuOpen={isMobileMenuOpen}
+      setIsMobileMenuOpen={setIsMobileMenuOpen}
+      router={router}
+    />
   )
 }
 
