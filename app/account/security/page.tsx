@@ -295,6 +295,7 @@ export default function SecurityPage() {
                         required
                         value={passwordForm.currentPassword}
                         onChange={handlePasswordChange}
+                        autoComplete="current-password"
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
@@ -310,6 +311,7 @@ export default function SecurityPage() {
                         required
                         value={passwordForm.newPassword}
                         onChange={handlePasswordChange}
+                        autoComplete="new-password"
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                       
@@ -345,6 +347,7 @@ export default function SecurityPage() {
                         required
                         value={passwordForm.confirmPassword}
                         onChange={handlePasswordChange}
+                        autoComplete="new-password"
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
