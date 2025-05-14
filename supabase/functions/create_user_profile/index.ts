@@ -34,7 +34,7 @@ serve(async (req: Request) => {
       try {
         // 创建用户配置记录
         const { data, error } = await supabaseAdmin
-          .from('user_profiles')
+          .from('users')
           .insert({
             id,
             theme_preference: 'system',

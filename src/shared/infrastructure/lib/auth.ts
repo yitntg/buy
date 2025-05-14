@@ -32,7 +32,7 @@ export async function getCurrentUser(): Promise<User | null> {
   if (error || !user) return null;
 
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('users')
     .select('*')
     .eq('id', user.id)
     .single();
@@ -49,7 +49,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function updateProfile(userId: string, updates: Partial<User>) {
   const { error } = await supabase
-    .from('profiles')
+    .from('users')
     .update(updates)
     .eq('id', userId);
 
