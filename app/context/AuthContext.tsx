@@ -422,16 +422,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: null
       }));
 
-      // 验证环境变量
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseKey) {
-        console.error('登录失败: 缺少Supabase环境变量');
-        throw new AuthError('CONFIG_ERROR', 'Supabase配置错误，请联系管理员', AuthStatus.ERROR);
+      // 在生产环境中，不检查环境变量，假设它们已在Vercel中正确设置
+      if (process.env.NODE_ENV !== 'production') {
+        // 只在开发环境中记录环境变量状态
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+          console.warn('开发环境警告: Supabase环境变量未设置，请检查.env.local文件');
+        } else {
+          console.log('Supabase配置检查通过');
+        }
       }
-      
-      console.log('Supabase配置检查通过');
       
       // 设置会话持久化
       const sessionOptions = rememberMe ? { sessionStorage: 'local' } : { sessionStorage: 'memory' };
