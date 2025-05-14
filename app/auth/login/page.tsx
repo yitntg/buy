@@ -20,24 +20,34 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [debugInfo, setDebugInfo] = useState<Record<string, any>>({})
+  const [isMounted, setIsMounted] = useState(false)
+  
+  // 组件挂载标记，防止服务端渲染不匹配
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
   
   // 如果已登录，重定向到指定页面
   useEffect(() => {
+    if (!isMounted) return; // 防止服务端执行
+    
     console.log('登录状态检查:', { isAuthenticated, status, redirect })
     if (isAuthenticated) {
       router.push(redirect)
     }
-  }, [isAuthenticated, router, redirect])
+  }, [isAuthenticated, router, redirect, isMounted])
   
   // 显示从URL中传递的错误信息
   useEffect(() => {
+    if (!isMounted) return; // 防止服务端执行
+    
     const reason = searchParams.get('reason')
     if (reason === 'invalid_token') {
       setErrorMessage('您的登录已过期，请重新登录')
     } else if (reason === 'session_expired') {
       setErrorMessage('会话已过期，请重新登录')
     }
-  }, [searchParams])
+  }, [searchParams, isMounted])
   
   // 处理表单字段变化
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +89,24 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+  
+  // 如果组件尚未挂载，显示简单的加载界面，防止水合不匹配
+  if (!isMounted) {
+    return (
+      <main className="min-h-screen bg-gray-50 py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="py-6 px-8">
+              <h2 className="text-2xl font-bold mb-6 text-center">登录账户</h2>
+              <div className="flex justify-center py-8">
+                <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
   }
   
   return (

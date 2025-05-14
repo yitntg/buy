@@ -422,8 +422,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: null
       }));
 
-      // 在生产环境中，不检查环境变量，假设它们已在Vercel中正确设置
-      if (process.env.NODE_ENV !== 'production') {
+      // 在客户端环境中检查环境变量
+      if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
         // 只在开发环境中记录环境变量状态
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
