@@ -61,14 +61,32 @@ function createMockClient() {
     from: () => ({
       select: () => ({
         order: () => ({
-          limit: () => Promise.resolve({ data: [], error: null }),
-          eq: () => Promise.resolve({ data: [], error: null }),
-          in: () => Promise.resolve({ data: [], error: null }),
+          limit: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({ data: null, error: null }),
+            }),
+            in: () => ({
+              single: () => Promise.resolve({ data: null, error: null }),
+            }),
+            single: () => Promise.resolve({ data: null, error: null }),
+          }),
+          eq: () => ({
+            single: () => Promise.resolve({ data: null, error: null }),
+          }),
+          in: () => ({
+            single: () => Promise.resolve({ data: null, error: null }),
+          }),
           single: () => Promise.resolve({ data: null, error: null }),
         }),
-        eq: () => Promise.resolve({ data: [], error: null }),
-        in: () => Promise.resolve({ data: [], error: null }),
-        limit: () => Promise.resolve({ data: [], error: null }),
+        eq: () => ({
+          single: () => Promise.resolve({ data: null, error: null }),
+        }),
+        in: () => ({
+          single: () => Promise.resolve({ data: null, error: null }),
+        }),
+        limit: () => ({
+          single: () => Promise.resolve({ data: null, error: null }),
+        }),
         single: () => Promise.resolve({ data: null, error: null }),
       }),
       insert: () => Promise.resolve({ data: null, error: null }),
@@ -84,7 +102,9 @@ function createMockClient() {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
       getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-      signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
+      signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: null }),
+      signUp: () => Promise.resolve({ data: { user: null, session: null }, error: null }),
+      setSession: () => Promise.resolve({ data: { session: null }, error: null }),
       signOut: () => Promise.resolve({ error: null }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
     },

@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../context/AuthContext'
+import { checkSupabaseEnv, checkDatabaseConnection } from '@/utils/env-check'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,9 +20,11 @@ export default function LoginPage() {
   
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [debugInfo, setDebugInfo] = useState<Record<string, any>>({})
   
   // 如果已登录，重定向到指定页面
   useEffect(() => {
+    console.log('登录状态检查:', { isAuthenticated, status, redirect })
     if (isAuthenticated) {
       router.push(redirect)
     }
@@ -46,6 +49,42 @@ export default function LoginPage() {
     })
   }
   
+  // 进行环境变量和数据库连接检查
+  const checkEnvironment = async () => {
+    // 检查环境变量
+    const envCheck = checkSupabaseEnv();
+    setDebugInfo(prev => ({ ...prev, environment: envCheck }));
+    
+    if (!envCheck.isValid) {
+      setErrorMessage(envCheck.message);
+      return false;
+    }
+    
+    // 检查数据库连接
+    try {
+      const dbCheck = await checkDatabaseConnection();
+      setDebugInfo(prev => ({ ...prev, database: dbCheck }));
+      
+      if (!dbCheck.connected) {
+        setErrorMessage(`数据库连接失败: ${dbCheck.error}`);
+        return false;
+      }
+    } catch (error) {
+      setDebugInfo(prev => ({ 
+        ...prev, 
+        database: { 
+          connected: false, 
+          error: error instanceof Error ? error.message : '未知错误' 
+        } 
+      }));
+      
+      setErrorMessage('数据库连接检查失败');
+      return false;
+    }
+    
+    return true;
+  }
+  
   // 处理表单提交
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -53,14 +92,43 @@ export default function LoginPage() {
     // 清除之前的错误
     setErrorMessage('')
     setIsLoading(true)
+    setDebugInfo({})
+    
+    console.log('开始登录流程:', { email: formData.email, rememberMe: formData.rememberMe })
     
     try {
+      // 检查环境变量和数据库连接
+      const environmentOk = await checkEnvironment();
+      if (!environmentOk) {
+        setIsLoading(false);
+        return;
+      }
+      
+      // 检查环境变量
+      const envInfo = {
+        hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        supabaseUrlPrefix: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 10) + '...'
+      }
+      console.log('环境变量检查:', envInfo)
+      setDebugInfo(prev => ({ ...prev, env: envInfo }))
+      
       await signIn(formData.email, formData.password, formData.rememberMe)
+      console.log('登录成功，等待重定向...')
       // 登录成功将在useEffect中处理重定向
     } catch (err: any) {
+      // 记录错误详情
+      console.error('登录失败详情:', err)
+      const errorDetails = {
+        message: err.message || '未知错误',
+        code: err.code || 'UNKNOWN',
+        status: err.status || null,
+        name: err.name || typeof err
+      }
+      setDebugInfo(prev => ({ ...prev, error: errorDetails }))
+      
       // 显示错误消息
       setErrorMessage(err.message || error || '登录失败，请检查账号密码')
-      console.error(err)
     } finally {
       setIsLoading(false)
     }
@@ -176,6 +244,17 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
+              
+              {Object.keys(debugInfo).length > 0 && (
+                <div className="mt-6 p-3 bg-gray-100 rounded-md text-xs text-gray-600">
+                  <details>
+                    <summary className="cursor-pointer">调试信息</summary>
+                    <pre className="mt-2 overflow-auto max-h-40">
+                      {JSON.stringify(debugInfo, null, 2)}
+                    </pre>
+                  </details>
+                </div>
+              )}
             </div>
           </div>
         </div>

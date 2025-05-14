@@ -23,6 +23,9 @@ import {
   MFAType
 } from '@/types/auth';
 
+// 导入Supabase类型以修复类型问题
+import { AuthError as SupabaseAuthError, Session } from '@supabase/supabase-js';
+
 // 默认权限配置
 const DEFAULT_PERMISSIONS: PermissionMap = {
   users: { read: false, write: false, delete: false, admin: false },
@@ -411,22 +414,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 登录方法
   const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
+      console.log('开始登录流程:', { email, rememberMe });
+      
       setAuthState(prev => ({
         ...prev,
         status: AuthStatus.LOADING,
         error: null
       }));
 
+      // 验证环境变量
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        console.error('登录失败: 缺少Supabase环境变量');
+        throw new AuthError('CONFIG_ERROR', 'Supabase配置错误，请联系管理员', AuthStatus.ERROR);
+      }
+      
+      console.log('Supabase配置检查通过');
+      
       // 设置会话持久化
       const sessionOptions = rememberMe ? { sessionStorage: 'local' } : { sessionStorage: 'memory' };
+      console.log('会话持久化设置:', sessionOptions);
       
       // 登录
+      console.log('执行登录操作...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
+        console.error('Supabase登录失败:', error);
         const authError = handleAuthError(error);
         setAuthState(prev => ({
           ...prev,
@@ -436,17 +455,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw authError;
       }
 
+      console.log('Supabase登录成功，获取用户数据...');
+      
       // 根据rememberMe设置持久化
-      if (data.session) {
+      if (data?.session) {
         // 刷新会话并按rememberMe设置存储方式
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token
-        });
+        console.log('设置会话持久化...');
+        try {
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+          });
+        } catch (sessionError) {
+          console.error('设置会话失败:', sessionError);
+          // 继续执行，因为这不是致命错误
+        }
       }
 
-      if (data.user) {
+      if (data?.user) {
         // 获取用户详情
+        console.log('获取用户详情...');
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
@@ -455,6 +483,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (userError) {
           console.error('获取用户数据失败:', userError);
+          console.error('错误详情:', JSON.stringify(userError));
+          
+          // 检查表是否存在问题
+          if (userError.message && userError.message.includes('does not exist')) {
+            console.error('错误: users表可能不存在或权限不足');
+            throw new AuthError('DATABASE_ERROR', '数据库配置错误，请联系管理员', AuthStatus.ERROR);
+          }
+          
           setAuthState(prev => ({
             ...prev,
             status: AuthStatus.ERROR,
@@ -463,13 +499,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new AuthError('USER_DATA_ERROR', '获取用户数据失败', AuthStatus.ERROR);
         }
 
+        console.log('用户数据获取成功');
+        
         // 转换用户数据
         const user = convertToUser(userData);
+        console.log('用户数据转换完成');
         
         // 获取用户权限
+        console.log('获取用户权限...');
         const permissions = await fetchUserPermissions(user, supabase);
+        console.log('用户权限获取完成');
 
         // 更新认证状态
+        console.log('更新认证状态...');
         setAuthState({
           user,
           status: AuthStatus.AUTHENTICATED,
@@ -477,10 +519,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           permissions,
           loading: false
         });
+        console.log('登录流程完成');
       }
     } catch (error) {
-      console.error('登录失败:', error);
-      throw error;
+      console.error('登录过程中发生错误:', error);
+      
+      // 确保错误被正确抛出
+      if (error instanceof AuthError) {
+        throw error;
+      } else {
+        // 如果不是AuthError，转换为AuthError
+        const message = error instanceof Error ? error.message : '未知错误';
+        throw new AuthError('UNKNOWN_ERROR', `登录失败: ${message}`, AuthStatus.ERROR);
+      }
     }
   };
 
@@ -504,6 +555,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new AuthError('WEAK_PASSWORD', passwordValidation.message, AuthStatus.ERROR);
       }
 
+      console.log('注册新用户:', userData.email);
+      
       // 注册用户
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
@@ -511,6 +564,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
+        console.error('注册失败:', error);
         const authError = handleAuthError(error);
         setAuthState(prev => ({
           ...prev,
@@ -520,7 +574,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw authError;
       }
 
-      if (data.user) {
+      if (data?.user) {
+        console.log('用户注册成功，创建用户资料');
+        
         // 创建用户资料
         const { error: profileError } = await supabase
           .from('users')
