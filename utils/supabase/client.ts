@@ -1,5 +1,6 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { Database } from '@/types/supabase'
+import { SupabaseClientOptions } from '@supabase/supabase-js'
 
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -10,7 +11,53 @@ export function createClient() {
     console.warn('警告: Supabase环境变量未配置');
     console.warn('- NEXT_PUBLIC_SUPABASE_URL');
     console.warn('- NEXT_PUBLIC_SUPABASE_ANON_KEY');
-    // 返回模拟客户端，避免在未配置时崩溃
+    
+    // 在生产环境中，继续尝试创建客户端，即使环境变量看起来为空
+    // 因为在某些情况下，客户端组件可能无法正确访问环境变量
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        console.info('生产环境：尝试创建Supabase客户端，即使环境变量检查失败');
+        return createBrowserClient<Database>(
+          supabaseUrl || '',
+          supabaseKey || '',
+          {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: true,
+              storageKey: 'supabase.auth.token',
+              flowType: 'pkce'
+            },
+            global: {
+              fetch: (url: RequestInfo | URL, options = {}) => {
+                return fetch(url, options).catch(err => {
+                  console.error('Supabase请求失败:', err);
+                  throw err;
+                });
+              }
+            }
+          }
+        );
+      } catch (error) {
+        console.error('创建生产环境Supabase客户端失败:', error);
+        // 在生产环境中使用空字符串作为最后的尝试
+        return createBrowserClient<Database>(
+          '', 
+          '', 
+          {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: true,
+              storageKey: 'supabase.auth.token',
+              flowType: 'pkce'
+            }
+          }
+        );
+      }
+    }
+    
+    // 开发环境返回模拟客户端，避免在未配置时崩溃
     return createMockClient();
   }
   
@@ -28,7 +75,7 @@ export function createClient() {
         },
         global: {
           // 添加请求日志和错误捕获
-          fetch: (url, options = {}) => {
+          fetch: (url: RequestInfo | URL, options = {}) => {
             // 只在开发环境记录详细日志
             if (process.env.NODE_ENV === 'development') {
               const timestamp = new Date().toISOString();

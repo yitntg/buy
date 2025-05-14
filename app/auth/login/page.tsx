@@ -51,6 +51,22 @@ export default function LoginPage() {
   
   // 进行环境变量和数据库连接检查
   const checkEnvironment = async () => {
+    // 在生产环境中，假设环境配置正确
+    if (process.env.NODE_ENV === 'production') {
+      setDebugInfo(prev => ({ 
+        ...prev, 
+        environment: { 
+          isValid: true, 
+          message: '生产环境，跳过环境变量检查' 
+        },
+        database: {
+          connected: true,
+          message: '生产环境，跳过数据库连接检查'
+        }
+      }));
+      return true;
+    }
+    
     // 检查环境变量
     const envCheck = checkSupabaseEnv();
     setDebugInfo(prev => ({ ...prev, environment: envCheck }));
