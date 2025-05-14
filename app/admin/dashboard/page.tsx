@@ -4,9 +4,11 @@
 // import '../revalidate-config.js';
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/app/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // 定义仪表盘数据类型
 interface DashboardStats {

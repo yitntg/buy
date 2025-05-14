@@ -1,70 +1,138 @@
+// Supabase存储初始化脚本
+// 运行方式: node scripts/init-storage.js
+
 const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
+const chalk = require('chalk') || { green: (t) => t, red: (t) => t, yellow: (t) => t, blue: (t) => t };
 
+// 加载环境变量
 dotenv.config();
 
+// 获取环境变量
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-async function initStorageBuckets() {
-  try {
-    console.log('初始化存储桶...');
-
-    // 头像存储桶
-    const { data: avatarBucket, error: avatarBucketError } = await supabase.storage.createBucket('avatars', {
-      public: false,
-      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif'],
-      fileSizeLimit: 1024 * 1024 * 5 // 5MB
-    });
-
-    if (avatarBucketError) {
-      console.warn('头像存储桶已存在或创建失败:', avatarBucketError);
-    } else {
-      console.log('头像存储桶已就绪');
-    }
-
-    // 应用头像存储桶策略
-    await supabase.rpc('apply_storage_policy', {
-      bucket_name: 'avatars',
-      policy: JSON.stringify({
-        type: 'rls',
-        action: 'select',
-        role: 'authenticated',
-        condition: 'auth.uid() = owner'
-      })
-    });
-
-    // 产品存储桶
-    const { data: productBucket, error: productBucketError } = await supabase.storage.createBucket('products', {
-      public: false,
-      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-      fileSizeLimit: 1024 * 1024 * 10 // 10MB
-    });
-
-    if (productBucketError) {
-      console.warn('产品存储桶已存在或创建失败:', productBucketError);
-    } else {
-      console.log('产品存储桶已就绪');
-    }
-
-    // 应用产品存储桶策略
-    await supabase.rpc('apply_storage_policy', {
-      bucket_name: 'products',
-      policy: JSON.stringify({
-        type: 'rls',
-        action: 'select',
-        role: 'authenticated',
-        condition: 'auth.role() IN (\'admin\', \'seller\')'
-      })
-    });
-
-    console.log('存储桶初始化完成');
-  } catch (error) {
-    console.error('存储桶初始化失败:', error);
-    process.exit(1);
-  }
+// 检查必要的环境变量
+if (!supabaseUrl || !supabaseKey) {
+  console.warn(chalk.yellow('警告: 缺少Supabase环境变量，跳过存储初始化'));
+  process.exit(0);
 }
 
-initStorageBuckets(); 
+// 创建Supabase客户端
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+
+// 需要创建的存储桶配置
+const storageBuckets = [
+  {
+    name: 'products',
+    isPublic: true,
+    folderStructure: ['images', 'thumbnails', 'temp']
+  },
+  {
+    name: 'avatars',
+    isPublic: true,
+    folderStructure: ['users', 'temp']
+  },
+  {
+    name: 'documents',
+    isPublic: false,
+    folderStructure: ['orders', 'invoices', 'returns']
+  },
+  {
+    name: 'uploads',
+    isPublic: true,
+    folderStructure: ['comments', 'misc']
+  }
+];
+
+// 主函数
+async function main() {
+  console.log(chalk.blue('=== 初始化Supabase存储 ==='));
+  
+  // 检查连接
+  try {
+    const { data: health, error } = await supabase.rpc('heartbeat');
+    
+    if (error) {
+      console.warn(chalk.yellow(`警告: 无法连接到Supabase，跳过存储初始化: ${error.message}`));
+      return;
+    }
+  } catch (error) {
+    console.warn(chalk.yellow(`警告: 连接Supabase出错，跳过存储初始化: ${error.message}`));
+    return;
+  }
+  
+  console.log('正在检查和创建存储桶...');
+  
+  // 获取现有存储桶
+  const { data: existingBuckets, error: bucketsError } = await supabase.storage.listBuckets();
+  
+  if (bucketsError) {
+    console.error(chalk.red(`无法获取存储桶列表: ${bucketsError.message}`));
+    // 如果是因为权限问题，我们继续运行，不要中断
+    console.warn(chalk.yellow('这可能是权限问题，跳过存储桶创建'));
+    return;
+  }
+  
+  const existingBucketNames = existingBuckets ? existingBuckets.map(b => b.name) : [];
+  console.log(`发现 ${existingBucketNames.length} 个现有存储桶`);
+  
+  // 创建缺失的存储桶
+  for (const bucket of storageBuckets) {
+    if (!existingBucketNames.includes(bucket.name)) {
+      console.log(`创建存储桶: ${bucket.name}`);
+      
+      try {
+        const { data, error } = await supabase.storage.createBucket(bucket.name, {
+          public: bucket.isPublic,
+          fileSizeLimit: 50 * 1024 * 1024 // 50MB 限制
+        });
+        
+        if (error) {
+          console.error(chalk.red(`创建存储桶 ${bucket.name} 失败: ${error.message}`));
+          continue;
+        }
+        
+        console.log(chalk.green(`✓ 创建存储桶 ${bucket.name} 成功`));
+      } catch (error) {
+        console.error(chalk.red(`创建存储桶时出错: ${error.message}`));
+      }
+    } else {
+      console.log(chalk.green(`✓ 存储桶 ${bucket.name} 已存在`));
+    }
+    
+    // 为每个存储桶创建文件夹结构
+    for (const folder of bucket.folderStructure) {
+      try {
+        // 上传一个空文件来创建文件夹（Supabase中创建文件夹的方式）
+        const { data, error } = await supabase.storage
+          .from(bucket.name)
+          .upload(`${folder}/.keep`, new Uint8Array(0), {
+            contentType: 'text/plain',
+            upsert: true
+          });
+          
+        if (error && error.message !== 'The resource already exists') {
+          console.warn(chalk.yellow(`创建文件夹 ${bucket.name}/${folder} 失败: ${error.message}`));
+        } else {
+          console.log(chalk.green(`✓ 文件夹 ${bucket.name}/${folder} 已就绪`));
+        }
+      } catch (error) {
+        console.warn(chalk.yellow(`创建文件夹结构时出错: ${error.message}`));
+      }
+    }
+  }
+  
+  console.log(chalk.green('\n存储初始化完成！'));
+}
+
+// 执行主函数
+main().catch(err => {
+  console.error(chalk.red('初始化过程中出现未捕获的错误:'), err);
+  // 不要中断构建过程
+}); 

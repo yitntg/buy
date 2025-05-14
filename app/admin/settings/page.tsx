@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/app/context/AuthContext';
 import { ThemeSettingsPreview, SpecificSettingPreview } from '@/app/components/ThemeSettingsPreview';
 import { supabase } from '@/lib/supabase';
 

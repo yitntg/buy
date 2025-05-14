@@ -5,7 +5,7 @@
 
 // 分类管理页面 - 支持添加、编辑、删除分类
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/app/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 

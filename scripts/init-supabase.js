@@ -1,222 +1,188 @@
-// 这个脚本用于自动创建Supabase数据库表和初始数据
+// Supabase数据库初始化脚本
 // 运行方式: node scripts/init-supabase.js
 
 const { createClient } = require('@supabase/supabase-js');
+const dotenv = require('dotenv');
+const chalk = require('chalk') || { green: (t) => t, red: (t) => t, yellow: (t) => t, blue: (t) => t };
 const fs = require('fs');
 const path = require('path');
-const dotenv = require('dotenv');
 
 // 加载环境变量
 dotenv.config();
 
-// 硬编码凭据，确保脚本始终能够运行
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://pzjhupjfojvlbthnsgqt.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6amh1cGpmb2p2bGJ0aG5zZ3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2ODAxOTIsImV4cCI6MjAzMTI1NjE5Mn0.COXs_t1-J5XhZXu7X0W3DlsgI1UByhgA-hezLhWALN0';
+// 获取环境变量
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-console.log('使用Supabase URL:', supabaseUrl);
-console.log('使用API密钥:', supabaseKey.substring(0, 10) + '...');
+// 检查必要的环境变量
+if (!supabaseUrl || !supabaseKey) {
+  console.error(chalk.red('错误: 缺少必要的环境变量'));
+  console.error(chalk.red('请确保以下环境变量已设置:'));
+  console.error(chalk.red('- NEXT_PUBLIC_SUPABASE_URL'));
+  console.error(chalk.red('- SUPABASE_SERVICE_ROLE_KEY 或 NEXT_PUBLIC_SUPABASE_ANON_KEY'));
+  process.exit(1);
+}
 
 // 创建Supabase客户端
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
-async function initDatabase() {
-  console.log('正在初始化数据库...');
-
+// 主函数
+async function main() {
+  console.log(chalk.blue('=== 初始化Supabase数据库 ==='));
+  
+  // 检查连接
+  console.log('检查Supabase连接...');
   try {
-    // 创建表结构
-    await createTables();
+    const { data: health, error } = await supabase.rpc('heartbeat');
     
-    // 插入示例数据
-    console.log('添加示例数据...');
-    await insertSampleData();
-
-    console.log('数据库初始化完成！');
-  } catch (err) {
-    console.error('初始化数据库时出错:', err);
+    if (error) {
+      console.error(chalk.red(`无法连接到Supabase: ${error.message}`));
+      process.exit(1);
+    }
+    
+    console.log(chalk.green(`✓ 连接成功`));
+  } catch (error) {
+    console.error(chalk.red(`连接Supabase出错: ${error.message}`));
     process.exit(1);
   }
+  
+  // 执行迁移脚本
+  await runMigrations();
+  
+  // 创建示例数据（开发环境）
+  if (process.env.NODE_ENV !== 'production') {
+    await createSampleData();
+  } else {
+    console.log(chalk.yellow('跳过示例数据创建（生产环境）'));
+  }
+  
+  console.log(chalk.green('\n数据库初始化完成！'));
 }
 
-async function createTables() {
-  console.log('开始创建表结构...');
+// 执行迁移脚本
+async function runMigrations() {
+  console.log(chalk.blue('\n运行数据库迁移...'));
   
-  // 使用Supabase的存储过程创建表
-  const { error } = await supabase.rpc('create_tables');
+  const migrationsDir = path.join(__dirname, '..', 'supabase', 'migrations');
+  
+  // 检查目录是否存在
+  if (!fs.existsSync(migrationsDir)) {
+    console.error(chalk.red(`迁移目录不存在: ${migrationsDir}`));
+    return;
+  }
+  
+  // 读取迁移文件
+  const migrationFiles = fs.readdirSync(migrationsDir)
+    .filter(file => file.endsWith('.sql'))
+    .sort(); // 保证按文件名顺序执行
+  
+  if (migrationFiles.length === 0) {
+    console.log(chalk.yellow('没有找到迁移文件'));
+    return;
+  }
+  
+  console.log(`找到 ${migrationFiles.length} 个迁移文件`);
+  
+  // 逐个执行迁移文件
+  for (const file of migrationFiles) {
+    console.log(`执行迁移: ${file}`);
+    
+    const filePath = path.join(migrationsDir, file);
+    const sql = fs.readFileSync(filePath, 'utf8');
+    
+    try {
+      const { error } = await supabase.rpc('exec_sql', { query: sql });
+      
+      if (error) {
+        console.error(chalk.red(`执行迁移 ${file} 失败: ${error.message}`));
+        continue;
+      }
+      
+      console.log(chalk.green(`✓ 迁移 ${file} 成功`));
+    } catch (error) {
+      console.error(chalk.red(`执行迁移 ${file} 出错: ${error.message}`));
+    }
+  }
+}
+
+// 创建示例数据
+async function createSampleData() {
+  console.log(chalk.blue('\n创建示例数据...'));
+  
+  // 检查是否已存在数据
+  const { count, error } = await supabase
+    .from('products')
+    .select('*', { count: 'exact', head: true });
   
   if (error) {
-    console.error('创建表结构失败:', error);
-    console.log('尝试创建存储过程...');
-    
-    // 如果存储过程不存在，先创建它
-    await createStoredProcedure();
-    
-    // 再次尝试创建表
-    const { error: retryError } = await supabase.rpc('create_tables');
-    if (retryError) {
-      console.error('再次尝试创建表结构失败:', retryError);
-      throw new Error('无法创建表结构');
-    }
+    console.error(chalk.red(`检查产品表失败: ${error.message}`));
+    return;
   }
   
-  console.log('表结构创建成功');
-}
-
-async function createStoredProcedure() {
-  console.log('创建存储过程...');
-  
-  // 直接创建存储过程
-  const sql = `
-  CREATE OR REPLACE FUNCTION create_tables()
-  RETURNS void
-  LANGUAGE plpgsql
-  SECURITY DEFINER
-  AS $$
-  BEGIN
-    -- 创建产品分类表
-    CREATE TABLE IF NOT EXISTS categories (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(100) NOT NULL,
-      description TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-
-    -- 创建产品表
-    CREATE TABLE IF NOT EXISTS products (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      description TEXT NOT NULL,
-      price DECIMAL(10,2) NOT NULL,
-      image VARCHAR(255) NOT NULL,
-      category INTEGER NOT NULL,
-      inventory INTEGER NOT NULL DEFAULT 0,
-      rating DECIMAL(3,1) NOT NULL DEFAULT 0,
-      reviews INTEGER NOT NULL DEFAULT 0,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-
-    -- 创建评论表
-    CREATE TABLE IF NOT EXISTS reviews (
-      id SERIAL PRIMARY KEY,
-      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-      user_id VARCHAR(255) NOT NULL,
-      username VARCHAR(255) NOT NULL,
-      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-      comment TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-      CONSTRAINT unique_user_product_review UNIQUE (product_id, user_id)
-    );
-  END;
-  $$;
-  `;
-  
-  // 使用Postgres-specific API执行SQL
-  const { error } = await supabase.rpc('exec_sql', { query: sql });
-  
-  if (error) {
-    console.error('创建存储过程失败:', error);
-    console.log('尝试创建exec_sql函数...');
-    
-    // 如果exec_sql不存在，先创建它
-    await createExecSqlFunction();
-    
-    // 再次尝试创建存储过程
-    const { error: retryError } = await supabase.rpc('exec_sql', { query: sql });
-    if (retryError) {
-      console.error('再次尝试创建存储过程失败:', retryError);
-      throw new Error('无法创建存储过程');
-    }
+  if (count > 0) {
+    console.log(chalk.yellow('产品表已包含数据，跳过示例数据创建'));
+    return;
   }
-}
-
-async function createExecSqlFunction() {
-  console.log('创建exec_sql函数...');
   
-  // 使用REST API直接发送SQL
-  try {
-    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      },
-      body: JSON.stringify({
-        query: `
-        CREATE OR REPLACE FUNCTION exec_sql(query text)
-        RETURNS void
-        LANGUAGE plpgsql
-        SECURITY DEFINER
-        AS $$
-        BEGIN
-          EXECUTE query;
-        END;
-        $$;
-        `
-      })
-    });
-    
-    if (!response.ok) {
-      const responseText = await response.text();
-      console.error('创建exec_sql函数失败:', responseText);
-      throw new Error('无法创建exec_sql函数');
-    }
-    
-    console.log('exec_sql函数创建成功');
-  } catch (err) {
-    console.error('HTTP请求失败:', err);
-    throw err;
-  }
-}
-
-async function insertSampleData() {
-  // 插入分类数据
-  const categories = [
-    { id: 1, name: '电子产品', description: '各类电子产品、数码设备' },
-    { id: 2, name: '家居家具', description: '家具、家居用品' },
-    { id: 3, name: '服装服饰', description: '各类衣物、服装、鞋帽' },
-    { id: 4, name: '美妆个护', description: '美妆、个人护理用品' },
-    { id: 5, name: '食品饮料', description: '零食、饮品、生鲜食品' },
-    { id: 6, name: '运动户外', description: '运动器材、户外装备' }
-  ];
-
-  // 插入产品数据
+  // 创建示例产品
+  console.log('创建示例产品...');
+  
   const products = [
-    { name: '智能手表', description: '高级智能手表，支持多种运动模式和健康监测功能', price: 1299, image: 'https://picsum.photos/id/1/500/500', category: 1, inventory: 50, rating: 4.8, reviews: 120 },
-    { name: '蓝牙耳机', description: '无线蓝牙耳机，支持降噪功能，续航时间长', price: 399, image: 'https://picsum.photos/id/3/500/500', category: 1, inventory: 200, rating: 4.5, reviews: 85 },
-    { name: '真皮沙发', description: '进口真皮沙发，舒适耐用，适合家庭使用', price: 4999, image: 'https://picsum.photos/id/20/500/500', category: 2, inventory: 10, rating: 4.9, reviews: 32 },
-    { name: '纯棉T恤', description: '100%纯棉材质，透气舒适，多色可选', price: 99, image: 'https://picsum.photos/id/25/500/500', category: 3, inventory: 500, rating: 4.3, reviews: 210 },
-    { name: '保湿面霜', description: '深层保湿面霜，适合干性肌肤，改善肌肤干燥问题', price: 159, image: 'https://picsum.photos/id/30/500/500', category: 4, inventory: 80, rating: 4.6, reviews: 65 },
-    { name: '有机坚果礼盒', description: '精选有机坚果礼盒，包含多种坚果，营养丰富', price: 169, image: 'https://picsum.photos/id/40/500/500', category: 5, inventory: 100, rating: 4.7, reviews: 48 },
-    { name: '瑜伽垫', description: '专业瑜伽垫，防滑耐磨，厚度适中，适合各种瑜伽动作', price: 128, image: 'https://picsum.photos/id/50/500/500', category: 6, inventory: 60, rating: 4.4, reviews: 72 }
+    {
+      name: '高级笔记本电脑',
+      description: '强大的笔记本电脑，适合工作和游戏',
+      price: 1299.99,
+      category: '电子产品',
+      stock: 10,
+      status: 'active',
+      images: [
+        'https://example.com/images/laptop1.jpg',
+        'https://example.com/images/laptop2.jpg'
+      ]
+    },
+    {
+      name: '智能手机',
+      description: '最新款智能手机，配备高清摄像头',
+      price: 799.99,
+      category: '电子产品',
+      stock: 15,
+      status: 'active',
+      images: [
+        'https://example.com/images/phone1.jpg'
+      ]
+    },
+    {
+      name: '无线耳机',
+      description: '高品质无线耳机，降噪功能',
+      price: 149.99,
+      category: '配件',
+      stock: 25,
+      status: 'active',
+      images: [
+        'https://example.com/images/headphones.jpg'
+      ]
+    }
   ];
-
-  try {
-    // 先插入分类数据
-    const { error: catError } = await supabase
-      .from('categories')
-      .upsert(categories, { onConflict: 'id' });
-
-    if (catError) {
-      console.error('插入分类数据失败:', catError);
-      return;
-    }
-
-    console.log('成功插入分类数据');
-
-    // 再插入产品数据
-    const { error: prodError } = await supabase
-      .from('products')
-      .upsert(products, { onConflict: ['name', 'category'] });
-
-    if (prodError) {
-      console.error('插入产品数据失败:', prodError);
-      return;
-    }
-
-    console.log('成功插入产品数据');
-  } catch (err) {
-    console.error('插入示例数据时出错:', err);
+  
+  // 插入产品
+  const { error: productsError } = await supabase
+    .from('products')
+    .insert(products);
+  
+  if (productsError) {
+    console.error(chalk.red(`创建示例产品失败: ${productsError.message}`));
+  } else {
+    console.log(chalk.green(`✓ 创建了 ${products.length} 个示例产品`));
   }
 }
 
-initDatabase(); 
+// 执行主函数
+main().catch(err => {
+  console.error(chalk.red('初始化过程中出现未捕获的错误:'), err);
+  process.exit(1);
+}); 

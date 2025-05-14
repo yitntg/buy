@@ -1,78 +1,87 @@
 import { User } from '../../core/domain/entities/User';
 import { UserRepository } from '../../core/application/interfaces/UserRepository';
-import { prisma } from '../database/prisma';
+import { supabase } from '../database/supabase';
 
 export class UserRepositoryImpl implements UserRepository {
   async findById(id: string): Promise<User | null> {
-    const user = await prisma.user.findUnique({
-      where: { id }
-    });
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!user) {
+    if (error || !user) {
       return null;
     }
 
     return User.create({
       id: user.id,
       email: user.email,
-      name: user.name,
-      password: user.password,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      name: user.name || user.username,
+      role: user.role || 'user',
+      createdAt: new Date(user.created_at)
     });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
 
-    if (!user) {
+    if (error || !user) {
       return null;
     }
 
     return User.create({
       id: user.id,
       email: user.email,
-      name: user.name,
-      password: user.password,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      name: user.name || user.username,
+      role: user.role || 'user',
+      createdAt: new Date(user.created_at)
     });
   }
 
   async save(user: User): Promise<void> {
-    await prisma.user.create({
-      data: {
+    const { error } = await supabase
+      .from('users')
+      .insert({
         id: user.id,
         email: user.email,
         name: user.name,
-        password: user.password,
         role: user.role,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      }
-    });
+        created_at: user.createdAt.toISOString()
+      });
+
+    if (error) {
+      throw new Error(`保存用户失败: ${error.message}`);
+    }
   }
 
   async update(user: User): Promise<void> {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
+    const { error } = await supabase
+      .from('users')
+      .update({
         email: user.email,
         name: user.name,
-        password: user.password,
-        role: user.role,
-        updatedAt: user.updatedAt
-      }
-    });
+        role: user.role
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      throw new Error(`更新用户失败: ${error.message}`);
+    }
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.user.delete({
-      where: { id }
-    });
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`删除用户失败: ${error.message}`);
+    }
   }
 } 

@@ -15,9 +15,9 @@ export * from './features/products/application/use-cases/GetCommentsUseCase';
 export * from './features/products/application/use-cases/GetCommentDetailUseCase';
 
 // 导出基础设施层
-export * from './features/products/infrastructure/persistence/PrismaCommentRepository';
+export * from './features/products/infrastructure/persistence/SupabaseCommentRepository';
 export * from './features/products/infrastructure/cache/CachedCommentRepository';
-export * from './features/products/infrastructure/events/PrismaEventStore';
+export * from './features/products/infrastructure/events/SupabaseEventStore';
 
 // 导出表现层
 export * from './features/products/ui/CommentForm';

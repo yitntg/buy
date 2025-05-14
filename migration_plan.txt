@@ -1,0 +1,42 @@
+# 数据库迁移文件整合计划
+
+## 需删除的迁移文件（旧版本）
+- 01_create_products_table.sql（合并到20240625000010_create_product_tables.sql）
+- 02_create_comments_table.sql（合并到20240625000011_create_comment_tables.sql）
+- 03_create_orders_table.sql（合并到20240625000012_create_order_tables.sql）
+
+## 需重命名的迁移文件（解决命名冲突）
+- 20240625000001_create_domain_events.sql → 20240625000020_create_domain_events.sql
+- 20240625000001_create_product_tables.sql → 20240625000010_create_product_tables.sql
+- 20240625000002_create_comment_tables.sql → 20240625000011_create_comment_tables.sql
+- 20240625000003_create_order_tables.sql → 20240625000012_create_order_tables.sql
+
+## 保留的迁移文件（无需更改）
+- 20240623000000_create_storage_policy_function.sql
+- 20240623000001_update_users_table.sql
+- 20240623000002_unified_user_schema.sql
+- 20240623000003_create_user_permissions.sql
+- 20240623000004_create_mfa_tables.sql
+- 20240625000004_create_cart_tables.sql
+- 20240625000005_create_user_profiles.sql
+
+## 最终的迁移文件执行顺序
+1. 20240623000000_create_storage_policy_function.sql
+2. 20240623000001_update_users_table.sql
+3. 20240623000002_unified_user_schema.sql
+4. 20240623000003_create_user_permissions.sql
+5. 20240623000004_create_mfa_tables.sql
+6. 20240625000010_create_product_tables.sql
+7. 20240625000011_create_comment_tables.sql
+8. 20240625000012_create_order_tables.sql
+9. 20240625000020_create_domain_events.sql
+10. 20240625000004_create_cart_tables.sql
+11. 20240625000005_create_user_profiles.sql
+
+## 新增加的功能和增强
+- 在product_tables中增加了categories和tags支持
+- 在comment_tables中增加了comment_replies表
+- 在所有表中增加了行级安全(RLS)策略
+- 所有表都使用gen_random_uuid()作为默认ID生成器
+- 统一使用TIMESTAMP WITH TIME ZONE类型
+- 添加了约束和索引以提高数据一致性和查询性能 

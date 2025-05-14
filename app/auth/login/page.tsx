@@ -2,37 +2,47 @@
 
 import { useState, useEffect, FormEvent } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-// Header import removed
-// Footer import removed
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../context/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, isAuthenticated, error } = useAuth()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/account'
+  const { signIn, isAuthenticated, error, status } = useAuth()
   
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    rememberMe: false
   })
   
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   
-  // 如果已登录，重定向到账户页面
+  // 如果已登录，重定向到指定页面
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/account')
+      router.push(redirect)
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, router, redirect])
+  
+  // 显示从URL中传递的错误信息
+  useEffect(() => {
+    const reason = searchParams.get('reason')
+    if (reason === 'invalid_token') {
+      setErrorMessage('您的登录已过期，请重新登录')
+    } else if (reason === 'session_expired') {
+      setErrorMessage('会话已过期，请重新登录')
+    }
+  }, [searchParams])
   
   // 处理表单字段变化
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setFormData({
       ...formData,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     })
   }
   
@@ -45,12 +55,11 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      // 默认使用头像，这样如果没有保存的用户信息，也会为用户设置默认头像
-      await login(formData.email, formData.password, true)
+      await signIn(formData.email, formData.password, formData.rememberMe)
       // 登录成功将在useEffect中处理重定向
-    } catch (err) {
+    } catch (err: any) {
       // 显示错误消息
-      setErrorMessage(error || '登录失败，请检查账号密码')
+      setErrorMessage(err.message || error || '登录失败，请检查账号密码')
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -111,10 +120,13 @@ export default function LoginPage() {
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    id="remember"
+                    id="rememberMe"
+                    name="rememberMe"
+                    checked={formData.rememberMe}
+                    onChange={handleInputChange}
                     className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                   />
-                  <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                  <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
                     记住我
                   </label>
                 </div>
@@ -122,9 +134,9 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   className="w-full py-2 px-4 bg-primary text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary flex items-center justify-center"
-                  disabled={isLoading}
+                  disabled={isLoading || status === 'loading'}
                 >
-                  {isLoading ? (
+                  {isLoading || status === 'loading' ? (
                     <>
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

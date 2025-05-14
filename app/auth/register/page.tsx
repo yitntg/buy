@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '../../context/AuthContext'
 
 export default function RegisterPage() {
-  const { register, error, isLoading, isAuthenticated } = useAuth()
+  const { register, status, error, isLoading, isAuthenticated } = useAuth()
   const router = useRouter()
   const [formData, setFormData] = useState({
     firstName: '',
@@ -22,6 +22,7 @@ export default function RegisterPage() {
   })
   
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [serverError, setServerError] = useState<string | null>(null)
   
   // 如果用户已登录，重定向到首页
   useEffect(() => {
@@ -62,9 +63,7 @@ export default function RegisterPage() {
       errors.email = '请输入有效的邮箱地址'
     }
     
-    if (!formData.phone) {
-      errors.phone = '请输入手机号码'
-    } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
+    if (formData.phone && !/^1[3-9]\d{9}$/.test(formData.phone)) {
       errors.phone = '请输入有效的手机号码'
     }
     
@@ -96,12 +95,23 @@ export default function RegisterPage() {
       return
     }
     
+    // 清除之前的错误
+    setServerError(null)
+    
     try {
-      await register(formData)
+      // 调用AuthContext中的注册方法
+      await register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName || undefined,
+        lastName: formData.lastName || undefined
+      })
+      
       // 注册成功将在useEffect中处理重定向
-    } catch (err) {
-      // 错误已在useAuth hook中处理
-      console.error(err)
+    } catch (err: any) {
+      console.error('注册失败:', err)
+      setServerError(err.message || error || '注册失败，请稍后再试')
     }
   }
   
@@ -111,9 +121,9 @@ export default function RegisterPage() {
           <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
             <h1 className="text-2xl font-bold text-center mb-6">创建账户</h1>
             
-            {error && (
+            {(serverError || error) && (
               <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-                {error}
+                {serverError || error}
               </div>
             )}
             
@@ -190,7 +200,7 @@ export default function RegisterPage() {
               
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  手机号码 <span className="text-red-500">*</span>
+                  手机号码
                 </label>
                 <input
                   type="tel"
@@ -198,7 +208,6 @@ export default function RegisterPage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  required
                   autoComplete="tel"
                   className={`w-full px-4 py-2 border ${validationErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-primary`}
                 />
@@ -249,49 +258,45 @@ export default function RegisterPage() {
               
               <div className="flex items-center">
                 <input
+                  type="checkbox"
                   id="terms"
                   name="terms"
-                  type="checkbox"
                   checked={formData.terms}
                   onChange={handleChange}
                   required
-                  className={`h-4 w-4 text-primary rounded ${validationErrors.terms ? 'border-red-500' : ''}`}
+                  className={`h-4 w-4 ${validationErrors.terms ? 'border-red-500' : 'border-gray-300'} rounded text-primary focus:ring-primary`}
                 />
                 <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                  我已阅读并同意 <Link href="/terms" className="text-primary hover:underline">服务条款</Link> 和 <Link href="/privacy" className="text-primary hover:underline">隐私政策</Link>
+                  我已阅读并同意 <Link href="/terms" className="text-primary">服务条款</Link> 和 <Link href="/privacy" className="text-primary">隐私政策</Link>
                 </label>
               </div>
               {validationErrors.terms && (
                 <p className="mt-1 text-sm text-red-500">{validationErrors.terms}</p>
               )}
               
-              <div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      注册中...
-                    </>
-                  ) : '注册'}
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full py-2 px-4 bg-primary text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary flex items-center justify-center"
+                disabled={status === 'loading' || isLoading}
+              >
+                {status === 'loading' || isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    正在注册...
+                  </>
+                ) : '创建账户'}
+              </button>
             </form>
             
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                已有账户? {' '}
-                <Link href="/auth/login" className="text-primary hover:underline">
-                  登录
-                </Link>
-              </p>
-            </div>
+            <p className="mt-6 text-center text-sm text-gray-600">
+              已有账户？{' '}
+              <Link href="/auth/login" className="text-primary font-medium">
+                立即登录
+              </Link>
+            </p>
           </div>
         </div>
       </main>

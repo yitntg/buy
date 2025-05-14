@@ -1,84 +1,93 @@
-import { PrismaClient } from '@prisma/client';
 import { Product } from '@/core/domain/entities/Product';
 import { ProductRepository, ProductSearchParams, ProductSearchResult } from '@/core/application/interfaces/ProductRepository';
 import { Money } from '@/core/domain/value-objects/Money';
+import { supabase } from '../database/supabase';
 
 export class ProductRepositoryImpl implements ProductRepository {
-  private prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Product | null> {
-    const product = await this.prisma.product.findUnique({
-      where: { id }
-    });
+    const { data: product, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!product) return null;
+    if (error || !product) return null;
 
     return Product.create({
       id: product.id,
       name: product.name,
       description: product.description,
       price: Money.create(product.price),
-      images: [],
-      categoryId: '0',
+      images: product.images || [],
+      categoryId: product.category || '0',
       stock: product.stock,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt
+      createdAt: new Date(product.created_at),
+      updatedAt: new Date(product.updated_at)
     });
   }
 
   async findAll(): Promise<Product[]> {
-    const products = await this.prisma.product.findMany();
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*');
     
-    return products.map(dbProduct => Product.create({
-      id: dbProduct.id,
-      name: dbProduct.name,
-      description: dbProduct.description,
-      price: Money.create(dbProduct.price),
-      images: [],
-      categoryId: '0',
-      stock: dbProduct.stock,
-      createdAt: dbProduct.createdAt,
-      updatedAt: dbProduct.updatedAt
+    if (error || !products) return [];
+    
+    return products.map(product => Product.create({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: Money.create(product.price),
+      images: product.images || [],
+      categoryId: product.category || '0',
+      stock: product.stock,
+      createdAt: new Date(product.created_at),
+      updatedAt: new Date(product.updated_at)
     }));
   }
 
   async findByCategory(categoryId: string): Promise<Product[]> {
-    // 暂时简单实现，实际可能需要在产品表添加categoryId字段
-    const products = await this.prisma.product.findMany();
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('category', categoryId);
     
-    return products.map(dbProduct => Product.create({
-      id: dbProduct.id,
-      name: dbProduct.name,
-      description: dbProduct.description,
-      price: Money.create(dbProduct.price),
-      images: [],
-      categoryId: categoryId,
-      stock: dbProduct.stock,
-      createdAt: dbProduct.createdAt,
-      updatedAt: dbProduct.updatedAt
+    if (error || !products) return [];
+    
+    return products.map(product => Product.create({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: Money.create(product.price),
+      images: product.images || [],
+      categoryId: product.category || categoryId,
+      stock: product.stock,
+      createdAt: new Date(product.created_at),
+      updatedAt: new Date(product.updated_at)
     }));
   }
 
   async findFeatured(limit: number = 4): Promise<Product[]> {
-    const products = await this.prisma.product.findMany({
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    });
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error || !products) return [];
     
     return products.map(product => new Product(
       product.id,
       product.name,
       product.description,
       product.price,
-      [], 
-      0,
+      product.images || [], 
+      product.category || '0',
       product.stock,
-      product.createdAt,
-      product.updatedAt
+      new Date(product.created_at),
+      new Date(product.updated_at)
     ));
   }
 
@@ -88,61 +97,66 @@ export class ProductRepositoryImpl implements ProductRepository {
       categoryId, 
       minPrice, 
       maxPrice, 
-      sortBy = 'createdAt', 
+      sortBy = 'created_at', 
       sortOrder = 'desc',
       page = 1,
       limit = 10
     } = params;
 
-    const where: any = {};
+    let queryBuilder = supabase
+      .from('products')
+      .select('*', { count: 'exact' });
     
     if (query) {
-      where.OR = [
-        { name: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } }
-      ];
+      // PostgreSQL ILIKE用于不区分大小写搜索
+      queryBuilder = queryBuilder.or(`name.ilike.%${query}%,description.ilike.%${query}%`);
     }
     
     if (minPrice !== undefined) {
-      where.price = { ...where.price, gte: minPrice };
+      queryBuilder = queryBuilder.gte('price', minPrice);
     }
     
     if (maxPrice !== undefined) {
-      where.price = { ...where.price, lte: maxPrice };
+      queryBuilder = queryBuilder.lte('price', maxPrice);
     }
     
-    // 假设我们有一个分类ID
     if (categoryId !== undefined) {
-      where.categoryId = categoryId;
+      queryBuilder = queryBuilder.eq('category', categoryId);
     }
 
-    const orderBy: any = {};
-    orderBy[sortBy] = sortOrder;
+    // 添加排序
+    queryBuilder = queryBuilder.order(sortBy, { ascending: sortOrder === 'asc' });
 
-    const skip = (page - 1) * limit;
+    // 添加分页
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    queryBuilder = queryBuilder.range(from, to);
+    
+    const { data: products, error, count } = await queryBuilder;
 
-    const [products, total] = await Promise.all([
-      this.prisma.product.findMany({
-        where,
-        orderBy,
-        skip,
-        take: limit
-      }),
-      this.prisma.product.count({ where })
-    ]);
+    if (error || !products) {
+      return {
+        items: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0
+      };
+    }
 
-    const mappedProducts = products.map(dbProduct => Product.create({
-      id: dbProduct.id,
-      name: dbProduct.name,
-      description: dbProduct.description,
-      price: Money.create(dbProduct.price),
-      images: [],
-      categoryId: '0',
-      stock: dbProduct.stock,
-      createdAt: dbProduct.createdAt,
-      updatedAt: dbProduct.updatedAt
+    const mappedProducts = products.map(product => Product.create({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: Money.create(product.price),
+      images: product.images || [],
+      categoryId: product.category || '0',
+      stock: product.stock,
+      createdAt: new Date(product.created_at),
+      updatedAt: new Date(product.updated_at)
     }));
 
+    const total = count || 0;
     const totalPages = Math.ceil(total / limit);
 
     return {
@@ -155,39 +169,52 @@ export class ProductRepositoryImpl implements ProductRepository {
   }
 
   async save(product: Product): Promise<void> {
-    await this.prisma.product.upsert({
-      where: { id: product.id },
-      update: {
-        name: product.name,
-        description: product.description,
-        price: product.price.getAmount(),
-        stock: product.stock
-      },
-      create: {
+    const { error } = await supabase
+      .from('products')
+      .upsert({
         id: product.id,
         name: product.name,
         description: product.description,
         price: product.price.getAmount(),
-        stock: product.stock
-      }
-    });
+        images: product.images,
+        category: product.categoryId,
+        stock: product.stock,
+        created_at: product.createdAt.toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) {
+      throw new Error(`保存产品失败: ${error.message}`);
+    }
   }
 
   async update(id: string, product: Product): Promise<void> {
-    await this.prisma.product.update({
-      where: { id },
-      data: {
+    const { error } = await supabase
+      .from('products')
+      .update({
         name: product.name,
         description: product.description,
         price: product.price.getAmount(),
-        stock: product.stock
-      }
-    });
+        images: product.images,
+        category: product.categoryId,
+        stock: product.stock,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`更新产品失败: ${error.message}`);
+    }
   }
 
   async delete(id: string): Promise<void> {
-    await this.prisma.product.delete({
-      where: { id }
-    });
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw new Error(`删除产品失败: ${error.message}`);
+    }
   }
 } 

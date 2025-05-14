@@ -5,10 +5,11 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/app/context/AuthContext'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
+import { AuthStatus } from '@/app/context/AuthContext'
 
 // 产品数据类型
 interface Product {
@@ -25,7 +26,8 @@ interface Product {
 export default function EditProductPage() {
   const params = useParams()
   const router = useRouter()
-  const { user, isAuthenticated } = useAuth()
+  const { user, status } = useAuth()
+  const isAuthenticated = status === AuthStatus.AUTHENTICATED
   
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)

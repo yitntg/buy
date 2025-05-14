@@ -4,7 +4,7 @@
 // import '../revalidate-config.js';
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/app/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'

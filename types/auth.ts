@@ -1,8 +1,10 @@
 // 认证状态枚举
 export enum AuthStatus {
-  UNAUTHENTICATED = 'unauthenticated',
+  INITIAL = 'initial',
   AUTHENTICATED = 'authenticated',
-  LOADING = 'loading'
+  UNAUTHENTICATED = 'unauthenticated',
+  LOADING = 'loading',
+  ERROR = 'error'
 }
 
 // 权限类型
@@ -16,14 +18,18 @@ export type Permission =
 
 // 角色权限映射
 export type PermissionMap = {
-  [role in UserRole]: Permission[];
+  [resource: string]: {
+    read: boolean;
+    write: boolean;
+    delete: boolean;
+    admin: boolean;
+  }
 };
 
 // 用户角色枚举
 export enum UserRole {
-  ADMIN = 'admin',
   USER = 'user',
-  GUEST = 'guest'
+  ADMIN = 'admin'
 }
 
 // 自定义认证错误
@@ -49,18 +55,117 @@ export interface UserInfo {
 // 权限检查函数类型
 export type PermissionCheckFn = (user: UserInfo, requiredPermission: Permission) => boolean;
 
+// 多因素认证状态
+export enum MFAStatus {
+  DISABLED = 'disabled',
+  ENABLED = 'enabled',
+  SETUP_REQUIRED = 'setup_required',
+  VERIFICATION_REQUIRED = 'verification_required'
+}
+
+// 多因素认证类型
+export enum MFAType {
+  APP = 'app',     // 认证应用 (如Google Authenticator)
+  SMS = 'sms',     // 短信验证码
+  EMAIL = 'email'  // 邮件验证码
+}
+
+// 多因素认证信息
+export interface MFAInfo {
+  enabled: boolean;
+  status: MFAStatus;
+  preferredMethod?: MFAType;
+  methods: {
+    [key in MFAType]?: {
+      enabled: boolean;
+      verified: boolean;
+      lastUsed?: string;
+    }
+  };
+}
+
 export interface User {
-  id: string
-  email: string
-  role: UserRole
-  name?: string
-  avatar?: string
+  id: string;
+  username?: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  role?: 'user' | 'admin';
+  phone?: string;
+  join_date?: string;
+  last_login?: string;
+  name?: string;
+  avatar_url?: string;
+  created_at?: string;
+  mfa?: MFAInfo;
 }
 
 export interface AuthContextType {
-  user: User | null
-  status: AuthStatus
-  signIn: (email: string, password: string) => Promise<void>
-  signOut: () => Promise<void>
-  isAdmin: () => boolean
+  user: User | null;
+  status: AuthStatus;
+  error: string | null;
+  
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
+  signOut: () => Promise<void>;
+  register: (userData: RegisterUserData) => Promise<void>;
+  
+  updateProfile: (userData: Partial<User>) => Promise<void>;
+  
+  isAdmin: () => boolean;
+  can: (resource: string, action: string) => boolean;
+
+  // 多因素认证相关方法
+  setupMFA: (type: MFAType) => Promise<{ secret?: string, qrCode?: string }>;
+  verifyMFA: (code: string, type: MFAType) => Promise<boolean>;
+  disableMFA: (type: MFAType) => Promise<void>;
+  isMFAEnabled: () => boolean;
+  getMFAStatus: () => MFAStatus;
+
+  // 新增属性
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}
+
+export interface RegisterUserData {
+  username?: string;
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+// MFA API请求响应接口
+export interface MFAVerifyRequest {
+  code: string
+  type: MFAType
+  userId: string
+}
+
+export interface MFASetupRequest {
+  type: MFAType
+}
+
+export interface MFASetupResponse {
+  success: boolean
+  type: MFAType
+  qrCode?: string
+  secret?: string
+  message?: string
+}
+
+export interface MFADisableRequest {
+  type: MFAType
+}
+
+export interface MFASendCodeRequest {
+  type: MFAType
+  userId: string
+}
+
+export interface ApiResponse {
+  success?: boolean
+  error?: string
+  message?: string
+  details?: string
 } 

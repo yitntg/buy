@@ -266,3 +266,183 @@ docker-compose up -d
 ## 许可证
 
 MIT 
+
+## 认证和数据库系统
+
+### 认证系统
+
+本项目使用 Supabase 认证服务进行用户身份验证。认证流程包括:
+
+- 使用邮箱/密码进行登录和注册
+- JWT 令牌验证
+- 中间件保护管理员路由
+- 基于角色的权限控制
+
+主要文件:
+- `/app/context/AuthContext.tsx` - 认证上下文提供者和钩子
+- `/utils/supabase/client.ts` - 浏览器端 Supabase 客户端
+- `/utils/supabase/server.ts` - 服务器端 Supabase 客户端
+- `/middleware.ts` - 保护 /admin 路由的中间件
+
+### 数据库系统
+
+本项目使用 Supabase (PostgreSQL) 作为数据库。数据库迁移和表结构定义在 `/supabase/migrations/` 目录中。
+
+主要表结构:
+- `users` - 用户表 (由 Supabase Auth 自动管理)
+- `products` - 产品表
+- `comments` - 评论表
+- `orders` - 订单表
+
+数据访问层:
+- `/shared/infrastructure/lib/supabase.ts` - 共享 Supabase 客户端和 Prisma 兼容层
+- `/shared/infrastructure/repositories/` - 仓储模式实现
+
+### 环境变量
+
+确保配置以下环境变量:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key (可选，用于管理任务)
+```
+
+### 验证脚本
+
+项目包含两个验证脚本用于检查配置:
+
+- `npm run verify:auth` - 验证认证系统配置
+- `npm run verify:db` - 验证数据库结构
+
+## 认证系统改进记录
+
+### 问题修复总结
+
+我们对认证系统进行了全面改进，解决了以下问题：
+
+1. **统一Supabase客户端实现**
+   - 移除了多余的 `lib/supabase.ts` 实现
+   - 增强了 `utils/supabase/client.ts` 实现，添加错误检查
+   - 确保正确使用 `src/utils/supabase/server.ts` 处理服务端请求
+
+2. **统一认证逻辑**
+   - 移除了自定义API路由 `/api/auth/login` 和 `/api/auth/register`
+   - 所有认证请求直接通过Supabase Auth服务处理
+   - 确保登录页和注册页正确使用 `AuthContext` 提供的方法
+
+3. **改进路由和UI**
+   - 登录页支持 `redirect` 参数，登录后跳转到指定页面
+   - 添加错误消息显示，包括无效令牌和会话过期的处理
+   - 改进表单验证，提供更好的用户体验
+
+4. **数据库结构统一**
+   - 统一使用Supabase迁移文件管理数据库结构
+   - 创建安全的初始化脚本，不包含硬编码凭据
+   - 确保用户表、权限表和MFA表结构一致
+
+5. **添加验证工具**
+   - 添加 `verify:auth` 脚本，用于检查认证系统配置
+   - 在构建后自动运行 `init-db-safe` 脚本确保数据库结构正确
+
+### 使用指南
+
+1. **初始化数据库**
+   ```bash
+   # 本地开发环境
+   npm run init-db-local
+   
+   # 生产环境(安全模式)
+   npm run init-db-safe
+   ```
+
+2. **验证认证系统**
+   ```bash
+   npm run verify:auth
+   ```
+
+3. **开发模式运行**
+   ```bash
+   npm run dev
+   ``` 
+
+## 数据库系统改进记录
+
+### 问题分析
+
+在对应用的数据库系统进行全面检查后，发现项目同时使用了两套数据库管理技术:
+
+1. **Supabase** - 用于用户认证和基本数据存储
+2. **Prisma** - 用于评论系统、产品和订单管理
+
+这种混合使用造成了以下问题:
+- 代码重复和不一致
+- 数据同步困难
+- 增加维护成本
+- 可能引发意外错误
+
+### 改进措施
+
+我们采取了以下措施统一数据库系统:
+
+1. **清理迁移文件**
+   - 删除重复和模板迁移文件
+   - 添加结构化的表创建迁移文件
+
+2. **创建全面的数据模型**
+   - 为产品系统创建完整的表结构
+   - 为评论系统创建表结构和关系
+   - 为订单系统创建表结构和关系
+
+3. **建立数据迁移工具**
+   - 创建从Prisma到Supabase的数据迁移脚本
+   - 提供迁移验证和错误处理机制
+
+4. **增强类型定义**
+   - 扩展Supabase类型定义，覆盖所有业务实体
+   - 添加视图和函数的类型支持
+
+5. **添加数据库验证工具**
+   - 创建验证脚本检查数据库结构
+   - 提供详细的错误报告
+
+### 新增数据表和视图
+
+本次改进新增了以下数据表:
+
+- **产品相关**: `products`, `categories`, `tags`, `product_tags`
+- **评论相关**: `comments`, `comment_likes`, `comment_replies`
+- **订单相关**: `orders`, `order_items`
+
+新增的数据视图:
+
+- `comment_stats` - 提供产品评论统计信息
+- `user_order_stats` - 提供用户订单统计信息
+
+### 行级安全策略(RLS)
+
+所有表都添加了细粒度的行级安全策略，确保:
+
+- 公开数据可以被任何人读取
+- 个人数据只能被所有者访问
+- 管理员拥有适当的管理权限
+
+### 使用指南
+
+1. **初始化数据库结构**
+   ```bash
+   # 应用所有迁移文件
+   npm run init-db-safe
+   ```
+
+2. **迁移Prisma数据到Supabase**
+   ```bash
+   # 将Prisma管理的数据转移到Supabase
+   npm run migrate:prisma-to-supabase
+   ```
+
+3. **验证数据库结构**
+   ```bash
+   # 验证所有必要的表和视图是否存在
+   npm run verify:db
+   ``` 

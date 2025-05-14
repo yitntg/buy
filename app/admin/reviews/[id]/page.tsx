@@ -2,42 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/app/context/AuthContext';
+import { createClient } from '@/utils/supabase/client';
+import type { Database } from '@/types/supabase';
 
-interface Review {
-  id: string;
-  product_id: string;
-  user_id: string;
-  rating: number;
-  comment: string;
-  created_at: string;
-  status: 'pending' | 'approved' | 'rejected';
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image_url: string;
-}
+type Review = Database['public']['Tables']['reviews']['Row'];
+type Product = Database['public']['Tables']['products']['Row'];
 
 export default function ReviewDetail({ params }: { params: { id: string } }) {
-  const { user, isAuthenticated } = useAuth();
+  const { status } = useAuth();
   const router = useRouter();
+  const supabase = createClient();
   const [review, setReview] = useState<Review | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (status !== 'authenticated') {
       router.push('/login');
       return;
     }
 
     loadReview();
-  }, [isAuthenticated, router, params.id]);
+  }, [status, router, params.id]);
 
   const loadReview = async () => {
     try {
@@ -125,7 +113,7 @@ export default function ReviewDetail({ params }: { params: { id: string } }) {
               <h2 className="text-lg font-semibold mb-2">Product</h2>
               <div className="flex items-center space-x-4">
                 <img
-                  src={product.image_url}
+                  src={product.image_url || ''}
                   alt={product.name}
                   className="w-16 h-16 object-cover rounded"
                 />

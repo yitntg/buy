@@ -25,11 +25,13 @@ export const errorHandler = (
     });
   }
 
-  // 处理 Prisma 错误
-  if (err.name === 'PrismaClientKnownRequestError') {
+  // 处理 Supabase 错误
+  if (err.message && err.message.includes('Supabase') || 
+      (err as any).code === 'PGRST') {
     return res.status(400).json({
       status: 'error',
-      message: '数据库操作失败'
+      message: '数据库操作失败',
+      ...(process.env.NODE_ENV === 'development' && { details: err.message })
     });
   }
 

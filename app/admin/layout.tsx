@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LayoutDashboard, ShoppingBag, Users } from 'lucide-react'
-import { AuthProvider, useAuth } from '@/context/AuthContext'
+import { AuthProvider, useAuth } from '@/app/context/AuthContext'
 import { AuthStatus, UserRole } from '@/types/auth'
 
 export default function AdminLayout({
