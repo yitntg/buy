@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPaymentIntent } from '@/lib/airwallex'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/shared/infrastructure/lib/supabase'
 
 /**
  * 更新订单状态

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/shared/infrastructure/lib/supabase'
 
 // 获取单个评论
 export async function GET(

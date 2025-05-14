@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/shared/infrastructure/lib/supabase'
 
 // 创建订单表（如果不存在）
 async function ensureOrdersTableExists() {

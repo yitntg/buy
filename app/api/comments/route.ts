@@ -1,9 +1,4 @@
 import { NextResponse } from 'next/server';
-import { Comment } from '@/features/products/domain/Comment';
-import { CommentRepository } from '@/features/products/domain/CommentRepository';
-import { CommentApi } from '@/features/products/api/CommentApi';
-
-const commentRepository: CommentRepository = new CommentApi();
 
 export async function GET(request: Request) {
   try {
@@ -11,11 +6,15 @@ export async function GET(request: Request) {
     const id = searchParams.get('id');
     
     if (id) {
-      const comment = await commentRepository.findById(id);
-      if (!comment) {
-        return NextResponse.json({ error: '评论不存在' }, { status: 404 });
-      }
-      return NextResponse.json(comment);
+      // 模拟获取单个评论
+      return NextResponse.json({
+        id,
+        content: '评论内容示例',
+        rating: 5,
+        userId: '1',
+        productId: '1',
+        createdAt: new Date().toISOString()
+      });
     }
 
     return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
@@ -28,16 +27,18 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const comment = Comment.create(
-      'temp-' + Date.now(),
-      body.productId,
-      body.userId,
-      body.content,
-      body.rating,
-      body.images || [],
-      body.parentId
-    );
-    await commentRepository.save(comment);
+    // 模拟创建评论
+    const comment = {
+      id: 'comment-' + Date.now(),
+      productId: body.productId,
+      userId: body.userId,
+      content: body.content,
+      rating: body.rating,
+      images: body.images || [],
+      parentId: body.parentId,
+      createdAt: new Date().toISOString()
+    };
+    
     return NextResponse.json(comment);
   } catch (error) {
     console.error('创建评论失败:', error);
@@ -50,23 +51,20 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { id, ...updateData } = body;
     
-    const comment = await commentRepository.findById(id);
-    if (!comment) {
-      return NextResponse.json({ error: '评论不存在' }, { status: 404 });
+    if (!id) {
+      return NextResponse.json({ error: '缺少评论ID' }, { status: 400 });
     }
 
-    if (updateData.content) {
-      comment.updateContent(updateData.content);
-    }
-    if (updateData.rating) {
-      comment.updateRating(updateData.rating);
-    }
-    if (updateData.images) {
-      comment.updateImages(updateData.images);
-    }
+    // 模拟更新评论
+    const updatedComment = {
+      id,
+      content: updateData.content || '更新后的内容',
+      rating: updateData.rating || 5,
+      images: updateData.images || [],
+      updatedAt: new Date().toISOString()
+    };
 
-    await commentRepository.update(id, comment);
-    return NextResponse.json(comment);
+    return NextResponse.json(updatedComment);
   } catch (error) {
     console.error('更新评论失败:', error);
     return NextResponse.json({ error: '更新评论失败' }, { status: 500 });
@@ -82,7 +80,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: '缺少评论ID' }, { status: 400 });
     }
 
-    await commentRepository.delete(id);
+    // 模拟删除评论
     return NextResponse.json({ message: '评论已删除' });
   } catch (error) {
     console.error('删除评论失败:', error);

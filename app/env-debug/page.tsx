@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/shared/infrastructure/lib/supabase'
 
 // 定义类型
 interface SupabaseData {

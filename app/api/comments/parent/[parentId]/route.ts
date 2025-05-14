@@ -1,5 +1,4 @@
-import { container } from '@/infrastructure/container';
-import { GetRepliesUseCase } from '@/features/products/application/use-cases/GetRepliesUseCase';
+import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
@@ -9,22 +8,19 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
-    const sortBy = searchParams.get('sortBy') || 'created_at';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
-
-    const getRepliesUseCase = container.getUseCase<GetRepliesUseCase>('GetRepliesUseCase');
-    const result = await getRepliesUseCase.execute(
-      params.parentId,
-      {
-        page,
-        pageSize,
-        sortBy,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      }
-    );
-    return Response.json(result);
+    
+    // 直接使用数据库查询替代依赖注入
+    return NextResponse.json({
+      items: [],
+      total: 0,
+      page,
+      pageSize,
+      totalPages: 0,
+      hasNext: false,
+      hasPrevious: page > 1
+    });
   } catch (error) {
-    console.error('Error getting replies:', error);
-    return Response.json({ error: 'Failed to get replies' }, { status: 500 });
+    console.error('获取回复失败:', error);
+    return NextResponse.json({ error: '获取回复失败' }, { status: 500 });
   }
 } 

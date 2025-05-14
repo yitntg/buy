@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { ThemeSettingsPreview, SpecificSettingPreview } from '@/app/components/ThemeSettingsPreview';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/shared/infrastructure/lib/supabase';
 
 // 移除本地revalidate配置，依赖layout中的全局设置
 // export const revalidate = 0;

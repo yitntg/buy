@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/shared/infrastructure/lib/supabase';
 
 // 移除本地revalidate配置，依赖layout中的全局设置
 // export const dynamic = 'force-dynamic'

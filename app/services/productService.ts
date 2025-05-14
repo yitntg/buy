@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/shared/infrastructure/lib/supabase'
 import { fetchWithRetry, fetchWithTimeout } from '@/lib/timeout'
 
 // 定义商品类型接口
