@@ -5,6 +5,14 @@ const { execSync } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 
+// 定义简单的日志着色函数
+const log = {
+  green: (text) => `\x1b[32m${text}\x1b[0m`,
+  red: (text) => `\x1b[31m${text}\x1b[0m`,
+  yellow: (text) => `\x1b[33m${text}\x1b[0m`,
+  blue: (text) => `\x1b[34m${text}\x1b[0m`
+};
+
 // 加载环境变量
 dotenv.config();
 
@@ -14,10 +22,10 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // 确保环境变量存在
 if (!supabaseUrl || !supabaseKey) {
-  console.error('错误: 缺少必要的环境变量');
-  console.error('请确保以下环境变量已设置:');
-  console.error('- NEXT_PUBLIC_SUPABASE_URL');
-  console.error('- SUPABASE_SERVICE_ROLE_KEY');
+  console.error(log.red('错误: 缺少必要的环境变量'));
+  console.error(log.red('请确保以下环境变量已设置:'));
+  console.error(log.red('- NEXT_PUBLIC_SUPABASE_URL'));
+  console.error(log.red('- SUPABASE_SERVICE_ROLE_KEY'));
   process.exit(1);
 }
 
@@ -30,11 +38,11 @@ const migrationsDir = path.join(__dirname, '..', 'supabase', 'migrations');
 // 迁移文件按正确顺序执行 - 自动扫描目录并排序
 async function applyMigrations() {
   try {
-    console.log('开始应用数据库迁移...');
+    console.log(log.blue('开始应用数据库迁移...'));
     
     // 1. 首先确保迁移文件目录存在
     if (!fs.existsSync(migrationsDir)) {
-      console.error(`错误: 迁移文件目录 ${migrationsDir} 不存在`);
+      console.error(log.red(`错误: 迁移文件目录 ${migrationsDir} 不存在`));
       process.exit(1);
     }
     
@@ -49,7 +57,7 @@ async function applyMigrations() {
       });
     
     if (migrationFiles.length === 0) {
-      console.log('没有找到迁移文件');
+      console.log(log.yellow('没有找到迁移文件'));
       return;
     }
     
@@ -64,7 +72,7 @@ async function applyMigrations() {
       
     // 如果迁移表不存在，创建它
     if (schemaError && schemaError.code === 'PGRST116') {
-      console.log('创建迁移记录表...');
+      console.log(log.blue('创建迁移记录表...'));
       
       await supabase.rpc('exec_sql', {
         query: `
@@ -84,7 +92,7 @@ async function applyMigrations() {
       .order('id', { ascending: true });
       
     if (error) {
-      console.error('获取已应用迁移记录出错:', error);
+      console.error(log.red('获取已应用迁移记录出错:'), error);
       process.exit(1);
     }
     
@@ -97,11 +105,11 @@ async function applyMigrations() {
     
     for (const file of migrationFiles) {
       if (appliedSet.has(file)) {
-        console.log(`已跳过: ${file}`);
+        console.log(log.yellow(`已跳过: ${file}`));
         continue;
       }
       
-      console.log(`应用迁移: ${file}`);
+      console.log(log.blue(`应用迁移: ${file}`));
       const filePath = path.join(migrationsDir, file);
       const sql = fs.readFileSync(filePath, 'utf8');
       
@@ -114,41 +122,45 @@ async function applyMigrations() {
           .from('migrations')
           .insert({ name: file });
           
-        console.log(`✅ 成功: ${file}`);
+        console.log(log.green(`✅ 成功: ${file}`));
         successCount++;
       } catch (sqlError) {
-        console.error(`❌ 失败: ${file}`);
-        console.error('错误详情:', sqlError);
+        console.error(log.red(`❌ 失败: ${file}`));
+        console.error(log.red('错误详情:'), sqlError);
         failCount++;
         
         // 如果使用了--strict标志，则在遇到错误时停止
         if (process.argv.includes('--strict')) {
-          console.error('由于使用了--strict标志，停止迁移过程');
+          console.error(log.red('由于使用了--strict标志，停止迁移过程'));
           process.exit(1);
         }
       }
     }
     
     // 5. 输出结果摘要
-    console.log('\n迁移完成!');
+    console.log(log.blue('\n迁移完成!'));
     console.log(`总共: ${migrationFiles.length}`);
     console.log(`跳过: ${appliedSet.size}`);
-    console.log(`成功: ${successCount}`);
-    console.log(`失败: ${failCount}`);
+    console.log(log.green(`成功: ${successCount}`));
+    if (failCount > 0) {
+      console.log(log.red(`失败: ${failCount}`));
+    } else {
+      console.log(`失败: ${failCount}`);
+    }
     
     if (failCount > 0) {
-      console.error('有迁移失败，请检查错误信息');
+      console.error(log.red('有迁移失败，请检查错误信息'));
       process.exit(1);
     }
     
   } catch (error) {
-    console.error('迁移过程中发生错误:', error);
+    console.error(log.red('迁移过程中发生错误:'), error);
     process.exit(1);
   }
 }
 
 // 执行迁移
 applyMigrations().catch(err => {
-  console.error('运行迁移时出错:', err);
+  console.error(log.red('运行迁移时出错:'), err);
   process.exit(1);
 }); 

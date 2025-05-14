@@ -3,7 +3,14 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
-const chalk = require('chalk') || { green: (t) => t, red: (t) => t, yellow: (t) => t, blue: (t) => t };
+
+// 定义一个简单的 chalk 替代
+const log = {
+  green: (text) => `\x1b[32m${text}\x1b[0m`,
+  red: (text) => `\x1b[31m${text}\x1b[0m`,
+  yellow: (text) => `\x1b[33m${text}\x1b[0m`,
+  blue: (text) => `\x1b[34m${text}\x1b[0m`
+};
 
 // 加载环境变量
 dotenv.config();
@@ -14,7 +21,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 
 // 检查必要的环境变量
 if (!supabaseUrl || !supabaseKey) {
-  console.warn(chalk.yellow('警告: 缺少Supabase环境变量，跳过存储初始化'));
+  console.warn(log.yellow('警告: 缺少Supabase环境变量，跳过存储初始化'));
   process.exit(0);
 }
 
@@ -52,18 +59,18 @@ const storageBuckets = [
 
 // 主函数
 async function main() {
-  console.log(chalk.blue('=== 初始化Supabase存储 ==='));
+  console.log(log.blue('=== 初始化Supabase存储 ==='));
   
   // 检查连接
   try {
     const { data: health, error } = await supabase.rpc('heartbeat');
     
     if (error) {
-      console.warn(chalk.yellow(`警告: 无法连接到Supabase，跳过存储初始化: ${error.message}`));
+      console.warn(log.yellow(`警告: 无法连接到Supabase，跳过存储初始化: ${error.message}`));
       return;
     }
   } catch (error) {
-    console.warn(chalk.yellow(`警告: 连接Supabase出错，跳过存储初始化: ${error.message}`));
+    console.warn(log.yellow(`警告: 连接Supabase出错，跳过存储初始化: ${error.message}`));
     return;
   }
   
@@ -73,9 +80,9 @@ async function main() {
   const { data: existingBuckets, error: bucketsError } = await supabase.storage.listBuckets();
   
   if (bucketsError) {
-    console.error(chalk.red(`无法获取存储桶列表: ${bucketsError.message}`));
+    console.error(log.red(`无法获取存储桶列表: ${bucketsError.message}`));
     // 如果是因为权限问题，我们继续运行，不要中断
-    console.warn(chalk.yellow('这可能是权限问题，跳过存储桶创建'));
+    console.warn(log.yellow('这可能是权限问题，跳过存储桶创建'));
     return;
   }
   
@@ -94,16 +101,16 @@ async function main() {
         });
         
         if (error) {
-          console.error(chalk.red(`创建存储桶 ${bucket.name} 失败: ${error.message}`));
+          console.error(log.red(`创建存储桶 ${bucket.name} 失败: ${error.message}`));
           continue;
         }
         
-        console.log(chalk.green(`✓ 创建存储桶 ${bucket.name} 成功`));
+        console.log(log.green(`✓ 创建存储桶 ${bucket.name} 成功`));
       } catch (error) {
-        console.error(chalk.red(`创建存储桶时出错: ${error.message}`));
+        console.error(log.red(`创建存储桶时出错: ${error.message}`));
       }
     } else {
-      console.log(chalk.green(`✓ 存储桶 ${bucket.name} 已存在`));
+      console.log(log.green(`✓ 存储桶 ${bucket.name} 已存在`));
     }
     
     // 为每个存储桶创建文件夹结构
@@ -118,21 +125,21 @@ async function main() {
           });
           
         if (error && error.message !== 'The resource already exists') {
-          console.warn(chalk.yellow(`创建文件夹 ${bucket.name}/${folder} 失败: ${error.message}`));
+          console.warn(log.yellow(`创建文件夹 ${bucket.name}/${folder} 失败: ${error.message}`));
         } else {
-          console.log(chalk.green(`✓ 文件夹 ${bucket.name}/${folder} 已就绪`));
+          console.log(log.green(`✓ 文件夹 ${bucket.name}/${folder} 已就绪`));
         }
       } catch (error) {
-        console.warn(chalk.yellow(`创建文件夹结构时出错: ${error.message}`));
+        console.warn(log.yellow(`创建文件夹结构时出错: ${error.message}`));
       }
     }
   }
   
-  console.log(chalk.green('\n存储初始化完成！'));
+  console.log(log.green('\n存储初始化完成！'));
 }
 
 // 执行主函数
 main().catch(err => {
-  console.error(chalk.red('初始化过程中出现未捕获的错误:'), err);
+  console.error(log.red('初始化过程中出现未捕获的错误:'), err);
   // 不要中断构建过程
 }); 

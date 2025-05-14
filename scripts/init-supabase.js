@@ -3,9 +3,16 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
-const chalk = require('chalk') || { green: (t) => t, red: (t) => t, yellow: (t) => t, blue: (t) => t };
 const fs = require('fs');
 const path = require('path');
+
+// 定义简单的日志着色函数
+const log = {
+  green: (text) => `\x1b[32m${text}\x1b[0m`,
+  red: (text) => `\x1b[31m${text}\x1b[0m`,
+  yellow: (text) => `\x1b[33m${text}\x1b[0m`,
+  blue: (text) => `\x1b[34m${text}\x1b[0m`
+};
 
 // 加载环境变量
 dotenv.config();
@@ -16,10 +23,10 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 
 // 检查必要的环境变量
 if (!supabaseUrl || !supabaseKey) {
-  console.error(chalk.red('错误: 缺少必要的环境变量'));
-  console.error(chalk.red('请确保以下环境变量已设置:'));
-  console.error(chalk.red('- NEXT_PUBLIC_SUPABASE_URL'));
-  console.error(chalk.red('- SUPABASE_SERVICE_ROLE_KEY 或 NEXT_PUBLIC_SUPABASE_ANON_KEY'));
+  console.error(log.red('错误: 缺少必要的环境变量'));
+  console.error(log.red('请确保以下环境变量已设置:'));
+  console.error(log.red('- NEXT_PUBLIC_SUPABASE_URL'));
+  console.error(log.red('- SUPABASE_SERVICE_ROLE_KEY 或 NEXT_PUBLIC_SUPABASE_ANON_KEY'));
   process.exit(1);
 }
 
@@ -33,7 +40,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 
 // 主函数
 async function main() {
-  console.log(chalk.blue('=== 初始化Supabase数据库 ==='));
+  console.log(log.blue('=== 初始化Supabase数据库 ==='));
   
   // 检查连接
   console.log('检查Supabase连接...');
@@ -41,13 +48,13 @@ async function main() {
     const { data: health, error } = await supabase.rpc('heartbeat');
     
     if (error) {
-      console.error(chalk.red(`无法连接到Supabase: ${error.message}`));
+      console.error(log.red(`无法连接到Supabase: ${error.message}`));
       process.exit(1);
     }
     
-    console.log(chalk.green(`✓ 连接成功`));
+    console.log(log.green(`✓ 连接成功`));
   } catch (error) {
-    console.error(chalk.red(`连接Supabase出错: ${error.message}`));
+    console.error(log.red(`连接Supabase出错: ${error.message}`));
     process.exit(1);
   }
   
@@ -58,21 +65,21 @@ async function main() {
   if (process.env.NODE_ENV !== 'production') {
     await createSampleData();
   } else {
-    console.log(chalk.yellow('跳过示例数据创建（生产环境）'));
+    console.log(log.yellow('跳过示例数据创建（生产环境）'));
   }
   
-  console.log(chalk.green('\n数据库初始化完成！'));
+  console.log(log.green('\n数据库初始化完成！'));
 }
 
 // 执行迁移脚本
 async function runMigrations() {
-  console.log(chalk.blue('\n运行数据库迁移...'));
+  console.log(log.blue('\n运行数据库迁移...'));
   
   const migrationsDir = path.join(__dirname, '..', 'supabase', 'migrations');
   
   // 检查目录是否存在
   if (!fs.existsSync(migrationsDir)) {
-    console.error(chalk.red(`迁移目录不存在: ${migrationsDir}`));
+    console.error(log.red(`迁移目录不存在: ${migrationsDir}`));
     return;
   }
   
@@ -82,7 +89,7 @@ async function runMigrations() {
     .sort(); // 保证按文件名顺序执行
   
   if (migrationFiles.length === 0) {
-    console.log(chalk.yellow('没有找到迁移文件'));
+    console.log(log.yellow('没有找到迁移文件'));
     return;
   }
   
@@ -99,20 +106,20 @@ async function runMigrations() {
       const { error } = await supabase.rpc('exec_sql', { query: sql });
       
       if (error) {
-        console.error(chalk.red(`执行迁移 ${file} 失败: ${error.message}`));
+        console.error(log.red(`执行迁移 ${file} 失败: ${error.message}`));
         continue;
       }
       
-      console.log(chalk.green(`✓ 迁移 ${file} 成功`));
+      console.log(log.green(`✓ 迁移 ${file} 成功`));
     } catch (error) {
-      console.error(chalk.red(`执行迁移 ${file} 出错: ${error.message}`));
+      console.error(log.red(`执行迁移 ${file} 出错: ${error.message}`));
     }
   }
 }
 
 // 创建示例数据
 async function createSampleData() {
-  console.log(chalk.blue('\n创建示例数据...'));
+  console.log(log.blue('\n创建示例数据...'));
   
   // 检查是否已存在数据
   const { count, error } = await supabase
@@ -120,12 +127,12 @@ async function createSampleData() {
     .select('*', { count: 'exact', head: true });
   
   if (error) {
-    console.error(chalk.red(`检查产品表失败: ${error.message}`));
+    console.error(log.red(`检查产品表失败: ${error.message}`));
     return;
   }
   
   if (count > 0) {
-    console.log(chalk.yellow('产品表已包含数据，跳过示例数据创建'));
+    console.log(log.yellow('产品表已包含数据，跳过示例数据创建'));
     return;
   }
   
@@ -175,14 +182,14 @@ async function createSampleData() {
     .insert(products);
   
   if (productsError) {
-    console.error(chalk.red(`创建示例产品失败: ${productsError.message}`));
+    console.error(log.red(`创建示例产品失败: ${productsError.message}`));
   } else {
-    console.log(chalk.green(`✓ 创建了 ${products.length} 个示例产品`));
+    console.log(log.green(`✓ 创建了 ${products.length} 个示例产品`));
   }
 }
 
 // 执行主函数
 main().catch(err => {
-  console.error(chalk.red('初始化过程中出现未捕获的错误:'), err);
+  console.error(log.red('初始化过程中出现未捕获的错误:'), err);
   process.exit(1);
 }); 
