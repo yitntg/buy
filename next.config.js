@@ -13,6 +13,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ['postgres'],
     // 启用自定义src目录
     externalDir: true,
+    esmExternals: 'loose',
   },
   typescript: {
     // 忽略类型错误，确保构建成功
@@ -69,13 +70,15 @@ const nextConfig = {
   },
   
   // 添加webpack配置以支持路径别名
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@/src': path.join(__dirname, 'src'),
       '@/customer': path.join(__dirname, 'src/customer'),
       '@/admin': path.join(__dirname, 'src/admin'),
       '@/shared': path.join(__dirname, 'src/shared'),
+      // 为缺失的rc-util模块提供别名
+      'rc-util/es/Dom/canUseDom': require.resolve('./polyfills/canUseDom.js'),
     };
     return config;
   },
