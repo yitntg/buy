@@ -79,7 +79,16 @@ const nextConfig = {
       '@/shared': path.join(__dirname, 'src/shared'),
       // 为缺失的rc-util模块提供别名 - 使用ESM兼容的路径
       'rc-util/es/Dom/canUseDom': path.join(__dirname, 'polyfills/canUseDom.js'),
+      'rc-util/es/React/isFragment': path.join(__dirname, 'polyfills/isFragment.js'),
+      'rc-util/es/Children/toArray': path.join(__dirname, 'polyfills/toArray.js')
     };
+    
+    // 禁用严格ESM检查
+    config.module = {
+      ...config.module,
+      strictExportPresence: false,
+    };
+    
     return config;
   },
 };
