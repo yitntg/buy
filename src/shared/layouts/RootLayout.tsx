@@ -2,7 +2,6 @@
 
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
 import { CartProvider } from '@/shared/contexts/CartContext'
 import { AuthProvider } from '@/shared/contexts/AuthContext'
 import { ThemeProvider } from '@/shared/contexts/ThemeContext'
