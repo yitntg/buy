@@ -3,13 +3,17 @@
  */
 
 // 将价格格式化为货币显示（默认人民币）
-export function formatCurrency(amount: number, locale = 'zh-CN', currency = 'CNY'): string {
+export function formatCurrency(
+  value: number,
+  locale: string = 'zh-CN',
+  currency: string = 'CNY'
+): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(amount);
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
 // 将分为单位的价格转换为元
@@ -27,26 +31,17 @@ export function convertYuanToCents(yuan: number): number {
  */
 
 // 格式化日期为本地字符串
-export function formatDate(dateString: string, locale = 'zh-CN'): string {
-  if (!dateString) return '';
+export function formatDate(
+  date: Date | string,
+  locale: string = 'zh-CN'
+): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
   
-  try {
-    const date = new Date(dateString);
-    
-    // 检查日期是否有效
-    if (isNaN(date.getTime())) {
-      return '';
-    }
-    
-    return new Intl.DateTimeFormat(locale, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
-  } catch (e) {
-    console.error('日期格式化错误:', e);
-    return '';
-  }
+  return new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(dateObj);
 }
 
 // 格式化日期为相对时间（如"3天前"）
@@ -94,7 +89,10 @@ export function formatRelativeTime(dateString: string, locale = 'zh-CN'): string
 
 // 截断文本并添加省略号
 export function truncateText(text: string, maxLength: number): string {
-  if (!text || text.length <= maxLength) return text;
+  if (text.length <= maxLength) {
+    return text;
+  }
+  
   return text.slice(0, maxLength) + '...';
 }
 
@@ -176,4 +174,19 @@ export function formatAddress(address: {
   ].filter(Boolean);
   
   return parts.join(', ') + (address.postalCode ? ` (${address.postalCode})` : '');
+}
+
+/**
+ * 格式化商品数量文本显示
+ * @param count 数量
+ * @returns 格式化后的文本
+ */
+export function formatItemCount(count: number): string {
+  if (count <= 0) {
+    return '无库存';
+  } else if (count < 10) {
+    return `仅剩 ${count} 件`;
+  } else {
+    return `库存 ${count} 件`;
+  }
 } 

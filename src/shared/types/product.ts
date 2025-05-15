@@ -4,27 +4,57 @@
 
 // 基础产品类型
 export interface Product {
-  id: string | number
-  name: string
-  description: string
-  price: number
-  image?: string
-  images?: string[]  // 添加多图片支持
-  category: number | string
-  inventory?: number
-  stock?: number // 添加库存字段
-  rating?: number
-  reviews?: number
-  created_at?: string
-  updated_at?: string
-  createdAt?: string
-  updatedAt?: string
-  brand?: string
-  model?: string
-  specifications?: Record<string, string | number>
-  free_shipping?: boolean
-  returnable?: boolean
-  warranty?: boolean
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  images?: string[];
+  category: string;
+  stock: number;
+  created_at: string;
+  updated_at?: string;
+  brand?: string;
+  tags?: string[];
+  discount?: number;
+  rating?: number;
+  reviews_count?: number;
+  specifications?: Record<string, string | number | boolean>;
+  variants?: ProductVariant[];
+  is_featured?: boolean;
+  is_new?: boolean;
+  quantity?: number; // 购物车中的数量
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  price?: number;
+  stock?: number;
+  options: Record<string, string | number>;
+  images?: string[];
+}
+
+export interface ReviewInput {
+  product_id: string;
+  rating: number;
+  content: string;
+  title?: string;
+  images?: string[];
+}
+
+export interface Review {
+  id: string;
+  product_id: string;
+  user_id: string;
+  user_name: string;
+  rating: number;
+  title?: string;
+  content: string;
+  images?: string[];
+  created_at: string;
+  updated_at?: string;
+  likes_count: number;
+  is_verified_purchase: boolean;
 }
 
 // 带收藏状态的产品（用户端）
