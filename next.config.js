@@ -71,9 +71,6 @@ const nextConfig = {
     };
     return config;
   },
-
-  // 指定app和pages目录的位置
-  dir: 'src',
 }
 
 module.exports = nextConfig 
