@@ -2,6 +2,7 @@ import { supabase } from '@/shared/utils/supabase/client';
 import { Order, OrderStatus, OrderHistory } from '@/shared/types/order';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/shared/types/supabase';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 // 查询类型定义辅助类型
 type OrdersQuery = ReturnType<SupabaseClient<Database>['from']> extends {
@@ -508,5 +509,117 @@ export async function getOrderStats(): Promise<{
       data: null,
       error: error instanceof Error ? error.message : '发生未知错误'
     };
+  }
+}
+
+/**
+ * 处理订单API请求
+ * @param req 请求对象
+ * @param res 响应对象
+ */
+export async function handleOrdersRequest(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    // 根据HTTP方法执行不同操作
+    switch (req.method) {
+      case 'GET':
+        // 处理获取订单列表
+        if (req.query.id) {
+          // 获取单个订单详情
+          const { data, error } = await getOrderById(req.query.id as string);
+          if (error) return res.status(500).json({ error });
+          return res.status(200).json(data);
+        } else if (req.query.stats === 'true') {
+          // 获取订单统计数据
+          const { data, error } = await getOrderStats();
+          if (error) return res.status(500).json({ error });
+          return res.status(200).json(data);
+        } else {
+          // 获取订单列表
+          const paginationParams = {
+            page: req.query.page ? Number(req.query.page) : 1,
+            limit: req.query.limit ? Number(req.query.limit) : 20
+          };
+          
+          const filterParams = {
+            status: req.query.status as OrderStatus | undefined,
+            user_id: req.query.user_id as string | undefined,
+            search: req.query.search as string | undefined,
+            date_from: req.query.date_from as string | undefined,
+            date_to: req.query.date_to as string | undefined,
+            sort_by: req.query.sort_by as string | undefined,
+            min_total: req.query.min_total ? Number(req.query.min_total) : undefined,
+            max_total: req.query.max_total ? Number(req.query.max_total) : undefined
+          };
+          
+          const { data, count, error } = await getOrders(paginationParams, filterParams);
+          if (error) return res.status(500).json({ error });
+          return res.status(200).json({ orders: data, total: count });
+        }
+        
+      case 'POST':
+        // 创建新订单
+        if (!req.body || !req.body.user_id || !req.body.items) {
+          return res.status(400).json({ error: '无效的订单数据' });
+        }
+        
+        // 实际项目应实现创建订单逻辑
+        return res.status(501).json({ error: '功能未实现' });
+        
+      case 'PUT':
+        if (!req.query.id) {
+          return res.status(400).json({ error: '未指定订单ID' });
+        }
+        
+        const orderId = req.query.id as string;
+        
+        // 更新订单状态
+        if (req.body.status) {
+          const { data, error } = await updateOrderStatus(
+            orderId,
+            req.body.status as OrderStatus,
+            req.body.comment
+          );
+          if (error) return res.status(500).json({ error });
+          return res.status(200).json(data);
+        }
+        
+        // 更新追踪信息
+        if (req.body.tracking_number) {
+          const { data, error } = await updateOrderTracking(
+            orderId,
+            req.body.tracking_number,
+            req.body.estimated_delivery
+          );
+          if (error) return res.status(500).json({ error });
+          return res.status(200).json(data);
+        }
+        
+        // 更新订单备注
+        if (req.body.notes) {
+          const { data, error } = await addOrderNotes(
+            orderId,
+            req.body.notes
+          );
+          if (error) return res.status(500).json({ error });
+          return res.status(200).json(data);
+        }
+        
+        return res.status(400).json({ error: '未指定要更新的字段' });
+        
+      case 'DELETE':
+        // 删除订单（可能是假删除，将状态设置为"已删除"）
+        if (!req.query.id) {
+          return res.status(400).json({ error: '未指定订单ID' });
+        }
+        
+        // 实际项目应实现删除或归档订单的逻辑
+        return res.status(501).json({ error: '功能未实现' });
+        
+      default:
+        return res.status(405).json({ error: '方法不允许' });
+    }
+  } catch (error) {
+    console.error('订单API错误:', error);
+    return res.status(500).json({ error: '服务器内部错误' });
   }
 }

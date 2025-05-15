@@ -615,4 +615,6 @@ export function UsersPage() {
       {/* 这里可以添加用户详情模态框 */}
     </div>
   );
-} 
+}
+
+export default UsersPage; 

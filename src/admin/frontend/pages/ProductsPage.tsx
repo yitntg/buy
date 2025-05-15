@@ -507,4 +507,6 @@ export function ProductsPage() {
       {/* 这里可以添加产品新增和编辑的模态框 */}
     </div>
   );
-} 
+}
+
+export default ProductsPage; 

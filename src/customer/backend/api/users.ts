@@ -3,6 +3,7 @@ import { User } from '@/shared/types/auth';
 import { ShippingAddress } from '@/shared/types/order';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/shared/types/supabase';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 // 查询类型定义辅助类型
 type UsersQuery = ReturnType<SupabaseClient<Database>['from']> extends {
@@ -313,5 +314,21 @@ export async function deleteUserAddress(
       success: false,
       error: error instanceof Error ? error.message : '发生未知错误'
     };
+  }
+}
+
+/**
+ * 处理客户用户API请求
+ * @param req 请求对象
+ * @param res 响应对象
+ */
+export async function handleUserRequest(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    // 这里应该根据请求方法和查询参数调用相应的客户用户管理函数
+    // 目前返回一个临时响应
+    return res.status(200).json({ message: '客户用户API功能正在开发中' });
+  } catch (error) {
+    console.error('客户用户API错误:', error);
+    return res.status(500).json({ error: '服务器内部错误' });
   }
 } 

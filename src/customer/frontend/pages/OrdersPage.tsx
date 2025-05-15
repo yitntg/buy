@@ -391,4 +391,6 @@ export function OrdersPage() {
       </main>
     </div>
   );
-} 
+}
+
+export default OrdersPage; 

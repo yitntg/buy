@@ -396,4 +396,6 @@ function getMockRelatedProducts(excludeId: string, count: number): Product[] {
     rating: Math.floor(Math.random() * 5) + 1,
     reviews: Math.floor(Math.random() * 50) + 5
   }));
-} 
+}
+
+export default ProductDetailPage; 

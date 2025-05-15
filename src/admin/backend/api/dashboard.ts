@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/utils/supabase/client';
 import { OrderStatus } from '@/shared/types/order';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 // 销售数据按日接口
 interface DailySales {
@@ -381,5 +382,30 @@ export async function getDashboardStats(
       data: null,
       error: error instanceof Error ? error.message : '发生未知错误'
     };
+  }
+}
+
+/**
+ * 处理仪表盘API请求
+ * @param req 请求对象
+ * @param res 响应对象
+ */
+export async function handleDashboardRequest(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: '方法不允许' });
+  }
+
+  try {
+    const timeRange = req.query.timeRange as TimeRange || 'week';
+    const result = await getDashboardStats(timeRange);
+    
+    if (result.error) {
+      return res.status(500).json({ error: result.error });
+    }
+    
+    return res.status(200).json(result.data);
+  } catch (error) {
+    console.error('仪表盘API错误:', error);
+    return res.status(500).json({ error: '服务器内部错误' });
   }
 } 

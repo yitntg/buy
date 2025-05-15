@@ -575,4 +575,6 @@ export function OrdersPage() {
       {/* 这里可以添加订单详情模态框 */}
     </div>
   );
-} 
+}
+
+export default OrdersPage; 

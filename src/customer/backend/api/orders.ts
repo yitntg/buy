@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/shared/infrastructure/lib/supabase'
+import { NextApiRequest, NextApiResponse } from 'next'
 
 // 订单明细项接口
 interface OrderItem {
@@ -328,5 +329,21 @@ export async function DELETE(request: NextRequest) {
       { error: `删除订单失败: ${error.message}` },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * 处理客户订单API请求
+ * @param req 请求对象
+ * @param res 响应对象
+ */
+export async function handleOrdersRequest(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    // 这里应该根据请求方法和查询参数调用相应的客户订单管理函数
+    // 目前返回一个临时响应
+    return res.status(200).json({ message: '客户订单API功能正在开发中' });
+  } catch (error) {
+    console.error('客户订单API错误:', error);
+    return res.status(500).json({ error: '服务器内部错误' });
   }
 } 

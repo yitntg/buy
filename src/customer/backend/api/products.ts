@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/shared/infrastructure/lib/supabase'
+import { NextApiRequest, NextApiResponse } from 'next'
 
 // 定义Product接口
 interface Product {
@@ -157,5 +158,21 @@ export async function POST(request: NextRequest) {
       { error: `创建产品失败: ${error.message}` },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * 处理客户产品API请求
+ * @param req 请求对象
+ * @param res 响应对象
+ */
+export async function handleProductsRequest(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    // 这里应该根据请求方法和查询参数调用相应的客户产品查看函数
+    // 目前返回一个临时响应
+    return res.status(200).json({ message: '客户产品API功能正在开发中' });
+  } catch (error) {
+    console.error('客户产品API错误:', error);
+    return res.status(500).json({ error: '服务器内部错误' });
   }
 } 

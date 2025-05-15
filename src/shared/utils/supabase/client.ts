@@ -15,6 +15,9 @@ export function createClient() {
   );
 }
 
+// 创建并导出supabase客户端实例
+export const supabase = createClient();
+
 export function getImageUrl(bucket: string, path: string): string {
   if (!path) return '';
   
