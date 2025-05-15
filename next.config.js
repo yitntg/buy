@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
@@ -41,7 +43,34 @@ const nextConfig = {
   // 应用特定配置
   distDir: '.next',
   trailingSlash: false,
-  skipTrailingSlashRedirect: false
+  skipTrailingSlashRedirect: false,
+  
+  // 自定义favicon位置 (新增)
+  async headers() {
+    return [
+      {
+        source: '/favicon.ico',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
+  },
+  
+  // 添加webpack配置以支持路径别名
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@/src': path.join(__dirname, 'src'),
+      '@/customer': path.join(__dirname, 'src/customer'),
+      '@/admin': path.join(__dirname, 'src/admin'),
+      '@/shared': path.join(__dirname, 'src/shared'),
+    };
+    return config;
+  },
 }
 
 module.exports = nextConfig 

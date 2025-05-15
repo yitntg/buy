@@ -21,10 +21,10 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@/context/*": ["./context/*"],
-      "@/services/*": ["./services/*"],
-      "@/types/*": ["./types/*"],
-      "@/utils/*": ["./utils/*"]
+      "@/src/*": ["./src/*"],
+      "@/customer/*": ["./src/customer/*"],
+      "@/admin/*": ["./src/admin/*"],
+      "@/shared/*": ["./src/shared/*"]
     }
   },
   "include": [

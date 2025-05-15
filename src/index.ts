@@ -1,34 +1,31 @@
 // 导出领域层
-export * from './features/products/domain/Comment';
-export * from './features/products/domain/CommentAggregate';
-export * from './features/products/domain/CommentRepository';
-export * from './features/products/domain/services/CommentDomainService';
-
-// 导出应用层
-export * from './features/products/application/use-cases/CreateCommentUseCase';
-export * from './features/products/application/use-cases/UpdateCommentUseCase';
-export * from './features/products/application/use-cases/DeleteCommentUseCase';
-export * from './features/products/application/use-cases/LikeCommentUseCase';
-export * from './features/products/application/use-cases/UnlikeCommentUseCase';
-export * from './features/products/application/use-cases/ReplyToCommentUseCase';
-export * from './features/products/application/use-cases/GetCommentsUseCase';
-export * from './features/products/application/use-cases/GetCommentDetailUseCase';
-
-// 导出基础设施层
-export * from './features/products/infrastructure/persistence/SupabaseCommentRepository';
-export * from './features/products/infrastructure/cache/CachedCommentRepository';
-export * from './features/products/infrastructure/events/SupabaseEventStore';
-
-// 导出表现层
-export * from './features/products/ui/CommentForm';
-export * from './features/products/ui/CommentList';
-export * from './features/products/ui/CommentDetail';
-export * from './features/products/ui/Rating';
-export * from './features/products/ui/ImageUpload';
-
-// 导出共享模块
 export * from './shared/domain/events/DomainEvent';
 export * from './shared/domain/events/EventBus';
+export * from './shared/domain/events/EventStore';
 export * from './shared/domain/PaginatedResult';
-export * from './shared/infrastructure/middleware/ErrorHandler';
-export * from './shared/infrastructure/logging/Logger'; 
+
+// 导出共享服务
+export * from './shared/services/productService';
+export * from './shared/infrastructure/repositories/SupabaseCommentRepository';
+
+// 导出用户端API（使用命名空间避免命名冲突）
+import * as ProductAPI from './customer/backend/api/products';
+import * as OrderAPI from './customer/backend/api/orders';
+import * as UserAPI from './customer/backend/api/users';
+import * as CategoryAPI from './customer/backend/api/categories';
+import * as CommentAPI from './customer/backend/api/comments/index';
+
+export {
+  ProductAPI,
+  OrderAPI,
+  UserAPI,
+  CategoryAPI,
+  CommentAPI
+};
+
+// 导出用户端组件
+export * from './customer/frontend/components/StarRating';
+export * from './customer/frontend/components/CustomerLayout';
+
+// 注意：原有的许多引用文件在新结构中不存在，
+// 如需使用这些功能，请先创建相应的文件 

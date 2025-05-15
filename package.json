@@ -10,21 +10,16 @@
     "supabase"
   ],
   "scripts": {
-    "dev": "node scripts/init-storage.js && next dev",
-    "build": "node scripts/init-storage.js && next build",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "init-db": "node scripts/init-supabase.js",
-    "init-db-local": "node -r dotenv/config scripts/init-supabase.js",
-    "init-db-safe": "node scripts/init-supabase-safe.js",
-    "direct-init": "node scripts/direct-init.js",
-    "init-storage": "node scripts/init-storage.js",
-    "migrate:users": "ts-node scripts/migrate-users.ts",
-    "verify:auth": "node scripts/verify-auth.js",
-    "verify:db": "node scripts/verify-db.js",
-    "postbuild": "node scripts/init-supabase-safe.js",
-    "db:migrate": "node scripts/apply-migrations.js",
-    "db:migrate:strict": "node scripts/apply-migrations.js --strict"
+    "prebuild": "node prebuild.js",
+    "prepare": "node prebuild.js",
+    "db:check": "node scripts/check-db.js",
+    "db:verify": "node scripts/verify-db.js",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",

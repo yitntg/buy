@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/src/shared/utils/supabase/server'
 
 // 安全路径配置
 const PROTECTED_ROUTES = [
@@ -16,6 +16,11 @@ const PROTECTED_ROUTES = [
 export async function middleware(request: NextRequest) {
   // 获取请求路径
   const path = request.nextUrl.pathname
+  
+  // 处理favicon请求，重定向到新位置
+  if (path === '/favicon.ico') {
+    return NextResponse.rewrite(new URL('/src/shared/assets/favicon.ico', request.url))
+  }
   
   // 创建服务端Supabase客户端
   const supabase = createClient()
@@ -104,13 +109,14 @@ export async function middleware(request: NextRequest) {
 
 // 配置匹配的路径
 export const config = {
-  // 匹配所有保护路径和API路由
+  // 匹配所有保护路径和API路由，以及favicon
   matcher: [
     '/admin/:path*',
     '/account/:path*',
     '/checkout/:path*',
     '/profile/:path*',
     '/orders/:path*',
-    '/api/:path*'
+    '/api/:path*',
+    '/favicon.ico'
   ],
 } 

@@ -10,5 +10,9 @@ export abstract class DomainEvent {
     this.eventId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }
 
+  eventName(): string {
+    return this.eventType;
+  }
+
   abstract toPrimitive(): Record<string, any>;
 } 
