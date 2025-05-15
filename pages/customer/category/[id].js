@@ -1,3 +1,3 @@
-import { CategoryPage } from '../../../src/customer/frontend/pages/category';
+import CategoryDetailPage from '../../../src/customer/frontend/pages/CategoryDetailPage';
 
-export default CategoryPage; 
+export default CategoryDetailPage; 
