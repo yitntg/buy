@@ -77,8 +77,8 @@ const nextConfig = {
       '@/customer': path.join(__dirname, 'src/customer'),
       '@/admin': path.join(__dirname, 'src/admin'),
       '@/shared': path.join(__dirname, 'src/shared'),
-      // 为缺失的rc-util模块提供别名
-      'rc-util/es/Dom/canUseDom': require.resolve('./polyfills/canUseDom.js'),
+      // 为缺失的rc-util模块提供别名 - 使用ESM兼容的路径
+      'rc-util/es/Dom/canUseDom': path.join(__dirname, 'polyfills/canUseDom.js'),
     };
     return config;
   },
