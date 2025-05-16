@@ -363,4 +363,134 @@ async function getFilterCounts(): Promise<FilterCounts> {
       ratings: {}
     }
   }
+}
+
+/**
+ * 根据ID获取产品详情
+ * @param productId 产品ID
+ * @returns 产品详情
+ */
+export async function getProductById(productId: string): Promise<{ data: Product | null; error: string | null }> {
+  try {
+    // 查询产品详情，包含图片信息
+    const { data: product, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        images:product_images(
+          id,
+          image_url,
+          is_primary,
+          sort_order
+        )
+      `)
+      .eq('id', productId)
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (!product) {
+      return {
+        data: null,
+        error: '产品不存在'
+      };
+    }
+    
+    // 处理主图信息
+    const productWithPrimaryImage = {
+      ...product,
+      primary_image: product.images?.find((img: ProductImage) => img.is_primary)?.image_url || 
+                   product.images?.[0]?.image_url
+    };
+    
+    return {
+      data: productWithPrimaryImage as Product,
+      error: null
+    };
+  } catch (error) {
+    console.error('获取产品详情失败:', error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : '发生未知错误'
+    };
+  }
+}
+
+/**
+ * 获取首页产品数据
+ * @returns 特色产品和新品
+ */
+export async function getHomeProducts(): Promise<{ 
+  featured: Product[] | null; 
+  newArrivals: Product[] | null; 
+  error: string | null 
+}> {
+  try {
+    // 获取特色产品
+    const { data: featuredData, error: featuredError } = await supabase
+      .from('products')
+      .select(`
+        *,
+        images:product_images(
+          id,
+          image_url,
+          is_primary,
+          sort_order
+        )
+      `)
+      .eq('is_featured', true)
+      .order('created_at', { ascending: false })
+      .limit(4);
+    
+    if (featuredError) {
+      throw featuredError;
+    }
+    
+    // 获取新品
+    const { data: newArrivalsData, error: newArrivalsError } = await supabase
+      .from('products')
+      .select(`
+        *,
+        images:product_images(
+          id,
+          image_url,
+          is_primary,
+          sort_order
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(6);
+    
+    if (newArrivalsError) {
+      throw newArrivalsError;
+    }
+    
+    // 处理主图信息
+    const processedFeatured = featuredData?.map(product => ({
+      ...product,
+      primary_image: product.images?.find((img: ProductImage) => img.is_primary)?.image_url || 
+                    product.images?.[0]?.image_url
+    }));
+    
+    const processedNewArrivals = newArrivalsData?.map(product => ({
+      ...product,
+      primary_image: product.images?.find((img: ProductImage) => img.is_primary)?.image_url || 
+                    product.images?.[0]?.image_url
+    }));
+    
+    return {
+      featured: processedFeatured as Product[],
+      newArrivals: processedNewArrivals as Product[],
+      error: null
+    };
+  } catch (error) {
+    console.error('获取首页产品数据失败:', error);
+    return {
+      featured: null,
+      newArrivals: null,
+      error: error instanceof Error ? error.message : '发生未知错误'
+    };
+  }
 } 

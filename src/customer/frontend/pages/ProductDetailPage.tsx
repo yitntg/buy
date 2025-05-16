@@ -29,24 +29,35 @@ export default function ProductDetailPage() {
         setIsLoading(true);
         setError(null);
         
-        // 实际项目中这里会调用API
-        // const response = await fetch(`/api/products/${productId}`);
+        if (!productId) return;
+
+        // 获取产品详情
+        const response = await fetch(`/api/customer/products/${productId}`);
         
-        // 模拟API请求延迟
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // 使用模拟数据
-        const mockProduct = getMockProduct(productId);
-        setProduct(mockProduct);
-        if (mockProduct.images && mockProduct.images.length > 0) {
-          setSelectedImage(mockProduct.images[0]);
-        } else if (mockProduct.image) {
-          setSelectedImage(mockProduct.image);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `获取产品详情失败: ${response.status}`);
         }
         
-        // 加载相关产品
-        setRelatedProducts(getMockRelatedProducts(productId, 4));
+        const productData = await response.json();
+        setProduct(productData);
         
+        if (productData.images && productData.images.length > 0) {
+          setSelectedImage(productData.images[0].image_url);
+        } else if (productData.primary_image) {
+          setSelectedImage(productData.primary_image);
+        }
+        
+        // 获取相关产品
+        const relatedResponse = await fetch(`/api/customer/products?category=${productData.category}&limit=4&exclude=${productId}`);
+        
+        if (relatedResponse.ok) {
+          const relatedData = await relatedResponse.json();
+          setRelatedProducts(relatedData.products || []);
+        } else {
+          console.error('获取相关产品失败');
+          setRelatedProducts([]);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : '发生未知错误');
         console.error('获取产品详情失败:', err);
@@ -67,8 +78,7 @@ export default function ProductDetailPage() {
         id: product.id.toString(),
         name: product.name,
         price: product.price,
-        image: product.image,
-        images: product.images,
+        image: product.primary_image || (product.images && product.images.length > 0 ? product.images[0].image_url : ''),
         quantity
       });
       // 显示一个通知，在实际项目中可能会使用 toast 组件
@@ -89,7 +99,7 @@ export default function ProductDetailPage() {
         addedAt: new Date().toISOString(),
         rating: product.rating || 0,
         reviews: product.reviews || 0,
-        inventory: product.inventory || product.stock || 0
+        inventory: product.inventory || 0
       };
       addToFavorites(favoriteProduct);
     }
@@ -98,7 +108,7 @@ export default function ProductDetailPage() {
   // 处理数量变更
   const handleQuantityChange = (newQuantity: number) => {
     // 确保数量在有效范围内
-    const validQuantity = Math.max(1, Math.min(newQuantity, product?.stock || 99));
+    const validQuantity = Math.max(1, Math.min(newQuantity, product?.inventory || 99));
     setQuantity(validQuantity);
   };
 
@@ -145,7 +155,9 @@ export default function ProductDetailPage() {
   }
 
   // 获取产品图片列表，确保它存在
-  const productImages = product.images || [product.image || ''];
+  const productImages = product.images 
+    ? product.images.map(img => img.image_url) 
+    : (product.primary_image ? [product.primary_image] : []);
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ backgroundColor: theme.backgroundColor, color: theme.textColor }}>
@@ -165,7 +177,7 @@ export default function ProductDetailPage() {
           <div className="md:w-1/2 mb-8 md:mb-0">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-4">
               <img 
-                src={selectedImage || (product.image || '')} 
+                src={selectedImage || product.primary_image || ''} 
                 alt={product.name} 
                 className="w-full h-96 object-contain p-4"
               />
@@ -216,12 +228,12 @@ export default function ProductDetailPage() {
             {/* 库存信息 */}
             <div className="mb-6">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${
-                (product.stock || 0) > 10 ? 'bg-green-100 text-green-800' : 
-                (product.stock || 0) > 0 ? 'bg-yellow-100 text-yellow-800' : 
+                (product.inventory || 0) > 10 ? 'bg-green-100 text-green-800' : 
+                (product.inventory || 0) > 0 ? 'bg-yellow-100 text-yellow-800' : 
                 'bg-red-100 text-red-800'
               }`}>
-                {(product.stock || 0) > 10 ? '库存充足' : 
-                 (product.stock || 0) > 0 ? `仅剩 ${product.stock} 件` : 
+                {(product.inventory || 0) > 10 ? '库存充足' : 
+                 (product.inventory || 0) > 0 ? `仅剩 ${product.inventory} 件` : 
                  '暂时缺货'}
               </span>
               <span className="ml-4 text-sm text-gray-500">
@@ -243,21 +255,21 @@ export default function ProductDetailPage() {
                 <input 
                   type="number" 
                   min="1" 
-                  max={product.stock || 99} 
+                  max={product.inventory || 99} 
                   value={quantity}
                   onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
                   className="w-12 text-center focus:outline-none"
                 />
                 <button 
                   onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={quantity >= (product.stock || 99)}
+                  disabled={quantity >= (product.inventory || 99)}
                   className="px-3 py-1 border-l border-gray-300 disabled:opacity-50"
                 >
                   +
                 </button>
               </div>
               <span className="ml-4 text-sm text-gray-500">
-                可购买数量: {product.stock || 0}
+                可购买数量: {product.inventory || 0}
               </span>
             </div>
             
@@ -265,7 +277,7 @@ export default function ProductDetailPage() {
             <div className="flex flex-wrap gap-4">
               <button 
                 onClick={handleAddToCart}
-                disabled={(product.stock || 0) === 0}
+                disabled={(product.inventory || 0) === 0}
                 className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 加入购物车
@@ -354,45 +366,4 @@ export default function ProductDetailPage() {
       </main>
     </div>
   );
-}
-
-// 辅助函数：生成模拟产品数据
-function getMockProduct(productId: string): Product {
-  return {
-    id: productId,
-    name: `模拟商品 ${productId}`,
-    description: '这是一个详细的模拟商品描述，用于测试产品详情页面的展示效果。该商品具有多种功能和特性，适合多种场景使用。',
-    price: Math.floor(Math.random() * 1000) + 50,
-    images: [
-      `https://via.placeholder.com/600x600?text=Product+${productId}+Main`,
-      `https://via.placeholder.com/600x600?text=Product+${productId}+View+1`,
-      `https://via.placeholder.com/600x600?text=Product+${productId}+View+2`,
-      `https://via.placeholder.com/600x600?text=Product+${productId}+View+3`,
-    ],
-    image: `https://via.placeholder.com/600x600?text=Product+${productId}+Main`,
-    category: 'mock-category',
-    stock: Math.floor(Math.random() * 100) + 1,
-    created_at: new Date().toISOString(),
-    rating: 4.5,
-    reviews: 125
-  };
-}
-
-// 辅助函数：生成模拟相关产品数据
-function getMockRelatedProducts(excludeId: string, count: number): Product[] {
-  const categories = ['electronics', 'clothing', 'home', 'beauty', 'food'];
-  
-  return Array.from({ length: count }, (_, i) => ({
-    id: `related-${i + 1}`,
-    name: `相关商品 ${i + 1}`,
-    description: '这是一个相关商品的简短描述',
-    price: Math.floor(Math.random() * 1000) + 50,
-    images: [`https://via.placeholder.com/400?text=Related+${i + 1}`],
-    image: `https://via.placeholder.com/400?text=Related+${i + 1}`,
-    category: categories[Math.floor(Math.random() * categories.length)],
-    stock: Math.floor(Math.random() * 100) + 1,
-    created_at: new Date().toISOString(),
-    rating: Math.floor(Math.random() * 5) + 1,
-    reviews: Math.floor(Math.random() * 50) + 5
-  }));
 } 

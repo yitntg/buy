@@ -32,7 +32,7 @@ export default function ProductsPage() {
   // 加载分类数据
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories')
+      const response = await fetch('/api/customer/categories')
       const data = await response.json()
       
       if (response.ok) {

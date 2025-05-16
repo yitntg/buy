@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Product } from '@/shared/types/product';
+import { Product, ProductImage } from '@/shared/types/product';
 import { formatCurrency, formatDate } from '@/shared/utils/formatters';
 
 // 扩展产品类型以包含管理端需要的额外字段
@@ -12,6 +12,8 @@ interface AdminProduct extends Product {
   free_shipping?: boolean;
   returnable?: boolean;
   warranty?: boolean;
+  images?: ProductImage[];
+  primary_image?: string;
 }
 
 // 分页参数接口
@@ -56,7 +58,7 @@ export function ProductsPage() {
     fetchProducts(pagination, filters);
   }, [pagination.page, pagination.limit, filters]);
   
-  // 模拟从API获取产品数据
+  // 从API获取产品数据
   const fetchProducts = async (
     paginationParams: PaginationParams,
     filterParams: FilterParams
@@ -64,95 +66,52 @@ export function ProductsPage() {
     setIsLoading(true);
     
     try {
-      // 实际项目中，应该从API获取数据
-      // 这里使用模拟数据
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // 构建请求参数
+      const queryParams = new URLSearchParams({
+        page: paginationParams.page.toString(),
+        limit: paginationParams.limit.toString(),
+      });
       
-      // 模拟数据
-      const mockProducts: AdminProduct[] = Array.from({ length: 25 }, (_, i) => ({
-        id: `prod-${i + 1}`,
-        name: `产品 ${i + 1}`,
-        description: `这是产品 ${i + 1} 的详细描述，包含产品特点和用途。`,
-        price: Math.floor(Math.random() * 10000) + 99,
-        image: `https://picsum.photos/seed/prod-${i + 1}/300/300`,
-        category: Math.floor(Math.random() * 5) + 1,
-        inventory: Math.floor(Math.random() * 100) + 1,
-        rating: Math.floor(Math.random() * 50) / 10 + 1,
-        reviews: Math.floor(Math.random() * 100),
-        created_at: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
-        brand: `品牌 ${Math.floor(Math.random() * 5) + 1}`,
-        model: `型号 ${Math.floor(Math.random() * 100) + 100}`,
-        free_shipping: Math.random() > 0.5,
-        returnable: Math.random() > 0.3,
-        warranty: Math.random() > 0.4
-      }));
-      
-      // 筛选
-      let filteredProducts = [...mockProducts];
-      
+      // 添加筛选条件
       if (filterParams.search) {
-        const searchLower = filterParams.search.toLowerCase();
-        filteredProducts = filteredProducts.filter(p => 
-          p.name.toLowerCase().includes(searchLower) || 
-          p.description.toLowerCase().includes(searchLower)
-        );
+        queryParams.append('search', filterParams.search);
       }
       
       if (filterParams.category_id) {
-        filteredProducts = filteredProducts.filter(p => 
-          p.category !== undefined && p.category.toString() === filterParams.category_id
-        );
+        queryParams.append('category_id', filterParams.category_id);
       }
       
       if (filterParams.min_price !== undefined) {
-        filteredProducts = filteredProducts.filter(p => 
-          p.price >= filterParams.min_price!
-        );
+        queryParams.append('min_price', filterParams.min_price.toString());
       }
       
       if (filterParams.max_price !== undefined) {
-        filteredProducts = filteredProducts.filter(p => 
-          p.price <= filterParams.max_price!
-        );
+        queryParams.append('max_price', filterParams.max_price.toString());
       }
       
-      // 排序
-      switch (filterParams.sort_by) {
-        case 'price_asc':
-          filteredProducts.sort((a, b) => a.price - b.price);
-          break;
-        case 'price_desc':
-          filteredProducts.sort((a, b) => b.price - a.price);
-          break;
-        case 'name_asc':
-          filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
-          break;
-        case 'name_desc':
-          filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
-          break;
-        case 'inventory_asc':
-          filteredProducts.sort((a, b) => (a.inventory || 0) - (b.inventory || 0));
-          break;
-        case 'inventory_desc':
-          filteredProducts.sort((a, b) => (b.inventory || 0) - (a.inventory || 0));
-          break;
-        default: // newest
-          filteredProducts.sort((a, b) => {
-            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-            return dateB - dateA;
-          });
+      if (filterParams.sort_by) {
+        queryParams.append('sort_by', filterParams.sort_by);
       }
       
-      // 分页
-      const start = (paginationParams.page - 1) * paginationParams.limit;
-      const end = start + paginationParams.limit;
-      const paginatedProducts = filteredProducts.slice(start, end);
+      // 发起API请求
+      const response = await fetch(`/api/admin/products?${queryParams.toString()}`);
       
-      setProducts(paginatedProducts);
-      setTotal(filteredProducts.length);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `请求失败: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      setProducts(data.products || []);
+      setTotal(data.total || 0);
     } catch (error) {
       console.error('获取产品数据失败:', error);
+      // 显示错误信息
+      alert('获取产品数据失败，请重试');
+      // 重置为空列表
+      setProducts([]);
+      setTotal(0);
     } finally {
       setIsLoading(false);
     }
@@ -199,12 +158,29 @@ export function ProductsPage() {
   };
   
   // 处理删除产品
-  const handleDeleteProduct = (productId: string | number) => {
+  const handleDeleteProduct = async (productId: string | number) => {
     if (window.confirm('确定要删除此产品吗？此操作不可撤销。')) {
-      // 实际项目中，应该调用API删除产品
-      // 这里模拟删除
-      setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
-      setTotal(prevTotal => prevTotal - 1);
+      try {
+        // 调用API删除产品
+        const response = await fetch(`/api/admin/products/${productId}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '删除产品失败');
+        }
+        
+        // 从列表中移除已删除的产品
+        setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
+        setTotal(prevTotal => prevTotal - 1);
+        
+        // 显示成功消息
+        alert('产品已成功删除');
+      } catch (error) {
+        console.error('删除产品失败:', error);
+        alert('删除产品失败，请重试');
+      }
     }
   };
   
@@ -317,9 +293,9 @@ export function ProductsPage() {
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
                           <img 
-                            className="h-10 w-10 rounded-md object-cover" 
-                            src={product.image} 
-                            alt={product.name} 
+                            src={product.primary_image || (product.images && product.images.length > 0 ? product.images[0].image_url : 'https://via.placeholder.com/300')}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover object-center rounded-md"
                           />
                         </div>
                         <div className="ml-4">

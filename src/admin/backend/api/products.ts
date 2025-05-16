@@ -425,9 +425,63 @@ export async function bulkProductAction(
  */
 export async function handleProductsRequest(req: NextApiRequest, res: NextApiResponse) {
   try {
-    // 这里应该根据请求方法和查询参数调用相应的产品管理函数
-    // 目前返回一个临时响应
-    return res.status(200).json({ message: '产品API功能正在开发中' });
+    switch (req.method) {
+      case 'GET': {
+        // 解析查询参数
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        
+        // 构建筛选参数
+        const filterParams: FilterParams = {};
+        
+        if (req.query.category_id) {
+          filterParams.category_id = req.query.category_id as string;
+        }
+        
+        if (req.query.min_price) {
+          filterParams.min_price = parseFloat(req.query.min_price as string);
+        }
+        
+        if (req.query.max_price) {
+          filterParams.max_price = parseFloat(req.query.max_price as string);
+        }
+        
+        if (req.query.search) {
+          filterParams.search = req.query.search as string;
+        }
+        
+        if (req.query.sort_by) {
+          filterParams.sort_by = req.query.sort_by as any;
+        }
+        
+        // 获取产品列表
+        const { data, count, error } = await getProducts(
+          { page, limit },
+          filterParams
+        );
+        
+        if (error) {
+          return res.status(500).json({ error });
+        }
+        
+        return res.status(200).json({
+          products: data || [],
+          total: count || 0,
+          page,
+          limit,
+          totalPages: Math.ceil((count || 0) / limit)
+        });
+      }
+      
+      case 'POST': {
+        // 创建新产品
+        // 实现略
+        return res.status(501).json({ error: '创建产品功能尚未实现' });
+      }
+      
+      default:
+        return res.status(405).json({ error: '方法不允许' });
+    }
   } catch (error) {
     console.error('产品API错误:', error);
     return res.status(500).json({ error: '服务器内部错误' });

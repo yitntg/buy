@@ -19,24 +19,25 @@ export default function HomePage() {
       try {
         setIsLoading(true);
         
-        // 实际项目中这里会调用后端API
-        const response = await fetch('/api/products/featured');
+        // 获取产品数据
+        const response = await fetch('/api/customer/products/home');
         
         if (!response.ok) {
-          throw new Error('获取产品数据失败');
+          const errorData = await response.json();
+          throw new Error(errorData.error || '获取产品数据失败');
         }
         
         const data = await response.json();
-        setFeaturedProducts(data.featured);
-        setNewArrivals(data.newArrivals);
+        setFeaturedProducts(data.featured || []);
+        setNewArrivals(data.newArrivals || []);
         
       } catch (err) {
         setError(err instanceof Error ? err.message : '发生未知错误');
         console.error('获取产品失败:', err);
         
-        // 使用模拟数据作为后备
-        setFeaturedProducts(getMockProducts(theme.featuredCount || 4));
-        setNewArrivals(getMockProducts(6));
+        // 错误状态下设置空数组
+        setFeaturedProducts([]);
+        setNewArrivals([]);
       } finally {
         setIsLoading(false);
       }
@@ -79,7 +80,7 @@ export default function HomePage() {
         {newArrivals.map(product => (
           <div key={product.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4">
             <img
-              src={product.images && product.images[0] ? product.images[0] : 'https://via.placeholder.com/300'}
+              src={product.primary_image || (product.images && product.images.length > 0 ? product.images[0].image_url : 'https://via.placeholder.com/300')}
               alt={product.name}
               className="w-full h-40 object-cover object-center rounded-md mb-3"
             />
@@ -158,8 +159,12 @@ export default function HomePage() {
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-6">热门分类</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['电子产品', '家居日用', '服饰鞋包', '美妆个护'].map(category => (
-              <div key={category} className="bg-white rounded-lg shadow-sm p-6 text-center hover:shadow-md transition-shadow cursor-pointer">
+            {['电子产品', '家居日用', '服饰鞋包', '美妆个护'].map((category, index) => (
+              <div 
+                key={category} 
+                className="bg-white rounded-lg shadow-sm p-6 text-center hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => window.location.href = `/customer/products?category=${index + 1}`}
+              >
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-blue-600 text-2xl">🛒</span>
                 </div>
@@ -171,18 +176,4 @@ export default function HomePage() {
       </main>
     </div>
   );
-}
-
-// 辅助函数：生成模拟产品数据
-function getMockProducts(count: number): Product[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `mock-product-${i}`,
-    name: `Mock Product ${i}`,
-    description: 'This is a mock product for display purposes.',
-    price: 99.99,
-    images: ['/images/placeholder.jpg'],
-    category: `mock-category-${i % 3}`,
-    stock: 100,
-    created_at: new Date().toISOString(),
-  }));
 }

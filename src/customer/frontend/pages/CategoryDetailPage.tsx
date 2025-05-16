@@ -1,126 +1,145 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import CustomerLayout from '../components/CustomerLayout';
-import { ProductCard } from '../components/ProductCard';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
+import Link from 'next/link'
+import CustomerLayout from '../components/CustomerLayout'
+import { ProductCard } from '../components/ProductCard'
 
+// 产品接口
 interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: string;
-  stock: number;
-  created_at: string;
+  id: number
+  name: string
+  description: string
+  price: number
+  image: string
+  category: number
+  inventory: number
+  rating: number
+  reviews: number
 }
 
+// 分类接口
 interface Category {
-  id: string;
-  name: string;
-  description: string;
-  image?: string;
+  id: string
+  name: string
+  slug: string
+  description?: string
+  parent_id?: string
+  image?: string
+  products_count?: number
+  created_at: string
 }
 
-const CategoryDetailPage: React.FC = () => {
-  const router = useRouter();
-  const { id } = router.query;
+// API错误响应接口
+interface ErrorResponse {
+  error: string
+  details?: string
+  code?: string
+}
+
+const CategoryDetailPage = () => {
+  const router = useRouter()
+  const { id } = router.query
   
-  const [category, setCategory] = useState<Category | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<Product[]>([])
+  const [categoryName, setCategoryName] = useState('')
+  const [error, setError] = useState<string | null>(null)
   
   useEffect(() => {
-    if (!id) return;
+    if (!id) return
     
-    // 模拟加载分类详情
-    const fetchCategoryDetails = async () => {
-      setLoading(true);
+    // 加载分类商品数据
+    const fetchCategoryProducts = async () => {
+      setLoading(true)
+      setError(null)
+      
       try {
-        // 这里应该是实际API调用，现在用模拟数据代替
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // 获取分类信息
+        const categoryResponse = await fetch(`/api/customer/categories?id=${id}`)
+        if (!categoryResponse.ok) {
+          const errorData: ErrorResponse = await categoryResponse.json()
+          throw new Error(errorData.error || `获取分类信息失败: ${categoryResponse.status}`)
+        }
+        const categoryData: Category = await categoryResponse.json()
+        setCategoryName(categoryData.name)
         
-        // 模拟分类数据
-        const mockCategory = {
-          id: id as string,
-          name: `分类 ${id}`,
-          description: '这是一个产品分类的详细描述，展示该分类下的所有产品。',
-          image: 'https://picsum.photos/seed/category1/800/400'
-        };
+        // 获取该分类的商品
+        const productsResponse = await fetch(`/api/customer/products?category=${id}&limit=20`, {
+          headers: { 'Cache-Control': 'no-cache' }
+        })
         
-        // 模拟产品数据
-        const mockProducts = Array.from({ length: 8 }, (_, i) => ({
-          id: `product-${id}-${i}`,
-          name: `产品 ${i+1} (分类 ${id})`,
-          description: '这是一个示例产品描述，展示产品的主要特点和卖点。',
-          price: 99.99 + i * 10,
-          images: [`https://picsum.photos/seed/product${id}${i}/400/400`],
-          category: id as string,
-          stock: 100 - i * 5,
-          created_at: new Date().toISOString()
-        }));
+        if (!productsResponse.ok) {
+          const errorData: ErrorResponse = await productsResponse.json()
+          throw new Error(errorData.error || `获取分类商品失败: ${productsResponse.status}`)
+        }
         
-        setCategory(mockCategory);
-        setProducts(mockProducts);
+        const data = await productsResponse.json()
+        setProducts(data.products || [])
       } catch (err) {
-        console.error('加载分类详情失败:', err);
-        setError('无法加载分类详情，请稍后再试');
+        console.error('获取分类数据失败:', err)
+        setError(err instanceof Error ? err.message : '加载失败，请重试')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
     
-    fetchCategoryDetails();
-  }, [id]);
+    fetchCategoryProducts()
+  }, [id])
   
   return (
     <CustomerLayout>
-      <div className="container mx-auto px-4 py-8">
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-lg text-gray-600">加载中...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center text-red-500 py-8">{error}</div>
-        ) : category ? (
-          <>
-            <div className="mb-8">
-              {category.image && (
-                <div className="relative h-48 md:h-64 rounded-lg overflow-hidden mb-4">
-                  <img 
-                    src={category.image} 
-                    alt={category.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <h1 className="text-3xl font-bold mb-2">{category.name}</h1>
-              <p className="text-gray-600">{category.description}</p>
+      <main className="min-h-screen bg-gray-50 py-12">
+        <div className="container mx-auto px-4">
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold">{categoryName || '加载中...'}</h1>
+              <Link href="/" className="text-blue-600 hover:underline">
+                返回首页
+              </Link>
             </div>
-            
-            {products.length > 0 ? (
-              <>
-                <h2 className="text-xl font-semibold mb-4">该分类下的产品</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {products.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-lg text-gray-600">该分类下暂无产品</p>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-gray-600">分类不存在</p>
+            <div className="mt-2 text-gray-500">
+              <Link href="/" className="hover:text-blue-600">首页</Link>
+              <span className="mx-2">›</span>
+              <span>{categoryName || '加载中...'}</span>
+            </div>
           </div>
-        )}
-      </div>
+          
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+              <div className="text-4xl mb-4">⚠️</div>
+              <h2 className="text-xl font-medium mb-2">加载失败</h2>
+              <p className="text-gray-500 mb-4">{error}</p>
+              <button 
+                onClick={() => router.reload()}
+                className="text-blue-600 hover:underline"
+              >
+                点击刷新
+              </button>
+            </div>
+          ) : products.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+              <div className="text-4xl mb-4">🔍</div>
+              <h2 className="text-xl font-medium mb-2">暂无相关商品</h2>
+              <p className="text-gray-500 mb-4">我们正在积极丰富该分类的商品</p>
+              <Link href="/" className="text-blue-600 hover:underline">
+                返回首页浏览其他商品
+              </Link>
+            </div>
+          )}
+        </div>
+      </main>
     </CustomerLayout>
-  );
-};
+  )
+}
 
-export default CategoryDetailPage; 
+export default CategoryDetailPage 

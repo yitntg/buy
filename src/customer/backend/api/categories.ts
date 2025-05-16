@@ -1,8 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { supabase } from '@/shared/utils/supabase/client'
 
+// 统一的错误响应格式
+interface ErrorResponse {
+  error: string;
+  details?: string;
+  code?: string;
+}
+
 // 获取所有分类
-export async function GET(request: NextApiRequest) {
+export async function GET(req: NextApiRequest, res: NextApiResponse) {
   try {
     console.log('正在获取分类数据...')
 
@@ -16,54 +23,42 @@ export async function GET(request: NextApiRequest) {
       console.error('获取分类失败:', error)
       
       if (error.code === 'PGRST116' || error.code === '42P01' || error.message.includes('does not exist')) {
-        return NextApiResponse.json(
-          { error: '分类表不存在，请在Supabase中创建必要的表', details: error.message, code: error.code },
-          { status: 404 }
-        )
+        return res.status(404).json({
+          error: '分类表不存在，请在Supabase中创建必要的表',
+          details: error.message,
+          code: error.code
+        } as ErrorResponse)
       }
       
-      return NextApiResponse.json(
-        { error: '获取分类失败', details: error.message, code: error.code },
-        { status: 500 }
-      )
+      return res.status(500).json({
+        error: '获取分类失败',
+        details: error.message,
+        code: error.code
+      } as ErrorResponse)
     }
     
     console.log('成功获取分类数据:', data?.length || 0, '条记录')
-    return NextApiResponse.json(data || [])
+    return res.status(200).json(data || [])
   } catch (error: any) {
     console.error('获取分类失败:', error)
-    return NextApiResponse.json(
-      { error: `获取分类失败: ${error.message}`, stack: error.stack },
-      { status: 500 }
-    )
+    return res.status(500).json({
+      error: '获取分类失败',
+      details: error.message
+    } as ErrorResponse)
   }
 }
 
 // 创建新分类
-export async function POST(request: NextApiRequest) {
+export async function POST(req: NextApiRequest, res: NextApiResponse) {
   try {
-    // 克隆请求以避免Body has already been read错误
-    const clonedRequest = request.clone();
-    
-    let data;
-    try {
-      // 使用clonedRequest读取请求体
-      data = await clonedRequest.json();
-      console.log('创建分类请求数据:', data);
-    } catch (parseError) {
-      console.error('解析请求数据失败:', parseError);
-      return NextApiResponse.json(
-        { error: '无法解析请求数据', details: parseError instanceof Error ? parseError.message : '解析错误' },
-        { status: 400 }
-      );
-    }
+    const data = req.body;
+    console.log('创建分类请求数据:', data);
     
     // 验证必填字段
-    if (!data.name) {
-      return NextApiResponse.json(
-        { error: '分类名称不能为空' },
-        { status: 400 }
-      )
+    if (!data?.name) {
+      return res.status(400).json({
+        error: '分类名称不能为空'
+      } as ErrorResponse)
     }
     
     // 创建新分类
@@ -71,7 +66,8 @@ export async function POST(request: NextApiRequest) {
       .from('categories')
       .insert({
         name: data.name,
-        description: data.description || ''
+        description: data.description || '',
+        slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-')
       })
       .select()
       .single()
@@ -81,31 +77,34 @@ export async function POST(request: NextApiRequest) {
       
       // 更详细的错误处理
       if (error.code === 'PGRST116' || error.code === '42P01') {
-        return NextApiResponse.json(
-          { error: '分类表不存在，请在Supabase中创建必要的表', details: error.message, code: error.code },
-          { status: 404 }
-        )
+        return res.status(404).json({
+          error: '分类表不存在，请在Supabase中创建必要的表',
+          details: error.message,
+          code: error.code
+        } as ErrorResponse)
       } else if (error.code === '23505') {
-        return NextApiResponse.json(
-          { error: '分类名称已存在', details: error.message, code: error.code },
-          { status: 409 }  // Conflict
-        )
+        return res.status(409).json({
+          error: '分类名称已存在',
+          details: error.message,
+          code: error.code
+        } as ErrorResponse)
       }
       
-      return NextApiResponse.json(
-        { error: '创建分类失败', details: error.message, code: error.code },
-        { status: 500 }
-      )
+      return res.status(500).json({
+        error: '创建分类失败',
+        details: error.message,
+        code: error.code
+      } as ErrorResponse)
     }
     
     console.log('分类创建成功:', newCategory)
-    return NextApiResponse.json(newCategory, { status: 201 })
+    return res.status(201).json(newCategory)
   } catch (error: any) {
     console.error('创建分类失败:', error)
-    return NextApiResponse.json(
-      { error: `创建分类失败: ${error.message}`, stack: error.stack },
-      { status: 500 }
-    )
+    return res.status(500).json({
+      error: '创建分类失败',
+      details: error.message
+    } as ErrorResponse)
   }
 }
 
@@ -214,7 +213,7 @@ export async function getCategoryBySlug(slug: string): Promise<{ data: Category 
  * @param req 请求对象
  * @param res 响应对象
  */
-export async function handleCategoriesRequest(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     switch (req.method) {
       case 'GET':
@@ -222,18 +221,22 @@ export async function handleCategoriesRequest(req: NextApiRequest, res: NextApiR
           // 获取单个分类
           const { data, error } = await getCategoryById(req.query.id as string);
           if (error) return res.status(500).json({ error });
+          if (!data) return res.status(404).json({ error: '分类不存在' });
           return res.status(200).json(data);
         } else if (req.query.slug) {
           // 根据slug获取分类
           const { data, error } = await getCategoryBySlug(req.query.slug as string);
           if (error) return res.status(500).json({ error });
+          if (!data) return res.status(404).json({ error: '分类不存在' });
           return res.status(200).json(data);
         } else {
           // 获取所有分类
           const { data, error } = await getCategories();
           if (error) return res.status(500).json({ error });
-          return res.status(200).json(data);
+          return res.status(200).json(data || []);
         }
+      case 'POST':
+        return await POST(req, res);
       default:
         return res.status(405).json({ error: '方法不允许' });
     }
