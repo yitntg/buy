@@ -18,7 +18,7 @@ interface Breadcrumb {
 }
 
 export default function CustomerLayout({ children }: CustomerLayoutProps) {
-  const pathname = usePathname()
+  const pathname = usePathname() || '/'
   const { currentRoute, childRoutes } = useRoutes(customerRoutes)
 
   // 生成面包屑导航
@@ -48,37 +48,34 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* 页面内容 */}
-      <main className="flex-grow pt-16 pb-10">
-        {/* 面包屑导航 - 仅在非首页显示 */}
-        {pathname !== '/' && (
-          <div className="container mx-auto px-4 py-3 text-sm text-gray-600 mb-4">
-            <div className="flex items-center space-x-2">
-              {breadcrumbs.map((crumb, index) => (
-                <div key={crumb.path} className="flex items-center">
-                  {index === 0 && <Home size={14} className="mr-1" />}
-                  {index === breadcrumbs.length - 1 ? (
-                    <span className="text-primary font-medium">{crumb.name}</span>
-                  ) : (
-                    <>
-                      <Link href={crumb.path} className="hover:text-primary">
-                        {crumb.name}
-                      </Link>
-                      <span className="mx-2">/</span>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
+    <div className="flex-grow">
+      {/* 面包屑导航 - 仅在非首页显示 */}
+      {pathname !== '/' && (
+        <div className="container mx-auto px-4 py-3 text-sm text-gray-600 mb-4">
+          <div className="flex items-center space-x-2">
+            {breadcrumbs.map((crumb, index) => (
+              <div key={crumb.path} className="flex items-center">
+                {index === 0 && <Home size={14} className="mr-1" />}
+                {index === breadcrumbs.length - 1 ? (
+                  <span className="text-primary font-medium">{crumb.name}</span>
+                ) : (
+                  <>
+                    <Link href={crumb.path} className="hover:text-primary">
+                      {crumb.name}
+                    </Link>
+                    <span className="mx-2">/</span>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
-        )}
-        
-        {/* 主要内容 */}
-        <div className="container mx-auto px-4">
-          {children}
         </div>
-      </main>
+      )}
+      
+      {/* 主要内容 */}
+      <div className="container mx-auto px-4">
+        {children}
+      </div>
     </div>
   )
 } 
