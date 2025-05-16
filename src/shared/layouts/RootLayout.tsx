@@ -46,11 +46,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh">
-      <body className={inter.className}>
+      <body className={`${inter.className} flex flex-col min-h-screen`}>
         <AppProviders>
           <ErrorBoundary>
             <Header />
-            <main className="pt-20 pb-40">
+            <main className="pt-20 pb-40 flex-grow">
               <Suspense fallback={<LoadingFallback />}>
                 {children}
               </Suspense>

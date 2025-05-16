@@ -52,45 +52,45 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           {/* 品牌Logo */}
-          <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center">
+          <Link href="/customer" className="text-2xl font-bold text-blue-600 flex items-center">
             <span>ShopHub</span>
           </Link>
           
           {/* 导航菜单 - 桌面端 */}
           <nav className="hidden md:flex space-x-8">
             <Link 
-              href="/" 
+              href="/customer" 
               className={`hover:text-blue-600 transition-colors ${
-                pathname === '/' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                pathname === '/customer' ? 'text-blue-600 font-medium' : 'text-gray-700'
               }`}
             >
               首页
             </Link>
             <Link 
-                            href="/products"               className={`hover:text-blue-600 transition-colors ${                pathname === '/products' || pathname.startsWith('/product/')                   ? 'text-blue-600 font-medium'                   : 'text-gray-700'              }`}
+                            href="/customer/products"               className={`hover:text-blue-600 transition-colors ${                pathname === '/customer/products' || pathname.startsWith('/customer/product/')                   ? 'text-blue-600 font-medium'                   : 'text-gray-700'              }`}
             >
               全部商品
             </Link>
             <Link 
-              href="/categories" 
+              href="/customer/categories" 
               className={`hover:text-blue-600 transition-colors ${
-                pathname.startsWith('/category/') ? 'text-blue-600 font-medium' : 'text-gray-700'
+                pathname.startsWith('/customer/category/') || pathname === '/customer/categories' ? 'text-blue-600 font-medium' : 'text-gray-700'
               }`}
             >
               商品分类
             </Link>
             <Link 
-              href="/about" 
+              href="/customer/about" 
               className={`hover:text-blue-600 transition-colors ${
-                pathname === '/about' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                pathname === '/customer/about' ? 'text-blue-600 font-medium' : 'text-gray-700'
               }`}
             >
               关于我们
             </Link>
             <Link 
-              href="/contact" 
+              href="/customer/contact" 
               className={`hover:text-blue-600 transition-colors ${
-                pathname === '/contact' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                pathname === '/customer/contact' ? 'text-blue-600 font-medium' : 'text-gray-700'
               }`}
             >
               联系我们
@@ -109,7 +109,7 @@ export default function Header() {
             
             {/* 收藏夹 */}
             <Link 
-              href="/favorites" 
+              href="/customer/favorites" 
               className="p-2 text-gray-700 hover:text-blue-600 transition-colors relative"
               aria-label="收藏夹"
             >
@@ -118,7 +118,7 @@ export default function Header() {
             
             {/* 购物车 */}
             <Link 
-              href="/cart" 
+              href="/customer/cart" 
               className="p-2 text-gray-700 hover:text-blue-600 transition-colors relative"
               aria-label="购物车"
             >
@@ -135,7 +135,7 @@ export default function Header() {
               <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
             ) : user ? (
               <Link 
-                href="/account" 
+                href="/customer/account" 
                 className="p-1 rounded-full border-2 border-blue-200 hover:border-blue-400 transition-colors"
               >
                 <img 
@@ -146,7 +146,7 @@ export default function Header() {
               </Link>
             ) : (
               <Link 
-                href="/login"
+                href="/customer/login"
                 className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
                 aria-label="登录"
               >
@@ -171,7 +171,7 @@ export default function Header() {
         }`}>
           <div className="p-4">
             <div className="flex justify-between items-center mb-8">
-              <Link href="/" className="text-2xl font-bold text-blue-600" onClick={closeMenu}>
+              <Link href="/customer" className="text-2xl font-bold text-blue-600" onClick={closeMenu}>
                 ShopHub
               </Link>
               <button 
@@ -185,42 +185,42 @@ export default function Header() {
             
             <nav className="flex flex-col space-y-4">
               <Link 
-                href="/" 
+                href="/customer" 
                 className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  pathname === '/customer' ? 'text-blue-600 font-medium' : 'text-gray-700'
                 }`}
                 onClick={closeMenu}
               >
                 首页
               </Link>
               <Link 
-                                href="/products"                 className={`text-lg py-2 border-b border-gray-100 ${                  pathname === '/products' ? 'text-blue-600 font-medium' : 'text-gray-700'                }`}
+                                href="/customer/products"                 className={`text-lg py-2 border-b border-gray-100 ${                  pathname === '/customer/products' ? 'text-blue-600 font-medium' : 'text-gray-700'                }`}
                 onClick={closeMenu}
               >
                 全部商品
               </Link>
               <Link 
-                href="/categories" 
+                href="/customer/categories" 
                 className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/categories' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  pathname === '/customer/categories' ? 'text-blue-600 font-medium' : 'text-gray-700'
                 }`}
                 onClick={closeMenu}
               >
                 商品分类
               </Link>
               <Link 
-                href="/about" 
+                href="/customer/about" 
                 className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/about' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  pathname === '/customer/about' ? 'text-blue-600 font-medium' : 'text-gray-700'
                 }`}
                 onClick={closeMenu}
               >
                 关于我们
               </Link>
               <Link 
-                href="/contact" 
+                href="/customer/contact" 
                 className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/contact' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  pathname === '/customer/contact' ? 'text-blue-600 font-medium' : 'text-gray-700'
                 }`}
                 onClick={closeMenu}
               >
@@ -229,14 +229,14 @@ export default function Header() {
               {!user && (
                 <>
                   <Link 
-                    href="/login" 
+                    href="/customer/login" 
                     className="text-lg py-2 text-blue-600"
                     onClick={closeMenu}
                   >
                     登录
                   </Link>
                   <Link 
-                    href="/register" 
+                    href="/customer/register" 
                     className="text-lg py-2 text-blue-600"
                     onClick={closeMenu}
                   >
@@ -248,38 +248,50 @@ export default function Header() {
             
             {user && (
               <div className="mt-8 pt-4 border-t border-gray-100">
-                <Link 
-                  href="/account" 
-                  className="flex items-center space-x-3 mb-4"
-                  onClick={closeMenu}
-                >
+                <div className="flex items-center space-x-3 mb-4">
                   <img 
                     src={user.avatar || '/images/default-avatar.png'} 
                     alt={getDisplayName()} 
-                    className="w-10 h-10 rounded-full border-2 border-blue-200"
+                    className="w-10 h-10 rounded-full"
                   />
                   <div>
-                    <div className="font-medium">{getDisplayName()}</div>
-                    <div className="text-sm text-gray-500">管理您的帐户</div>
+                    <p className="font-medium">{getDisplayName()}</p>
+                    <p className="text-sm text-gray-500">{user.email}</p>
                   </div>
-                </Link>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <Link 
-                    href="/orders" 
-                    className="bg-gray-100 rounded-lg p-3 text-center hover:bg-gray-200"
-                    onClick={closeMenu}
-                  >
-                    我的订单
-                  </Link>
-                  <Link 
-                    href="/favorites" 
-                    className="bg-gray-100 rounded-lg p-3 text-center hover:bg-gray-200"
-                    onClick={closeMenu}
-                  >
-                    我的收藏
-                  </Link>
                 </div>
+                
+                <nav className="space-y-2">
+                  <Link 
+                    href="/customer/account" 
+                    className="flex items-center space-x-2 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-100"
+                    onClick={closeMenu}
+                  >
+                    <span>我的账户</span>
+                  </Link>
+                  <Link 
+                    href="/customer/account/orders" 
+                    className="flex items-center space-x-2 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-100"
+                    onClick={closeMenu}
+                  >
+                    <span>我的订单</span>
+                  </Link>
+                  <Link 
+                    href="/customer/favorites" 
+                    className="flex items-center space-x-2 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-100"
+                    onClick={closeMenu}
+                  >
+                    <span>收藏夹</span>
+                  </Link>
+                  <button 
+                    className="w-full flex items-center space-x-2 text-red-600 py-2 px-3 rounded-md hover:bg-red-50 mt-4"
+                    onClick={() => {
+                      // 处理登出
+                      closeMenu();
+                    }}
+                  >
+                    <span>退出登录</span>
+                  </button>
+                </nav>
               </div>
             )}
           </div>
