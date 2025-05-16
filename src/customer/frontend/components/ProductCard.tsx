@@ -29,7 +29,8 @@ export function ProductCard({
   const isInCartAlready = isInCart(product.id.toString())
   
   // 获取要显示的图片
-  const displayImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : '/images/placeholder.jpg')
+  const displayImage = product.primary_image || 
+                      (product.images && product.images.length > 0 ? product.images[0].image_url : '/images/placeholder.jpg')
   
   // 处理添加到收藏夹
   const handleToggleFavorite = (e: React.MouseEvent) => {

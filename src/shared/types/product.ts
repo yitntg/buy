@@ -4,22 +4,26 @@
 
 // 基础产品类型
 export interface Product {
-  id: string;
+  id: number;
   name: string;
   description: string;
   price: number;
-  images?: string[];
-  category: string;
-  stock: number;
-  created_at: string;
-  updated_at?: string;
+  category: number;
+  inventory: number;
+  rating: number;
+  reviews: number;
+  created_at?: string;
   brand?: string;
+  model?: string;
+  specifications?: string;
+  free_shipping?: boolean;
+  returnable?: boolean;
+  warranty?: boolean;
+  images?: ProductImage[];
+  primary_image?: string;
+  updated_at?: string;
   tags?: string[];
   discount?: number;
-  rating?: number;
-  reviews_count?: number;
-  specifications?: Record<string, string | number | boolean>;
-  variants?: ProductVariant[];
   is_featured?: boolean;
   is_new?: boolean;
   quantity?: number; // 购物车中的数量
@@ -123,4 +127,11 @@ export interface ProductsResponse {
       max: number
     }
   }
+}
+
+export interface ProductImage {
+  id: number;
+  image_url: string;
+  is_primary: boolean;
+  sort_order: number;
 } 

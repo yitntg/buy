@@ -8,7 +8,6 @@ interface Product {
   name: string
   description: string
   price: number
-  image: string
   category: number
   inventory: number
   rating: number
@@ -20,6 +19,15 @@ interface Product {
   free_shipping?: boolean
   returnable?: boolean
   warranty?: boolean
+  images?: ProductImage[]
+  primary_image?: string
+}
+
+interface ProductImage {
+  id: number
+  image_url: string
+  is_primary: boolean
+  sort_order: number
 }
 
 // 获取产品列表
@@ -33,8 +41,18 @@ export async function GET(request: NextRequest) {
     const sortBy = url.searchParams.get('sortBy') || 'created_at'
     const sortOrder = url.searchParams.get('sortOrder') || 'desc'
     
-    // 构建查询
-    let query = supabase.from('products').select('*', { count: 'exact' })
+    // 构建查询，包含图片信息
+    let query = supabase
+      .from('products')
+      .select(`
+        *,
+        images:product_images(
+          id,
+          image_url,
+          is_primary,
+          sort_order
+        )
+      `, { count: 'exact' })
     
     // 应用搜索过滤
     if (search) {
@@ -77,9 +95,16 @@ export async function GET(request: NextRequest) {
         details: error.message 
       }, { status: 500 })
     }
+
+    // 处理返回数据，确保每个产品都有主图信息
+    const processedProducts = products?.map(product => ({
+      ...product,
+      primary_image: product.images?.find((img: ProductImage) => img.is_primary)?.image_url || 
+                    product.images?.[0]?.image_url
+    }));
     
     return NextResponse.json({
-      products: products || [],
+      products: processedProducts || [],
       total: count || 0,
       page,
       limit,
