@@ -1,4 +1,4 @@
-import CategoryDetailPage from '../../../src/customer/frontend/pages/Categories';
+import CategoryDetailPage from '../../../src/customer/frontend/pages/Categories.tsx';
 
 // 禁用静态生成，让此页面只在客户端请求时生成
 export async function getStaticPaths() {
