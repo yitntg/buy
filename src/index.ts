@@ -25,7 +25,6 @@ export {
 
 // 导出用户端组件
 export * from './customer/frontend/components/StarRating';
-export * from './customer/frontend/components/CustomerLayout';
 
 // 注意：原有的许多引用文件在新结构中不存在，
 // 如需使用这些功能，请先创建相应的文件 

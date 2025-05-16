@@ -9,12 +9,13 @@
  */
 export interface RouteConfig {
   path: string;           // 路由路径，与URL对应
-  component: string;      // 对应的组件名称
-  exact?: boolean;        // 是否精确匹配
+  component?: string;     // 对应的组件名称
+  redirect?: string;      // 重定向路径
+  exact: boolean;          // 是否精确匹配
   name: string;           // 路由名称，用于显示
   icon?: string;          // 图标名称
-  showInNav?: boolean;    // 是否在导航栏显示
-  public?: boolean;       // 是否为公开路由（不需要登录）
+  showInNav: boolean;     // 是否在导航栏显示
+  public: boolean;        // 是否为公开路由（不需要登录）
   children?: RouteConfig[]; // 子路由配置
 }
 

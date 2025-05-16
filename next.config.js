@@ -54,6 +54,20 @@ const nextConfig = {
   trailingSlash: false,
   skipTrailingSlashRedirect: false,
   
+  // 添加rewrites配置
+  async rewrites() {
+    return [
+      {
+        source: '/products',
+        destination: '/customer/products',
+      },
+      {
+        source: '/product/:path*',
+        destination: '/customer/product/:path*',
+      }
+    ]
+  },
+  
   // 自定义favicon位置 (新增)
   async headers() {
     return [

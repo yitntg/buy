@@ -7,7 +7,7 @@ import { ProductCard } from '@/customer/frontend/components/ProductCard';
 import { Product } from '@/shared/types/product';
 import { formatCurrency } from '@/shared/utils/formatters';
 
-export function HomePage() {
+export default function HomePage() {
   const { theme } = useTheme();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);

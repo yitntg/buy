@@ -54,7 +54,7 @@ export const customerRoutes: RouteConfig[] = [
   },
   {
     path: '/orders',
-    component: 'OrdersPage',
+    redirect: '/account/orders',
     exact: true,
     name: '我的订单',
     icon: 'file-text',
@@ -70,6 +70,14 @@ export const customerRoutes: RouteConfig[] = [
     showInNav: true,
     public: false,
     children: [
+      {
+        path: '/account/orders',
+        component: 'OrdersPage',
+        exact: true,
+        name: '我的订单',
+        showInNav: true,
+        public: false,
+      },
       {
         path: '/account/profile',
         component: 'ProfilePage',

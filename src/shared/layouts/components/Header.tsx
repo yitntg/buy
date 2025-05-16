@@ -67,12 +67,7 @@ export default function Header() {
               首页
             </Link>
             <Link 
-              href="/products" 
-              className={`hover:text-blue-600 transition-colors ${
-                pathname === '/products' || pathname.startsWith('/product/') 
-                  ? 'text-blue-600 font-medium' 
-                  : 'text-gray-700'
-              }`}
+                            href="/products"               className={`hover:text-blue-600 transition-colors ${                pathname === '/products' || pathname.startsWith('/product/')                   ? 'text-blue-600 font-medium'                   : 'text-gray-700'              }`}
             >
               全部商品
             </Link>
@@ -199,10 +194,7 @@ export default function Header() {
                 首页
               </Link>
               <Link 
-                href="/products" 
-                className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/products' ? 'text-blue-600 font-medium' : 'text-gray-700'
-                }`}
+                                href="/products"                 className={`text-lg py-2 border-b border-gray-100 ${                  pathname === '/products' ? 'text-blue-600 font-medium' : 'text-gray-700'                }`}
                 onClick={closeMenu}
               >
                 全部商品

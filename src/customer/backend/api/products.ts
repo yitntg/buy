@@ -161,18 +161,181 @@ export async function POST(request: NextRequest) {
   }
 }
 
+interface CategoryCount {
+  category_id: number;
+  count: string;
+}
+
+interface RatingCount {
+  rating: number;
+  count: string;
+}
+
+interface PriceData {
+  price: number;
+}
+
+interface FilterCounts {
+  categories: Record<number, number>;
+  priceRanges: Record<string, number>;
+  ratings: Record<number, number>;
+}
+
 /**
- * 处理客户产品API请求
- * @param req 请求对象
- * @param res 响应对象
+ * 处理商品列表请求
  */
 export async function handleProductsRequest(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: '不支持的请求方法' })
+  }
+
   try {
-    // 这里应该根据请求方法和查询参数调用相应的客户产品查看函数
-    // 目前返回一个临时响应
-    return res.status(200).json({ message: '客户产品API功能正在开发中' });
+    const {
+      page = '1',
+      limit = '12',
+      keyword,
+      category,
+      minPrice,
+      maxPrice,
+      minRating,
+      sortBy
+    } = req.query
+
+    // 构建基础查询
+    let query = supabase
+      .from('products')
+      .select('*', { count: 'exact' })
+      .eq('status', 'active')
+
+    // 关键词搜索
+    if (keyword) {
+      query = query.or(`name.ilike.%${keyword}%,description.ilike.%${keyword}%`)
+    }
+
+    // 分类筛选
+    if (category) {
+      const categories = Array.isArray(category) ? category : [category]
+      query = query.in('category_id', categories)
+    }
+
+    // 价格范围筛选
+    if (minPrice) {
+      query = query.gte('price', parseFloat(minPrice as string))
+    }
+    if (maxPrice) {
+      query = query.lte('price', parseFloat(maxPrice as string))
+    }
+
+    // 评分筛选
+    if (minRating) {
+      query = query.gte('rating', parseFloat(minRating as string))
+    }
+
+    // 排序
+    switch (sortBy) {
+      case 'price-asc':
+        query = query.order('price', { ascending: true })
+        break
+      case 'price-desc':
+        query = query.order('price', { ascending: false })
+        break
+      case 'rating':
+        query = query.order('rating', { ascending: false })
+        break
+      case 'newest':
+        query = query.order('created_at', { ascending: false })
+        break
+      default:
+        // 默认按推荐排序（可以根据需求修改）
+        query = query.order('rating', { ascending: false })
+    }
+
+    // 分页
+    const pageNum = parseInt(page as string)
+    const limitNum = parseInt(limit as string)
+    const start = (pageNum - 1) * limitNum
+    
+    // 执行查询
+    const { data: products, error, count } = await query
+      .range(start, start + limitNum - 1)
+
+    if (error) {
+      console.error('获取商品列表失败:', error)
+      return res.status(500).json({ error: '获取商品列表失败' })
+    }
+
+    // 获取筛选计数
+    const filterCounts = await getFilterCounts()
+
+    // 返回结果
+    return res.status(200).json({
+      products: products || [],
+      total: count || 0,
+      totalPages: Math.ceil((count || 0) / limitNum),
+      filterCounts
+    })
+
   } catch (error) {
-    console.error('客户产品API错误:', error);
-    return res.status(500).json({ error: '服务器内部错误' });
+    console.error('处理商品列表请求失败:', error)
+    return res.status(500).json({ error: '服务器内部错误' })
+  }
+}
+
+/**
+ * 获取筛选条件的计数
+ */
+async function getFilterCounts(): Promise<FilterCounts> {
+  try {
+    // 获取分类计数
+    const { data: categoryData } = await supabase
+      .rpc('get_category_counts') as { data: CategoryCount[] }
+
+    // 获取价格区间计数
+    const { data: priceData } = await supabase
+      .from('products')
+      .select('price')
+      .eq('status', 'active') as { data: PriceData[] }
+
+    // 获取评分计数
+    const { data: ratingData } = await supabase
+      .rpc('get_rating_counts') as { data: RatingCount[] }
+
+    // 处理价格区间计数
+    const priceRanges: Record<string, number> = {
+      '0-100': 0,
+      '100-300': 0,
+      '300-500': 0,
+      '500-1000': 0,
+      '1000-999999': 0
+    }
+
+    priceData?.forEach(item => {
+      const price = item.price
+      if (price <= 100) priceRanges['0-100']++
+      else if (price <= 300) priceRanges['100-300']++
+      else if (price <= 500) priceRanges['300-500']++
+      else if (price <= 1000) priceRanges['500-1000']++
+      else priceRanges['1000-999999']++
+    })
+
+    return {
+      categories: categoryData?.reduce((acc: Record<number, number>, curr: CategoryCount) => {
+        acc[curr.category_id] = parseInt(curr.count)
+        return acc
+      }, {}),
+      priceRanges,
+      ratings: ratingData?.reduce((acc: Record<number, number>, curr: RatingCount) => {
+        acc[curr.rating] = parseInt(curr.count)
+        return acc
+      }, {})
+    }
+
+  } catch (error) {
+    console.error('获取筛选计数失败:', error)
+    return {
+      categories: {},
+      priceRanges: {},
+      ratings: {}
+    }
   }
 } 

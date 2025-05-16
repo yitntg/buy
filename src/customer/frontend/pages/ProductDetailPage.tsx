@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useTheme } from '@/shared/contexts/ThemeContext';
 import StarRating from '@/customer/frontend/components/StarRating';
 import { ProductCard } from '@/customer/frontend/components/ProductCard';
@@ -7,11 +8,9 @@ import { formatCurrency, formatDate } from '@/shared/utils/formatters';
 import { useCart } from '@/shared/contexts/CartContext';
 import { useFavorites } from '@/shared/contexts/FavoritesContext';
 
-interface ProductDetailPageProps {
-  productId: string;
-}
-
-export function ProductDetailPage({ productId }: ProductDetailPageProps) {
+export default function ProductDetailPage() {
+  const router = useRouter();
+  const { id: productId } = router.query;
   const { theme } = useTheme();
   const { addItem } = useCart();
   const { addToFavorites, removeFromFavorites, isInFavorites } = useFavorites();
@@ -396,6 +395,4 @@ function getMockRelatedProducts(excludeId: string, count: number): Product[] {
     rating: Math.floor(Math.random() * 5) + 1,
     reviews: Math.floor(Math.random() * 50) + 5
   }));
-}
-
-export default ProductDetailPage; 
+} 

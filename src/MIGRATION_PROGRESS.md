@@ -51,7 +51,16 @@
 - ✅ 产品详情页 (`customer/frontend/pages/ProductDetailPage.tsx`)
 - ✅ 购物车页面 (`customer/frontend/pages/CartPage.tsx`)
 - ✅ 结账页面 (`customer/frontend/pages/CheckoutPage.tsx`)
-- ✅ 订单页面 (`customer/frontend/pages/OrdersPage.tsx`)
+- ✅ 订单页面 (`customer/frontend/pages/account/OrdersPage.tsx`)
+- ✅ 账户页面 (`customer/frontend/pages/AccountPage.tsx`)
+- ✅ 收藏夹页面 (`customer/frontend/pages/FavoritesPage.tsx`)
+- ✅ 关于我们页面 (`customer/frontend/pages/AboutPage.tsx`)
+- ✅ 联系我们页面 (`customer/frontend/pages/ContactPage.tsx`)
+- ✅ 隐私政策页面 (`customer/frontend/pages/PrivacyPage.tsx`)
+- ✅ 服务条款页面 (`customer/frontend/pages/TermsPage.tsx`)
+- ✅ 分类页面 (`customer/frontend/pages/category/*`)
+- ✅ 信息页面 (`customer/frontend/pages/info/InfoPage.tsx`)
+- ✅ 仪表盘页面 (`customer/frontend/pages/dashboard/*`)
 
 #### 管理员端页面
 - ✅ 仪表盘页面 (`admin/frontend/pages/DashboardPage.tsx`)
@@ -59,18 +68,38 @@
 - ✅ 用户管理页面 (`admin/frontend/pages/UsersPage.tsx`)
 - ✅ 订单管理页面 (`admin/frontend/pages/OrdersPage.tsx`)
 - ✅ 设置页面 (`admin/frontend/pages/SettingsPage.tsx`)
+- ✅ 工具页面 (`admin/frontend/pages/tools/*`)
 
 ### API
 #### 用户端API
 - ✅ 产品API (`customer/backend/api/products.ts`)
 - ✅ 订单API (`customer/backend/api/orders.ts`)
 - ✅ 用户API (`customer/backend/api/users.ts`)
+- ✅ 分类API (`customer/backend/api/categories.ts`)
+- ✅ 评论API (`customer/backend/api/comments/*`)
 
 #### 管理员端API
 - ✅ 产品API (`admin/backend/api/products.ts`)
 - ✅ 订单API (`admin/backend/api/orders.ts`)
 - ✅ 用户API (`admin/backend/api/users.ts`)
 - ✅ 仪表盘API (`admin/backend/api/dashboard.ts`)
+
+### 服务和认证
+- ✅ 产品服务 (`shared/services/productService.ts`)
+- ✅ 认证模块 (`shared/auth/*`)
+- ✅ 上传服务 (`shared/api/upload.ts`)
+- ✅ 调试API (`shared/api/debug/*`)
+- ✅ 健康检查API (`shared/api/health.ts`)
+- ✅ 数据库测试API (`shared/api/db-test.ts`)
+
+### 布局和全局样式
+- ✅ 根布局 (`shared/layouts/RootLayout.tsx`)
+- ✅ 简单布局 (`shared/layouts/SimpleLayout.tsx`)
+- ✅ 错误页面 (`shared/layouts/Error.tsx`)
+- ✅ 全局错误页面 (`shared/layouts/GlobalError.tsx`)
+- ✅ 加载页面 (`shared/layouts/Loading.tsx`)
+- ✅ 404页面 (`shared/layouts/NotFound.tsx`)
+- ✅ 全局样式 (`shared/layouts/globals.css`)
 
 ### 类型修复
 - ✅ 修复了订单API中的类型错误 (`admin/backend/api/orders.ts`)
@@ -100,7 +129,26 @@
   - 实现了层级化的管理菜单结构
   - 添加了图标配置
 
-## 待迁移
+## 项目迁移总结
+
+✅ 项目迁移已全部完成！所有文件已按照业务领域和技术层次进行了重组。
+
+### 迁移架构：
+- **src/customer**: 用户端相关代码
+  - frontend: 前端页面和组件
+  - backend: 后端API和服务
+- **src/admin**: 管理员端相关代码
+  - frontend: 前端页面和组件
+  - backend: 后端API和服务
+- **src/shared**: 共享资源
+  - components: 共享组件
+  - utils: 工具函数
+  - types: 类型定义
+  - hooks: 自定义钩子
+  - layouts: 布局组件
+  - auth: 认证相关
+  - api: 共享API
+  - contexts: 上下文组件
 
 ## 遇到的问题和解决方案
 
@@ -146,8 +194,9 @@
 ## 后续工作
 
 1. ~~完善路由配置~~ ✅ 已完成
-2. 添加单元测试
-3. 进行端到端测试
-4. 优化API响应速度
-5. 完善错误处理机制
-6. 实现更细粒度的权限控制 
+2. ~~完成剩余文件迁移~~ ✅ 已完成
+3. 添加单元测试
+4. 进行端到端测试
+5. 优化API响应速度
+6. 完善错误处理机制
+7. 实现更细粒度的权限控制 

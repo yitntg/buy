@@ -4,20 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { ProductCard } from '../components/ProductCard'
 import { useTheme } from '@/shared/contexts/ThemeContext'
-
-// 定义商品类型接口
-interface Product {
-  id: number
-  name: string
-  description: string
-  price: number
-  image: string
-  category: number
-  inventory: number
-  rating: number
-  reviews: number
-  specifications?: Record<string, string | number>
-}
+import { Product } from '@/shared/types/product'
 
 // 定义分类类型
 interface Category {
@@ -150,7 +137,7 @@ export default function ProductsPage() {
       console.log('筛选参数:', params.toString());
       
       // 调用API获取商品数据
-      const response = await fetch(`/api/products?${params.toString()}`)
+      const response = await fetch(`/api/customer/products?${params.toString()}`)
       const data = await response.json()
       
       if (response.ok && data) {
