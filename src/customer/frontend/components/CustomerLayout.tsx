@@ -48,7 +48,7 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <div className="flex-grow">
+    <div>
       {/* 面包屑导航 - 仅在非首页显示 */}
       {pathname !== '/' && (
         <div className="container mx-auto px-4 py-3 text-sm text-gray-600 mb-4">

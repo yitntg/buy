@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import UserAvatar from '../../components/UserAvatar'
 import AccountSidebar from '../../components/AccountSidebar'
 import AvatarUploader from '../../components/AvatarUploader'
+import CustomerLayout from '../../components/CustomerLayout'
 
 export default function AccountPage() {
   const { user, logout, updateProfile: updateUser, isLoading } = useAuth()
@@ -137,7 +138,7 @@ export default function AccountPage() {
       router.push('/auth/login');
     }
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className="text-center">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full" role="status">
             <span className="visually-hidden">正在加载...</span>
@@ -149,162 +150,162 @@ export default function AccountPage() {
   }
   
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-2xl font-bold mb-6">我的账户</h1>
+    <CustomerLayout>
+      <div className="container mx-auto py-8">
+        <h1 className="text-2xl font-bold mb-6">我的账户</h1>
+        
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* 使用全局侧边栏组件 */}
+          <AccountSidebar activePage="profile" />
           
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* 使用全局侧边栏组件 */}
-            <AccountSidebar activePage="profile" />
-            
-            {/* 主内容区 */}
-            <div className="lg:w-3/4">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 className="text-xl font-medium mb-4">个人信息</h2>
-                
-                {message.text && (
-                  <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {message.text}
-                  </div>
-                )}
-                
-                <form className="space-y-6" onSubmit={handleSubmit}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                        姓名
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                        邮箱
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                        手机号码
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="avatar" className="block text-sm font-medium text-gray-700 mb-1">
-                        头像
-                      </label>
-                      <AvatarUploader 
-                        user={{
-                          username: userData.name,
-                          avatar: userData.avatar
-                        }}
-                        onAvatarChange={(url: string) => {
-                          setPreviewURL(url);
-                        }}
-                        size={48}
-                      />
-                    </div>
+          {/* 主内容区 */}
+          <div className="lg:w-3/4">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-xl font-medium mb-4">个人信息</h2>
+              
+              {message.text && (
+                <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {message.text}
+                </div>
+              )}
+              
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      姓名
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      className="bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600 flex items-center"
-                      disabled={isUpdating}
-                    >
-                      {isUpdating ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          正在保存...
-                        </>
-                      ) : '保存更改'}
-                    </button>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      邮箱
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
-                </form>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-medium">最近订单</h2>
-                  <Link href="/account/orders" className="text-primary hover:underline text-sm">
-                    查看全部订单
-                  </Link>
+                  
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                      手机号码
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="avatar" className="block text-sm font-medium text-gray-700 mb-1">
+                      头像
+                    </label>
+                    <AvatarUploader 
+                      user={{
+                        username: userData.name,
+                        avatar: userData.avatar
+                      }}
+                      onAvatarChange={(url: string) => {
+                        setPreviewURL(url);
+                      }}
+                      size={48}
+                    />
+                  </div>
                 </div>
                 
-                {userData.orders.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-2 text-left">订单号</th>
-                          <th className="px-4 py-2 text-left">日期</th>
-                          <th className="px-4 py-2 text-left">状态</th>
-                          <th className="px-4 py-2 text-right">金额</th>
-                          <th className="px-4 py-2 text-center">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {userData.orders.map((order) => (
-                          <tr key={order.id}>
-                            <td className="px-4 py-3">{order.id}</td>
-                            <td className="px-4 py-3">{order.date}</td>
-                            <td className="px-4 py-3">
-                              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                                {order.status}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-right">¥{order.total}</td>
-                            <td className="px-4 py-3 text-center">
-                              <Link
-                                href={`/account/orders/${order.id}`}
-                                className="text-primary hover:underline"
-                              >
-                                查看详情
-                              </Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>您还没有任何订单</p>
-                    <Link href="/products" className="text-primary hover:underline block mt-2">
-                      开始购物
-                    </Link>
-                  </div>
-                )}
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600 flex items-center"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        正在保存...
+                      </>
+                    ) : '保存更改'}
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-medium">最近订单</h2>
+                <Link href="/account/orders" className="text-primary hover:underline text-sm">
+                  查看全部订单
+                </Link>
               </div>
+              
+              {userData.orders.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left">订单号</th>
+                        <th className="px-4 py-2 text-left">日期</th>
+                        <th className="px-4 py-2 text-left">状态</th>
+                        <th className="px-4 py-2 text-right">金额</th>
+                        <th className="px-4 py-2 text-center">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {userData.orders.map((order) => (
+                        <tr key={order.id}>
+                          <td className="px-4 py-3">{order.id}</td>
+                          <td className="px-4 py-3">{order.date}</td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">¥{order.total}</td>
+                          <td className="px-4 py-3 text-center">
+                            <Link
+                              href={`/account/orders/${order.id}`}
+                              className="text-primary hover:underline"
+                            >
+                              查看详情
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>您还没有任何订单</p>
+                  <Link href="/products" className="text-primary hover:underline block mt-2">
+                    开始购物
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </main>
+      </div>
+    </CustomerLayout>
   )
 } 

@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 // Header import removed
 // Footer import removed
 import { useCart } from '@/shared/contexts/CartContext'
+import { formatCurrency } from '@/shared/utils/formatters'
+import CustomerLayout from '../components/CustomerLayout'
 
 export default function CartPage() {
   const router = useRouter()
@@ -595,56 +597,58 @@ export default function CartPage() {
   };
   
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          {/* 面包屑导航 */}
-          <div className="mb-6 flex items-center text-sm">
-            <Link href="/" className="text-gray-500 hover:text-primary">
-              首页
-            </Link>
-            <span className="mx-2 text-gray-300">/</span>
-            <span className="text-gray-700">{
-              step === 0 ? '购物车' : 
-              step === 1 ? '确认订单' : 
-              '支付订单'
-            }</span>
-          </div>
-          
-          {/* 步骤导航 */}
-          {items.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center justify-center">
-                <div className={`flex flex-col items-center ${step >= 0 ? 'text-primary' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 0 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
-                    1
-                  </div>
-                  <div className="mt-2">购物车</div>
+    <CustomerLayout>
+      <div className="container mx-auto">
+        <h1 className="text-2xl font-bold mb-6">购物车</h1>
+        
+        {/* 面包屑导航 */}
+        <div className="mb-6 flex items-center text-sm">
+          <Link href="/" className="text-gray-500 hover:text-primary">
+            首页
+          </Link>
+          <span className="mx-2 text-gray-300">/</span>
+          <span className="text-gray-700">{
+            step === 0 ? '购物车' : 
+            step === 1 ? '确认订单' : 
+            '支付订单'
+          }</span>
+        </div>
+        
+        {/* 步骤导航 */}
+        {items.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-center">
+              <div className={`flex flex-col items-center ${step >= 0 ? 'text-primary' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 0 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+                  1
                 </div>
-                
-                <div className={`w-16 md:w-32 h-1 ${step >= 1 ? 'bg-primary' : 'bg-gray-200'}`}></div>
-                
-                <div className={`flex flex-col items-center ${step >= 1 ? 'text-primary' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
-                    2
-                  </div>
-                  <div className="mt-2">确认订单</div>
+                <div className="mt-2">购物车</div>
+              </div>
+              
+              <div className={`w-16 md:w-32 h-1 ${step >= 1 ? 'bg-primary' : 'bg-gray-200'}`}></div>
+              
+              <div className={`flex flex-col items-center ${step >= 1 ? 'text-primary' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+                  2
                 </div>
-                
-                <div className={`w-16 md:w-32 h-1 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`}></div>
-                
-                <div className={`flex flex-col items-center ${step >= 2 ? 'text-primary' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
-                    3
-                  </div>
-                  <div className="mt-2">支付</div>
+                <div className="mt-2">确认订单</div>
+              </div>
+              
+              <div className={`w-16 md:w-32 h-1 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`}></div>
+              
+              <div className={`flex flex-col items-center ${step >= 2 ? 'text-primary' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+                  3
                 </div>
+                <div className="mt-2">支付</div>
               </div>
             </div>
-          )}
-          
-          {/* 步骤内容 */}
-          {renderStepContent()}
-        </div>
-      </main>
+          </div>
+        )}
+        
+        {/* 步骤内容 */}
+        {renderStepContent()}
+      </div>
+    </CustomerLayout>
   )
 } 

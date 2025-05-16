@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { useAuth } from '@/shared/contexts/AuthContext'
 import { useFavorites, FavoriteProduct } from '@/shared/contexts/FavoritesContext'
 import StarRating from '../components/StarRating'
+import CustomerLayout from '../components/CustomerLayout'
 
 export default function FavoritesPage() {
   const { user } = useAuth()
@@ -82,79 +83,75 @@ export default function FavoritesPage() {
   )
   
   return (
-    <main className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center text-gray-800">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                </svg>
-                我的收藏
-              </h1>
-              <p className="text-gray-500 text-sm mt-1">
-                {favorites.length > 0 
-                  ? `共${favorites.length}件商品` 
-                  : '收藏心仪商品，方便后续购买'}
-              </p>
-            </div>
-            
-            {favorites.length > 0 && (
-              <Link href="/products" className="text-primary hover:underline text-sm">
-                继续购物
-              </Link>
-            )}
+    <CustomerLayout>
+      <div className="container mx-auto">
+        <h1 className="text-2xl font-bold mb-6">我的收藏</h1>
+        
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <p className="text-gray-500 text-sm mt-1">
+              {favorites.length > 0 
+                ? `共${favorites.length}件商品` 
+                : '收藏心仪商品，方便后续购买'}
+            </p>
           </div>
           
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="flex flex-col items-center">
-                <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p className="mt-4 text-gray-600">正在加载您的收藏...</p>
-              </div>
-            </div>
-          ) : favorites.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <div className="text-8xl text-red-100 mb-6 flex justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-medium mb-4">您的收藏夹是空的</h2>
-              <p className="text-gray-500 mb-8">
-                浏览商品并点击"收藏"图标，将您喜欢的商品添加到收藏夹
-              </p>
-              <Link 
-                href="/products"
-                className="bg-primary text-white px-6 py-3 rounded-md hover:bg-blue-600 inline-block"
-              >
-                开始购物
-              </Link>
-            </div>
-          ) : (
-            <div className="transition-all duration-500">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {favorites.map((product: FavoriteProduct) => renderProductCard(product))}
-              </div>
-            </div>
+          {favorites.length > 0 && (
+            <Link href="/products" className="text-primary hover:underline text-sm">
+              继续购物
+            </Link>
           )}
-
-          {/* 添加悬浮"返回顶部"按钮 */}
-          <div className="fixed bottom-10 right-6 z-50">
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="bg-primary bg-opacity-80 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors focus:outline-none"
-              aria-label="返回顶部"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-            </button>
-          </div>
         </div>
-      </main>
+        
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col items-center">
+              <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="mt-4 text-gray-600">正在加载您的收藏...</p>
+            </div>
+          </div>
+        ) : favorites.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="text-8xl text-red-100 mb-6 flex justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-medium mb-4">您的收藏夹是空的</h2>
+            <p className="text-gray-500 mb-8">
+              浏览商品并点击"收藏"图标，将您喜欢的商品添加到收藏夹
+            </p>
+            <Link 
+              href="/products"
+              className="bg-primary text-white px-6 py-3 rounded-md hover:bg-blue-600 inline-block"
+            >
+              开始购物
+            </Link>
+          </div>
+        ) : (
+          <div className="transition-all duration-500">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {favorites.map((product: FavoriteProduct) => renderProductCard(product))}
+            </div>
+          </div>
+        )}
+
+        {/* 添加悬浮"返回顶部"按钮 */}
+        <div className="fixed bottom-10 right-6 z-50">
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="bg-primary bg-opacity-80 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors focus:outline-none"
+            aria-label="返回顶部"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </CustomerLayout>
   )
 } 

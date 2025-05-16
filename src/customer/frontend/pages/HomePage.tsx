@@ -6,6 +6,7 @@ import { useTheme } from '@/shared/contexts/ThemeContext';
 import { ProductCard } from '@/customer/frontend/components/ProductCard';
 import { Product } from '@/shared/types/product';
 import { formatCurrency } from '@/shared/utils/formatters';
+import CustomerLayout from '../components/CustomerLayout';
 
 export default function HomePage() {
   const { theme } = useTheme();
@@ -116,64 +117,62 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ backgroundColor: theme.backgroundColor, color: theme.textColor }}>
-      <main className="container mx-auto px-4 py-8">
-        {/* 英雄区域 */}
-        {theme.showHeroSection && (
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-8 mb-12 shadow-lg">
-            <div className="md:flex md:items-center">
-              <div className="md:w-1/2 mb-6 md:mb-0">
-                <h1 className="text-4xl font-bold mb-4">发现精选好物，丰富你的生活</h1>
-                <p className="text-xl mb-6">汇聚全球优质商品，满足你的一切购物需求</p>
-                <button className="bg-white text-blue-600 font-bold px-8 py-3 rounded-full hover:bg-blue-50 transition-colors">
-                  开始选购
-                </button>
-              </div>
-              <div className="md:w-1/2 md:pl-10">
-                <img 
-                  src="https://via.placeholder.com/600x400" 
-                  alt="精选商品" 
-                  className="rounded-lg shadow-md" 
-                />
-              </div>
+    <CustomerLayout>
+      {/* 英雄区域 */}
+      {theme.showHeroSection && (
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-8 mb-12 shadow-lg">
+          <div className="md:flex md:items-center">
+            <div className="md:w-1/2 mb-6 md:mb-0">
+              <h1 className="text-4xl font-bold mb-4">发现精选好物，丰富你的生活</h1>
+              <p className="text-xl mb-6">汇聚全球优质商品，满足你的一切购物需求</p>
+              <button className="bg-white text-blue-600 font-bold px-8 py-3 rounded-full hover:bg-blue-50 transition-colors">
+                开始选购
+              </button>
+            </div>
+            <div className="md:w-1/2 md:pl-10">
+              <img 
+                src="https://via.placeholder.com/600x400" 
+                alt="精选商品" 
+                className="rounded-lg shadow-md" 
+              />
             </div>
           </div>
-        )}
-        
-        {/* 特色产品 */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">精选推荐</h2>
-          {renderFeaturedProducts()}
-        </section>
-        
-        {/* 促销横幅 */}
-        {renderPromoBanner()}
-        
-        {/* 新品上市 */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">新品上市</h2>
-          {renderNewArrivals()}
-        </section>
-        
-        {/* 分类快捷入口 */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">热门分类</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['电子产品', '家居日用', '服饰鞋包', '美妆个护'].map((category, index) => (
-              <div 
-                key={category} 
-                className="bg-white rounded-lg shadow-sm p-6 text-center hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => window.location.href = `/customer/products?category=${index + 1}`}
-              >
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-blue-600 text-2xl">🛒</span>
-                </div>
-                <h3 className="font-medium">{category}</h3>
+        </div>
+      )}
+      
+      {/* 特色产品 */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">精选推荐</h2>
+        {renderFeaturedProducts()}
+      </section>
+      
+      {/* 促销横幅 */}
+      {renderPromoBanner()}
+      
+      {/* 新品上市 */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">新品上市</h2>
+        {renderNewArrivals()}
+      </section>
+      
+      {/* 分类快捷入口 */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">热门分类</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {['电子产品', '家居日用', '服饰鞋包', '美妆个护'].map((category, index) => (
+            <div 
+              key={category} 
+              className="bg-white rounded-lg shadow-sm p-6 text-center hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => window.location.href = `/products?category=${index + 1}`}
+            >
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-blue-600 text-2xl">🛒</span>
               </div>
-            ))}
-          </div>
-        </section>
-      </main>
-    </div>
+              <h3 className="font-medium">{category}</h3>
+            </div>
+          ))}
+        </div>
+      </section>
+    </CustomerLayout>
   );
 }

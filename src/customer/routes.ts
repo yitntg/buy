@@ -2,7 +2,8 @@
  * 用户端路由配置
  * 
  * 此文件定义了用户端所有页面的路由映射关系
- * 基于Next.js App Router约定，路径与文件结构对应
+ * 基于Next.js Pages Router约定，实际路由由pages目录文件决定
+ * 这里的配置用于组件内部的导航和面包屑
  */
 
 import { RouteConfig } from '@/shared/types/route'
@@ -36,6 +37,14 @@ export const customerRoutes: RouteConfig[] = [
     public: true,
   },
   {
+    path: '/category/:id',
+    component: 'CategoryDetailPage',
+    exact: true,
+    name: '分类详情',
+    showInNav: false,
+    public: true,
+  },
+  {
     path: '/cart',
     component: 'CartPage',
     exact: true,
@@ -64,7 +73,7 @@ export const customerRoutes: RouteConfig[] = [
   {
     path: '/account',
     component: 'AccountPage',
-    exact: false,
+    exact: true,
     name: '我的账户',
     icon: 'user',
     showInNav: true,
@@ -75,22 +84,6 @@ export const customerRoutes: RouteConfig[] = [
         component: 'OrdersPage',
         exact: true,
         name: '我的订单',
-        showInNav: true,
-        public: false,
-      },
-      {
-        path: '/account/profile',
-        component: 'ProfilePage',
-        exact: true,
-        name: '个人资料',
-        showInNav: true,
-        public: false,
-      },
-      {
-        path: '/account/settings',
-        component: 'SettingsPage',
-        exact: true,
-        name: '账户设置',
         showInNav: true,
         public: false,
       },

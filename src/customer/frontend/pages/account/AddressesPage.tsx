@@ -8,6 +8,7 @@ import { useAuth } from '@/shared/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import UserAvatar from '../../components/UserAvatar'
 import AccountSidebar from '../../components/AccountSidebar'
+import CustomerLayout from '../../components/CustomerLayout'
 
 // 模拟地址数据类型
 interface Address {
@@ -137,206 +138,206 @@ export default function AddressesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-2xl font-bold mb-6">我的账户</h1>
+    <CustomerLayout>
+      <div className="container mx-auto py-8">
+        <h1 className="text-2xl font-bold mb-6">我的账户</h1>
+        
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* 使用全局侧边栏组件 */}
+          <AccountSidebar activePage="addresses" />
           
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* 使用全局侧边栏组件 */}
-            <AccountSidebar activePage="addresses" />
-            
-            {/* 主内容区 */}
-            <div className="lg:w-3/4">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-medium">收货地址</h2>
-                  <button 
-                    className="text-primary border border-primary px-4 py-1 rounded-md hover:bg-blue-50 text-sm"
-                    onClick={() => setShowAddForm(true)}
-                  >
-                    添加新地址
-                  </button>
-                </div>
-                
-                {addresses.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {addresses.map(address => (
-                      <div 
-                        key={address.id} 
-                        className={`border rounded-lg p-4 relative ${address.isDefault ? 'border-primary bg-blue-50' : 'border-gray-200'}`}
-                      >
-                        {address.isDefault && (
-                          <span className="absolute top-2 right-2 text-xs px-2 py-1 bg-primary text-white rounded-full">
-                            默认地址
-                          </span>
-                        )}
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-medium">{address.name}</p>
-                            <p className="text-sm text-gray-600 mt-1">{address.phone}</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-700 mb-4">
-                          {address.province} {address.city} {address.district} {address.detail}
-                        </p>
-                        <div className="flex justify-end space-x-3 text-sm">
-                          {!address.isDefault && (
-                            <button 
-                              onClick={() => setAsDefault(address.id)}
-                              className="text-primary hover:text-blue-700"
-                            >
-                              设为默认
-                            </button>
-                          )}
-                          <button 
-                            onClick={() => deleteAddress(address.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            删除
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>您还没有添加任何收货地址</p>
-                  </div>
-                )}
-                
-                {/* 添加新地址表单 */}
-                {showAddForm && (
-                  <div className="mt-8 border-t pt-6">
-                    <h3 className="text-lg font-medium mb-4">添加新地址</h3>
-                    <form onSubmit={handleAddAddress} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                            收货人
-                          </label>
-                          <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            required
-                            value={newAddress.name}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                            手机号码
-                          </label>
-                          <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            required
-                            value={newAddress.phone}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">
-                            省份
-                          </label>
-                          <input
-                            type="text"
-                            id="province"
-                            name="province"
-                            required
-                            value={newAddress.province}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                            城市
-                          </label>
-                          <input
-                            type="text"
-                            id="city"
-                            name="city"
-                            required
-                            value={newAddress.city}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-1">
-                            区/县
-                          </label>
-                          <input
-                            type="text"
-                            id="district"
-                            name="district"
-                            required
-                            value={newAddress.district}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                        
-                        <div className="md:col-span-2">
-                          <label htmlFor="detail" className="block text-sm font-medium text-gray-700 mb-1">
-                            详细地址
-                          </label>
-                          <textarea
-                            id="detail"
-                            name="detail"
-                            required
-                            value={newAddress.detail}
-                            onChange={handleInputChange}
-                            rows={3}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id="isDefault"
-                          name="isDefault"
-                          checked={newAddress.isDefault}
-                          onChange={handleInputChange}
-                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                        />
-                        <label htmlFor="isDefault" className="ml-2 block text-sm text-gray-700">
-                          设为默认收货地址
-                        </label>
-                      </div>
-                      
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowAddForm(false)}
-                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-                        >
-                          取消
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-600"
-                        >
-                          保存地址
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
+          {/* 主内容区 */}
+          <div className="lg:w-3/4">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-medium">收货地址</h2>
+                <button 
+                  className="text-primary border border-primary px-4 py-1 rounded-md hover:bg-blue-50 text-sm"
+                  onClick={() => setShowAddForm(true)}
+                >
+                  添加新地址
+                </button>
               </div>
+              
+              {addresses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {addresses.map(address => (
+                    <div 
+                      key={address.id} 
+                      className={`border rounded-lg p-4 relative ${address.isDefault ? 'border-primary bg-blue-50' : 'border-gray-200'}`}
+                    >
+                      {address.isDefault && (
+                        <span className="absolute top-2 right-2 text-xs px-2 py-1 bg-primary text-white rounded-full">
+                          默认地址
+                        </span>
+                      )}
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-medium">{address.name}</p>
+                          <p className="text-sm text-gray-600 mt-1">{address.phone}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-4">
+                        {address.province} {address.city} {address.district} {address.detail}
+                      </p>
+                      <div className="flex justify-end space-x-3 text-sm">
+                        {!address.isDefault && (
+                          <button 
+                            onClick={() => setAsDefault(address.id)}
+                            className="text-primary hover:text-blue-700"
+                          >
+                            设为默认
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => deleteAddress(address.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>您还没有添加任何收货地址</p>
+                </div>
+              )}
+              
+              {/* 添加新地址表单 */}
+              {showAddForm && (
+                <div className="mt-8 border-t pt-6">
+                  <h3 className="text-lg font-medium mb-4">添加新地址</h3>
+                  <form onSubmit={handleAddAddress} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                          收货人
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          name="name"
+                          required
+                          value={newAddress.name}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                          手机号码
+                        </label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          required
+                          value={newAddress.phone}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">
+                          省份
+                        </label>
+                        <input
+                          type="text"
+                          id="province"
+                          name="province"
+                          required
+                          value={newAddress.province}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                          城市
+                        </label>
+                        <input
+                          type="text"
+                          id="city"
+                          name="city"
+                          required
+                          value={newAddress.city}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-1">
+                          区/县
+                        </label>
+                        <input
+                          type="text"
+                          id="district"
+                          name="district"
+                          required
+                          value={newAddress.district}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label htmlFor="detail" className="block text-sm font-medium text-gray-700 mb-1">
+                          详细地址
+                        </label>
+                        <textarea
+                          id="detail"
+                          name="detail"
+                          required
+                          value={newAddress.detail}
+                          onChange={handleInputChange}
+                          rows={3}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="isDefault"
+                        name="isDefault"
+                        checked={newAddress.isDefault}
+                        onChange={handleInputChange}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <label htmlFor="isDefault" className="ml-2 block text-sm text-gray-700">
+                        设为默认收货地址
+                      </label>
+                    </div>
+                    
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddForm(false)}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                      >
+                        取消
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-600"
+                      >
+                        保存地址
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </main>
-  )
+      </div>
+    </CustomerLayout>
+  );
 } 

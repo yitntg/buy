@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 // Footer import removed
 import { useAuth } from '@/shared/contexts/AuthContext'
 import AccountSidebar from '../../components/AccountSidebar'
+import CustomerLayout from '../../components/CustomerLayout'
 
 // 定义订单类型
 interface Order {
@@ -174,145 +175,162 @@ export default function OrdersPage() {
   
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gray-50 py-12">
-          <div className="container mx-auto px-4 flex justify-center items-center">
-            <div className="flex flex-col items-center">
-              <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <p className="mt-4 text-gray-600">加载中...</p>
-            </div>
+      <CustomerLayout>
+        <div className="container mx-auto px-4 flex justify-center items-center py-16">
+          <div className="flex flex-col items-center">
+            <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="mt-4 text-gray-600">加载中...</p>
           </div>
-        </main>
+        </div>
+      </CustomerLayout>
     )
   }
   
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-2xl font-bold mb-6">我的账户</h1>
+    <CustomerLayout>
+      <div className="container mx-auto py-8">
+        <h1 className="text-2xl font-bold mb-6">我的账户</h1>
+        
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* 使用全局侧边栏组件 */}
+          <AccountSidebar activePage="orders" />
           
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* 使用全局侧边栏组件 */}
-            <AccountSidebar activePage="orders" />
-            
-            {/* 主内容区 */}
-            <div className="lg:w-3/4">
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="p-6 border-b">
-                  <h2 className="text-xl font-medium">我的订单</h2>
+          {/* 主内容区 */}
+          <div className="lg:w-3/4">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-6 border-b">
+                <h2 className="text-xl font-medium">我的订单</h2>
+              </div>
+              
+              {/* 订单筛选选项卡 */}
+              <div className="border-b">
+                <div className="flex flex-wrap">
+                  <button 
+                    className={`px-6 py-3 font-medium ${activeTab === 'all' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => handleTabChange('all')}
+                  >
+                    全部订单
+                  </button>
+                  <button 
+                    className={`px-6 py-3 font-medium ${activeTab === 'processing' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => handleTabChange('processing')}
+                  >
+                    处理中
+                  </button>
+                  <button 
+                    className={`px-6 py-3 font-medium ${activeTab === 'completed' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => handleTabChange('completed')}
+                  >
+                    已完成
+                  </button>
+                  <button 
+                    className={`px-6 py-3 font-medium ${activeTab === 'cancelled' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => handleTabChange('cancelled')}
+                  >
+                    已取消
+                  </button>
                 </div>
-                
-                {/* 订单筛选选项卡 */}
-                <div className="border-b">
-                  <div className="flex flex-wrap">
-                    <button 
-                      className={`px-6 py-3 font-medium ${activeTab === 'all' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                      onClick={() => handleTabChange('all')}
-                    >
-                      全部订单
-                    </button>
-                    <button 
-                      className={`px-6 py-3 font-medium ${activeTab === 'processing' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                      onClick={() => handleTabChange('processing')}
-                    >
-                      处理中
-                    </button>
-                    <button 
-                      className={`px-6 py-3 font-medium ${activeTab === 'completed' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                      onClick={() => handleTabChange('completed')}
-                    >
-                      已完成
-                    </button>
-                    <button 
-                      className={`px-6 py-3 font-medium ${activeTab === 'cancelled' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                      onClick={() => handleTabChange('cancelled')}
-                    >
-                      已取消
-                    </button>
+              </div>
+              
+              {/* 订单列表 */}
+              <div className="p-6">
+                {isLoadingOrders ? (
+                  <div className="flex justify-center py-12">
+                    <div className="flex flex-col items-center">
+                      <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <p className="mt-4 text-gray-600">正在加载订单数据...</p>
+                    </div>
                   </div>
-                </div>
-                
-                {/* 订单列表 */}
-                <div className="p-6">
-                  {isLoadingOrders ? (
-                    <div className="flex justify-center py-12">
-                      <div className="flex flex-col items-center">
-                        <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <p className="mt-4 text-gray-600">正在加载订单数据...</p>
-                      </div>
-                    </div>
-                  ) : orders.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-6xl text-gray-300 mb-4">📦</div>
-                      <p className="text-gray-500 mb-4">没有{activeTab !== 'all' ? '相关' : ''}订单</p>
-                      <Link href="/products" className="inline-block bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600">
-                        去购物
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {orders.map(order => (
-                        <div key={order.id} className="border rounded-lg overflow-hidden">
-                          <div className="bg-gray-50 px-4 py-3 flex justify-between items-center border-b">
-                            <div>
-                              <span className="text-gray-500 mr-4">订单号: {order.id}</span>
-                              <span className="text-gray-500">下单时间: {order.date}</span>
-                            </div>
-                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusStyle(order.status)}`}>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl text-gray-200 mb-4">📋</div>
+                    <h3 className="text-lg font-medium mb-2">暂无订单</h3>
+                    <p className="text-gray-500 mb-8">您还没有创建任何订单</p>
+                    <Link href="/products" className="text-primary border border-primary px-6 py-2 rounded-md hover:bg-blue-50">
+                      立即购物
+                    </Link>
+                  </div>
+                ) : (
+                  <div>
+                    {orders.map(order => (
+                      <div key={order.id} className="border border-gray-200 rounded-lg mb-6 overflow-hidden">
+                        <div className="bg-gray-50 flex flex-wrap justify-between p-4 items-center">
+                          <div>
+                            <span className="text-gray-500">订单号: </span>
+                            <span className="font-medium">{order.id}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">下单时间: </span>
+                            <span>{order.date}</span>
+                          </div>
+                          <div>
+                            <span className={`px-3 py-1 rounded-full text-xs ${getStatusStyle(order.status)}`}>
                               {order.status}
                             </span>
                           </div>
-                          
-                          <div className="p-4">
-                            {order.items.map(item => (
-                              <div key={item.id} className="flex items-center py-3 border-b last:border-0">
-                                <div className="relative h-16 w-16 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
-                                  <Image
-                                    src={item.image}
-                                    alt={item.name}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
-                                <div className="ml-4 flex-grow">
-                                  <h3 className="font-medium">{item.name}</h3>
-                                  <p className="text-sm text-gray-500">数量: {item.quantity}</p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="font-medium">¥{item.price.toFixed(2)}</p>
-                                </div>
+                        </div>
+                        
+                        {/* 订单商品 */}
+                        <div className="p-4">
+                          {order.items.map(item => (
+                            <div key={item.id} className="flex items-start py-3 border-b last:border-0">
+                              <div className="w-16 h-16 relative flex-shrink-0">
+                                <Image
+                                  src={item.image}
+                                  alt={item.name}
+                                  fill
+                                  className="object-cover rounded-md"
+                                />
                               </div>
-                            ))}
+                              <div className="ml-4 flex-1">
+                                <div className="flex justify-between">
+                                  <h4 className="font-medium">{item.name}</h4>
+                                  <div className="text-gray-500">x{item.quantity}</div>
+                                </div>
+                                <div className="text-primary mt-1">¥{item.price}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* 订单合计和操作 */}
+                        <div className="p-4 bg-gray-50 flex flex-wrap justify-between items-center">
+                          <div className="text-gray-500">
+                            共 <span className="font-medium">{order.items.length}</span> 件商品，
+                            合计：<span className="text-primary font-bold">¥{order.total}</span>
+                            <span className="text-gray-400 text-xs ml-1">(含运费)</span>
                           </div>
-                          
-                          <div className="bg-gray-50 px-4 py-3 flex justify-between items-center border-t">
-                            <div>
-                              <span className="text-gray-500">共 {order.items.reduce((sum, item) => sum + item.quantity, 0)} 件商品</span>
-                            </div>
-                            <div className="flex items-center">
-                              <span className="mr-4">订单金额: <span className="font-medium">¥{order.total.toFixed(2)}</span></span>
-                              <Link
-                                href={`/account/orders/${order.id}`}
-                                className="bg-primary text-white px-4 py-1 rounded-md hover:bg-blue-600 text-sm"
-                              >
-                                订单详情
-                              </Link>
-                            </div>
+                          <div className="flex space-x-2 mt-2 sm:mt-0">
+                            <Link href={`/account/orders/${order.id}`} className="text-primary border border-primary px-4 py-1 rounded hover:bg-blue-50 text-sm">
+                              订单详情
+                            </Link>
+                            {order.status === '待发货' && (
+                              <button className="bg-white border border-gray-300 px-4 py-1 rounded hover:bg-gray-50 text-sm">
+                                取消订单
+                              </button>
+                            )}
+                            {order.status === '已完成' && (
+                              <button className="bg-primary text-white px-4 py-1 rounded hover:bg-blue-600 text-sm">
+                                申请售后
+                              </button>
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </div>
+    </CustomerLayout>
   )
 } 
