@@ -60,6 +60,20 @@ export function updateCSS(css, key) {
 
   return styleElem;
 }
+
+// 添加缺失的 removeCSS 函数导出
+export function removeCSS(key) {
+  if (!canUseDom()) {
+    return null;
+  }
+
+  const styleId = \`rc-util-\${key}\`;
+  const styleElem = document.getElementById(styleId);
+  
+  if (styleElem) {
+    styleElem.parentNode.removeChild(styleElem);
+  }
+}
 `
   },
   {
@@ -90,59 +104,67 @@ export default function toArray(children) {
   }
 ];
 
-// 创建模块
-modulesToCreate.forEach(module => {
-  // 构建目录路径
-  const dirPath = path.join(
-    process.cwd(), 
-    'node_modules', 
-    'rc-util', 
-    'es', 
-    ...module.path.slice(0, -1)
-  );
-  
-  // 确保目录存在
-  if (!fs.existsSync(dirPath)) {
-    console.log('创建目录:', dirPath);
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-  
-  // 构建文件路径
-  const filePath = path.join(dirPath, module.path[module.path.length - 1]);
-  
-  // 写入文件
-  fs.writeFileSync(filePath, module.content);
-  console.log('已创建文件:', filePath);
-  
-  // 对于每个.js文件，同时创建.mjs版本
-  if (module.path[module.path.length - 1].endsWith('.js')) {
-    const mfilePath = filePath.replace('.js', '.mjs');
-    fs.writeFileSync(mfilePath, module.content);
-    console.log('已创建ESM文件:', mfilePath);
-  }
-});
+// 创建模块 - rc-util
+function createModules(basePackage) {
+  modulesToCreate.forEach(module => {
+    // 构建目录路径
+    const dirPath = path.join(
+      process.cwd(), 
+      'node_modules', 
+      basePackage, 
+      'es', 
+      ...module.path.slice(0, -1)
+    );
+    
+    // 确保目录存在
+    if (!fs.existsSync(dirPath)) {
+      console.log('创建目录:', dirPath);
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+    
+    // 构建文件路径
+    const filePath = path.join(dirPath, module.path[module.path.length - 1]);
+    
+    // 写入文件
+    fs.writeFileSync(filePath, module.content);
+    console.log('已创建文件:', filePath);
+    
+    // 对于每个.js文件，同时创建.mjs版本
+    if (module.path[module.path.length - 1].endsWith('.js')) {
+      const mfilePath = filePath.replace('.js', '.mjs');
+      fs.writeFileSync(mfilePath, module.content);
+      console.log('已创建ESM文件:', mfilePath);
+    }
+  });
 
-// 在每个创建的目录中添加package.json以指定模块类型
-const directoriesAdded = new Set();
-modulesToCreate.forEach(module => {
-  const dirPath = path.join(
-    process.cwd(), 
-    'node_modules', 
-    'rc-util', 
-    'es', 
-    ...module.path.slice(0, -1)
-  );
-  
-  if (!directoriesAdded.has(dirPath)) {
-    const pkgPath = path.join(dirPath, 'package.json');
-    const pkgContent = JSON.stringify({
-      "name": module.path.slice(0, -1).join('-'),
-      "type": "module"
-    }, null, 2);
-    fs.writeFileSync(pkgPath, pkgContent);
-    console.log('已创建package.json:', pkgPath);
-    directoriesAdded.add(dirPath);
-  }
-});
+  // 在每个创建的目录中添加package.json以指定模块类型
+  const directoriesAdded = new Set();
+  modulesToCreate.forEach(module => {
+    const dirPath = path.join(
+      process.cwd(), 
+      'node_modules', 
+      basePackage, 
+      'es', 
+      ...module.path.slice(0, -1)
+    );
+    
+    if (!directoriesAdded.has(dirPath)) {
+      const pkgPath = path.join(dirPath, 'package.json');
+      const pkgContent = JSON.stringify({
+        "name": module.path.slice(0, -1).join('-'),
+        "type": "module"
+      }, null, 2);
+      fs.writeFileSync(pkgPath, pkgContent);
+      console.log('已创建package.json:', pkgPath);
+      directoriesAdded.add(dirPath);
+    }
+  });
+}
 
-console.log('RC Util 模块修复完成！'); 
+// 修复 rc-util 模块
+createModules('rc-util');
+console.log('RC Util 模块修复完成！');
+
+// 修复 @rc-component/util 模块
+createModules('@rc-component/util');
+console.log('@RC-Component/Util 模块修复完成！'); 
