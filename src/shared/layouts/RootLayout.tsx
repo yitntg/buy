@@ -6,8 +6,7 @@ import { CartProvider } from '@/shared/contexts/CartContext'
 import { AuthProvider } from '@/shared/contexts/AuthContext'
 import { ThemeProvider } from '@/shared/contexts/ThemeContext'
 import { FavoritesProvider } from '@/shared/contexts/FavoritesContext'
-import Header from './components/Header'
-import Footer from './components/Footer'
+import Header from '@/customer/frontend/components/Header'
 import { Suspense } from 'react'
 import ErrorBoundary from './components/ErrorBoundary'
 
@@ -55,7 +54,6 @@ export default function RootLayout({
                 {children}
               </Suspense>
             </main>
-            <Footer />
           </ErrorBoundary>
         </AppProviders>
       </body>
