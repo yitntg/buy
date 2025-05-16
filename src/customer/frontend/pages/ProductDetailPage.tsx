@@ -1,5 +1,7 @@
+'use client'
+
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter, useParams } from 'next/navigation';
 import { useTheme } from '@/shared/contexts/ThemeContext';
 import StarRating from '@/customer/frontend/components/StarRating';
 import { ProductCard } from '@/customer/frontend/components/ProductCard';
@@ -10,7 +12,8 @@ import { useFavorites } from '@/shared/contexts/FavoritesContext';
 
 export default function ProductDetailPage() {
   const router = useRouter();
-  const { id: productId } = router.query;
+  const params = useParams();
+  const productId = params?.id;
   const { theme } = useTheme();
   const { addItem } = useCart();
   const { addToFavorites, removeFromFavorites, isInFavorites } = useFavorites();

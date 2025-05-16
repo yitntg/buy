@@ -1,5 +1,7 @@
+'use client'
+
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import CustomerLayout from '../components/CustomerLayout'
 import { ProductCard } from '../components/ProductCard'
@@ -38,7 +40,8 @@ interface ErrorResponse {
 
 const CategoryDetailPage = () => {
   const router = useRouter()
-  const { id } = router.query
+  const params = useParams()
+  const id = params?.id
   
   const [loading, setLoading] = useState(true)
   const [products, setProducts] = useState<Product[]>([])
@@ -114,7 +117,7 @@ const CategoryDetailPage = () => {
               <h2 className="text-xl font-medium mb-2">加载失败</h2>
               <p className="text-gray-500 mb-4">{error}</p>
               <button 
-                onClick={() => router.reload()}
+                onClick={() => window.location.reload()}
                 className="text-blue-600 hover:underline"
               >
                 点击刷新
