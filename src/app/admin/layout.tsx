@@ -6,7 +6,6 @@ import { Suspense } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import AdminHeader from './components/AdminHeader';
 import LoadingFallback from '../(shared)/components/loading/PageLoading';
-import { adminPageConfig } from '@/src/app/config';
 import { API_PATHS } from '@/src/app/api/config';
 
 // 页面配置 - 使用明确的数值而不是对象引用
