@@ -1,6 +1,6 @@
 import { Comment } from '../../domain/Comment';
 import { CommentQueryParams } from '../../domain/CommentRepository';
-import { PaginatedResult } from '@/shared/domain/PaginatedResult';
+import { PaginatedResult } from '@/src/app/shared/domain/PaginatedResult';
 import { CommentRepository } from '../../domain/CommentRepository';
 
 export class GetRepliesUseCase {

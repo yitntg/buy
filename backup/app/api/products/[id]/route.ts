@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/shared/infrastructure/lib/supabase'
+import { supabase } from '@/src/app/shared/infrastructure/lib/supabase'
 
 // 获取单个商品
 export async function GET(

@@ -1,5 +1,5 @@
 import { Product } from './Product';
-import { PaginatedResult } from '@/shared/domain/PaginatedResult';
+import { PaginatedResult } from '@/src/app/shared/domain/PaginatedResult';
 
 export interface ProductSearchParams {
   query?: string;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPaymentIntent, confirmPaymentIntent } from '@/lib/airwallex'
-import { supabase } from '@/shared/infrastructure/lib/supabase'
+import { supabase } from '@/src/app/shared/infrastructure/lib/supabase'
 
 /**
  * 创建Airwallex支付意向

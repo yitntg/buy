@@ -4,7 +4,7 @@ import { CommentAggregate } from '../CommentAggregate';
 import { CommentCreatedEvent } from '../events/CommentCreatedEvent';
 import { CommentUpdatedEvent } from '../events/CommentUpdatedEvent';
 import { CommentDeletedEvent } from '../events/CommentDeletedEvent';
-import { EventBus } from '@/shared/domain/events/EventBus';
+import { EventBus } from '@/src/app/shared/domain/events/EventBus';
 
 export class CommentDomainService {
   constructor(

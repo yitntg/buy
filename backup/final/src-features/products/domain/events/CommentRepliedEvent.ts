@@ -1,4 +1,4 @@
-import { DomainEvent } from '@/shared/domain/events/DomainEvent';
+import { DomainEvent } from '@/src/app/shared/domain/events/DomainEvent';
 import { Comment } from '../Comment';
 
 export class CommentRepliedEvent extends DomainEvent {

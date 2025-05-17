@@ -9,11 +9,34 @@ const __dirname = path.dirname(__filename);
 
 const nextConfig = {
   reactStrictMode: true,
+  // 禁用图像优化以避免可能的构建问题
+  images: {
+    unoptimized: true,
+  },
+  // 禁用SSG/ISR，强制所有页面使用动态渲染
   experimental: {
-    serverComponentsExternalPackages: ['postgres'],
-    // 启用自定义src目录
+    // 启用外部目录支持
     externalDir: true,
-    esmExternals: 'loose',
+    // 启用ESM支持
+    esmExternals: true,
+    // 启用appDir
+    appDir: true,
+    // 禁用静态生成，解决revalidate问题
+    runtime: 'nodejs',
+    // 设置数据缓存模式
+    fetchCache: false
+  },
+  // 设置输出模式
+  output: 'standalone',
+  // 环境变量配置
+  env: {
+    // 可以在此处添加环境变量
+    API_URL: process.env.API_URL || 'http://localhost:3001',
+  },
+  // 禁用 revalidate 的检查，避免错误
+  onDemandEntries: {
+    // 设置页面生存期较短以快速重新生成
+    maxInactiveAge: 10,
   },
   typescript: {
     // 忽略类型错误，确保构建成功
@@ -29,7 +52,12 @@ const nextConfig = {
       'pzjhupjfojvlbthnsgqt.supabase.co', 
       'placehold.co',
       'api.dicebear.com',
-      'buy-nrqajqppn-yitntgs-projects.vercel.app'
+      'buy-nrqajqppn-yitntgs-projects.vercel.app',
+      'via.placeholder.com',
+      'images.unsplash.com',
+      'tailwindui.com',
+      'images.pexels.com',
+      'res.cloudinary.com',
     ],
     remotePatterns: [
       {
@@ -46,9 +74,7 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // 基本配置
-  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
-  // 生产环境配置
-  output: 'standalone',
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
   // 应用特定配置
   distDir: '.next',
   trailingSlash: false,
@@ -56,16 +82,11 @@ const nextConfig = {
   
   // 添加rewrites配置
   async rewrites() {
-    return [
-      {
-        source: '/products',
-        destination: '/customer/products',
-      },
-      {
-        source: '/product/:path*',
-        destination: '/customer/product/:path*',
-      }
-    ]
+    return {
+      beforeFiles: [],
+      afterFiles: [],
+      fallback: [],
+    };
   },
   
   // 自定义favicon位置 (新增)
@@ -103,8 +124,27 @@ const nextConfig = {
       strictExportPresence: false,
     };
     
+    // 排除备份文件夹
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/backup/**', '**/backup_pages/**', '**/backup2/**', '**/node_modules/**']
+    };
+    
     return config;
   },
+  
+  // 添加自定义配置以处理管理员和认证页面
+  async redirects() {
+    return [];
+  },
+  // 为特定页面配置动态渲染
+  async headers() {
+    return [];
+  },
+  // 手动指定哪些页面应该动态渲染
+  exportPathMap: undefined,
+  // 允许开发模式下的额外导出
+  poweredByHeader: false,
 };
 
 export default nextConfig; 

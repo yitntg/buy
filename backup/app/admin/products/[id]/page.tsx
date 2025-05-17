@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/app/context/AuthContext'
 import Link from 'next/link'
-import { supabase } from '@/shared/infrastructure/lib/supabase'
+import { supabase } from '@/src/app/shared/infrastructure/lib/supabase'
 import Image from 'next/image'
 
 // 产品数据类型

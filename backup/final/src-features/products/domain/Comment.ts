@@ -4,7 +4,7 @@ import { CommentDeletedEvent } from './events/CommentDeletedEvent';
 import { CommentLikedEvent } from './events/CommentLikedEvent';
 import { CommentUnlikedEvent } from './events/CommentUnlikedEvent';
 import { CommentRepliedEvent } from './events/CommentRepliedEvent';
-import { DomainEvent } from '@/shared/domain/events/DomainEvent';
+import { DomainEvent } from '@/src/app/shared/domain/events/DomainEvent';
 
 export class Comment {
   private domainEvents: DomainEvent[] = [];

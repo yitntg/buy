@@ -1,6 +1,6 @@
 import { Comment } from '../Comment';
 import { CommentRepository } from '../CommentRepository';
-import { PaginatedResult } from '@/shared/domain/PaginatedResult';
+import { PaginatedResult } from '@/src/app/shared/domain/PaginatedResult';
 
 export class GetProductCommentsUseCase {
   constructor(private readonly commentRepository: CommentRepository) {}

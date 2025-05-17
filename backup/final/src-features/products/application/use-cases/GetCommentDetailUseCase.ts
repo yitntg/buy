@@ -1,6 +1,6 @@
 import { CommentRepository } from '../../domain/CommentRepository';
 import { Comment } from '../../domain/Comment';
-import { PaginatedResult } from '@/shared/domain/PaginatedResult';
+import { PaginatedResult } from '@/src/app/shared/domain/PaginatedResult';
 
 export interface GetCommentDetailQuery {
   commentId: string;

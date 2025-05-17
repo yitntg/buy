@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/shared/infrastructure/lib/supabase'
+import { supabase } from '@/src/app/shared/infrastructure/lib/supabase'
 
 // 获取所有分类
 export async function GET(request: NextRequest) {

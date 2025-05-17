@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useDebounce } from '@/shared/hooks/useDebounce';
+import { useDebounce } from '@/src/app/shared/hooks/useDebounce';
 
 interface ProductSearchProps {
   onSearch: (query: string) => void;

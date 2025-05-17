@@ -22,9 +22,9 @@
     "paths": {
       "@/*": ["./*"],
       "@/src/*": ["./src/*"],
-      "@/customer/*": ["./src/customer/*"],
-      "@/admin/*": ["./src/admin/*"],
-      "@/shared/*": ["./src/shared/*"]
+      "@/customer/*": ["./src/app/(customer)/*"],
+      "@/admin/*": ["./src/app/admin/*"],
+      "@/shared/*": ["./src/app/(shared)/*"]
     }
   },
   "include": [

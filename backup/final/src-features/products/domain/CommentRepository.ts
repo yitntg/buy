@@ -1,5 +1,5 @@
 import { Comment } from './Comment';
-import { PaginatedResult } from '@/shared/domain/PaginatedResult';
+import { PaginatedResult } from '@/src/app/shared/domain/PaginatedResult';
 
 export interface PaginationParams {
   page: number;

@@ -1,5 +1,5 @@
 import { CommentRepository } from '../../domain/CommentRepository';
-import { EventBus } from '@/shared/domain/events/EventBus';
+import { EventBus } from '@/src/app/shared/domain/events/EventBus';
 import { CommentCreatedEvent } from '../../domain/events/CommentCreatedEvent';
 import { Comment } from '../../domain/Comment';
 

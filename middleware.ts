@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createClient } from '@/src/shared/utils/supabase/server'
+import { createMiddlewareClient } from '@/src/app/(shared)/infrastructure/supabase/middleware'
 
 // 安全路径配置
 const PROTECTED_ROUTES = [
@@ -19,11 +19,11 @@ export async function middleware(request: NextRequest) {
   
   // 处理favicon请求，重定向到新位置
   if (path === '/favicon.ico') {
-    return NextResponse.rewrite(new URL('/src/shared/assets/favicon.ico', request.url))
+    return NextResponse.rewrite(new URL('/src/app/(shared)/assets/favicon.ico', request.url))
   }
   
   // 创建服务端Supabase客户端
-  const supabase = createClient()
+  const supabase = createMiddlewareClient(request)
   
   // 获取并验证会话
   const { data: { session }, error } = await supabase.auth.getSession()

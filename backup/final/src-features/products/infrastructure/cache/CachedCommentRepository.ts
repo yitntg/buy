@@ -1,7 +1,7 @@
 import { Comment } from '../../domain/Comment';
 import { CommentRepository, CommentQueryParams } from '../../domain/CommentRepository';
 import { Redis } from 'ioredis';
-import { PaginatedResult } from '@/shared/domain/PaginatedResult';
+import { PaginatedResult } from '@/src/app/shared/domain/PaginatedResult';
 
 export class CachedCommentRepository implements CommentRepository {
   private readonly redis: Redis;

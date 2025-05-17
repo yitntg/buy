@@ -1,6 +1,6 @@
 import { CommentAggregate } from '../../domain/CommentAggregate';
 import { CommentRepository } from '../../domain/CommentRepository';
-import { EventBus } from '@/shared/domain/events/EventBus';
+import { EventBus } from '@/src/app/shared/domain/events/EventBus';
 import { CommentUnlikedEvent } from '../../domain/events/CommentUnlikedEvent';
 import { Comment } from '../../domain/Comment';
 

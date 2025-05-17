@@ -1,6 +1,6 @@
 import { Comment } from '../domain/Comment';
 import { CommentRepository, CommentQueryParams } from '../domain/CommentRepository';
-import { PaginatedResult } from '@/shared/domain/PaginatedResult';
+import { PaginatedResult } from '@/src/app/shared/domain/PaginatedResult';
 
 export class CommentApi implements CommentRepository {
   private readonly baseUrl = '/api/comments';

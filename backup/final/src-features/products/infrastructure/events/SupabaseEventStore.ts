@@ -1,6 +1,6 @@
-import { DomainEvent } from '@/shared/domain/events/DomainEvent';
-import { EventStore } from '@/shared/domain/events/EventStore';
-import { supabase } from '@/shared/infrastructure/lib/supabase';
+import { DomainEvent } from '@/src/app/shared/domain/events/DomainEvent';
+import { EventStore } from '@/src/app/shared/domain/events/EventStore';
+import { supabase } from '@/src/app/shared/infrastructure/lib/supabase';
 
 export class SupabaseEventStore implements EventStore {
   async saveEvent(event: DomainEvent): Promise<void> {

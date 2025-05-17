@@ -2,6 +2,7 @@
   "name": "modern-ecommerce",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "keywords": [
     "ecommerce",
     "nextjs",
@@ -11,11 +12,13 @@
   ],
   "scripts": {
     "dev": "next dev",
+    "dev:only": "set NODE_OPTIONS=--no-warnings && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prebuild": "node prebuild.js && node scripts/rc-util-fix.js",
-    "prepare": "node prebuild.js && node scripts/rc-util-fix.js",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "prepare": "node scripts/rc-util-fix.js",
     "db:check": "node scripts/check-db.js",
     "db:verify": "node scripts/verify-db.js",
     "test": "jest",
