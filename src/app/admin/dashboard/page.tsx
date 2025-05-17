@@ -10,11 +10,10 @@ import SalesChart from '@/src/app/admin/components/SalesChart'
 import PopularProducts from '@/src/app/admin/components/PopularProducts'
 import ErrorAlert from '@/src/app/(shared)/components/ErrorAlert'
 import AdminLayout from '@/src/app/admin/components/AdminLayout'
+import { dynamic, fetchCache, revalidate } from '@/src/app/admin/global-config'
 
-// 使用管理员页面配置 - 使用字面量而不是配置对象
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
-export const revalidate = 0
+// 使用全局配置
+export { dynamic, fetchCache, revalidate }
 
 // 仪表盘页面
 export default function AdminDashboardPage() {

@@ -1,9 +1,10 @@
 'use client'
 
-// 禁用缓存，确保页面实时更新
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+// 导入全局配置
+import { dynamic, fetchCache, revalidate } from '@/src/app/admin/global-config'
+
+// 导出全局配置
+export { dynamic, fetchCache, revalidate }
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';

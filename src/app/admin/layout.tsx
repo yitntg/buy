@@ -7,11 +7,10 @@ import AdminSidebar from './components/AdminSidebar';
 import AdminHeader from './components/AdminHeader';
 import LoadingFallback from '../(shared)/components/loading/PageLoading';
 import { API_PATHS } from '@/src/app/api/config';
+import { dynamic, fetchCache, revalidate } from './global-config';
 
-// 页面配置 - 使用明确的数值而不是对象引用
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+// 页面配置 - 使用从全局配置导入的值
+export { dynamic, fetchCache, revalidate };
 
 // 管理员布局组件
 export default function AdminLayout({
