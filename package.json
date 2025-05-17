@@ -13,7 +13,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:only": "set NODE_OPTIONS=--no-warnings && next dev",
-    "build": "next build",
+    "build": "node prebuild.js && next build",
+    "prebuild": "node prebuild.js",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -32,6 +33,7 @@
     "autoprefixer": "^10.4.16",
     "bcrypt": "^5.1.1",
     "critters": "^0.0.23",
+    "glob": "^7.2.3",
     "inversify": "^7.5.1",
     "ioredis": "^5.6.1",
     "jose": "^6.0.11",
