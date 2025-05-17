@@ -2,5 +2,7 @@
   "version": 2,
   "framework": "nextjs",
   "buildCommand": "next build",
-  "excludeFiles": ["backup/**", "backup_pages/**", "backup2/**"]
+  "git": {
+    "ignoredFiles": ["backup/**", "backup_pages/**", "backup2/**"]
+  }
 } 
