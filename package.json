@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:only": "set NODE_OPTIONS=--no-warnings && next dev",
-    "build": "node prebuild.js && next build",
+    "build": "node disable-admin-ssg.js && next build",
     "prebuild": "node prebuild.js",
     "start": "next start",
     "lint": "next lint",

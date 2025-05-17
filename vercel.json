@@ -1,8 +1,12 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "find src/app/admin -name '*.tsx' -type f -exec sed -i 's/export const revalidate = .*/export const revalidate = 0;/g' {} \\; && next build",
+  "buildCommand": "next build",
   "git": {
     "ignoredFiles": ["backup/**", "backup_pages/**", "backup2/**"]
+  },
+  "env": {
+    "NEXT_DISABLE_STATIC_GENERATION": "true",
+    "NEXT_PUBLIC_DISABLE_ISR": "true"
   }
 } 

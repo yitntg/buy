@@ -19,8 +19,6 @@ const nextConfig = {
     externalDir: true,
     // 启用ESM支持
     esmExternals: true,
-    // 启用appDir
-    appDir: true,
     // 禁用静态生成，解决revalidate问题
     runtime: 'nodejs',
     // 设置数据缓存模式
@@ -89,7 +87,7 @@ const nextConfig = {
     };
   },
   
-  // 自定义favicon位置 (新增)
+  // 自定义favicon位置
   async headers() {
     return [
       {
@@ -133,14 +131,37 @@ const nextConfig = {
     return config;
   },
   
-  // 添加自定义配置以处理管理员和认证页面
-  async redirects() {
-    return [];
+  // 自定义构建过程，为特定路径禁用静态生成
+  unstable_excludeFiles: [
+    'src/app/admin/**/*.tsx',  // 排除所有管理员页面
+  ],
+  
+  // 禁止特定页面的静态生成，强制使用服务器渲染
+  generateBuildId: async () => {
+    // 确保每次构建都有一个唯一的ID
+    return `build-${Date.now()}`;
   },
+  
   // 为特定页面配置动态渲染
   async headers() {
-    return [];
+    return [
+      {
+        // 对所有管理员页面应用动态渲染头
+        source: '/admin/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0',
+          },
+          {
+            key: 'X-Next-Dynamic',
+            value: '1',
+          }
+        ],
+      }
+    ];
   },
+  
   // 手动指定哪些页面应该动态渲染
   exportPathMap: undefined,
   // 允许开发模式下的额外导出
