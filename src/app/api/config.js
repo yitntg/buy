@@ -1,12 +1,11 @@
 // API路由配置
 // 确保所有API路由是动态的，不会在构建时静态生成
 
-// 导入API路由配置
-import { apiRouteConfig } from '../config';
+// 导入API路由重验证时间配置
+import { apiRevalidate } from '../config';
 
-// 导出API路由配置和Next.js设置
-export { apiRouteConfig };
-export const revalidate = apiRouteConfig.revalidate;
+// 直接导出配置值
+export const revalidate = apiRevalidate;
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
