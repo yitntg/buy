@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "next build",
+  "buildCommand": "find src/app/admin -name '*.tsx' -type f -exec sed -i 's/export const revalidate = .*/export const revalidate = 0;/g' {} \\; && next build",
   "git": {
     "ignoredFiles": ["backup/**", "backup_pages/**", "backup2/**"]
   }
