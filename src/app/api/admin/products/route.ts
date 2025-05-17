@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/src/app/(shared)/infrastructure/supabase/server';
-import { apiRouteConfig } from '@/src/app/api/config';
 
-// 配置为静态路由，但设置合理的revalidate时间
-export const revalidate = apiRouteConfig.revalidate;
+// 配置为静态路由，但设置revalidate时间
+export const revalidate = 60;
 
 // GET处理函数 - 获取产品列表(管理员)
 export async function GET(request: Request) {

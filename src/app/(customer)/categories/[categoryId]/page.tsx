@@ -6,12 +6,11 @@ import ProductCard from '@/src/app/(shared)/components/ProductCard'
 import LoadingSkeleton from '@/src/app/(shared)/components/LoadingSkeleton'
 import ProductFilters from '@/src/app/(shared)/components/ProductFilters'
 import ProductSorter from '@/src/app/(shared)/components/ProductSorter'
-import { clientPageConfig } from '@/src/app/config'
 
-// 使用客户端配置
-export const dynamic = clientPageConfig.dynamic
-export const fetchCache = clientPageConfig.fetchCache
-export const revalidate = clientPageConfig.revalidate
+// 直接导出配置值
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 
 // 分类名称映射 - 后续可从数据库获取
 const categoryNames: { [key: string]: string } = {

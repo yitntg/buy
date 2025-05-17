@@ -1,10 +1,9 @@
 import { redirect } from 'next/navigation'
-import { clientPageConfig } from './config'
 
-// 页面配置
-export const dynamic = clientPageConfig.dynamic;
-export const fetchCache = clientPageConfig.fetchCache;
-export const revalidate = clientPageConfig.revalidate;
+// 页面配置 - 直接导出配置值
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 // 将根路径重定向到客户端首页
 export default function HomePage() {

@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/src/app/(shared)/infrastructure/supabase/server';
-import { apiRouteConfig } from '@/src/app/api/config';
 
-// 设置合理的revalidate时间
-export const revalidate = apiRouteConfig.revalidate;
+// 设置revalidate时间
+export const revalidate = 60;
 
 // GET - 获取产品详情
 export async function GET(
