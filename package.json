@@ -18,9 +18,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "prepare": "node scripts/rc-util-fix.js",
-    "db:check": "node scripts/check-db.js",
-    "db:verify": "node scripts/verify-db.js",
+    "prepare": "node --experimental-modules scripts/rc-util-fix.js",
     "test": "jest",
     "test:watch": "jest --watch"
   },

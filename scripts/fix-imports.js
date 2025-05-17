@@ -1,6 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { fileURLToPath } from 'url';
+
+// 获取当前文件的目录路径
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 需要修复的路径模式
 const pathMappings = [
