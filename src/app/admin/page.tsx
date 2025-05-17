@@ -1,6 +1,5 @@
 'use client'
 
-
 // 禁用缓存，确保页面实时更新
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -12,11 +11,7 @@ import { OrdersCard, RevenueCard, UsersCard, ProductsCard } from '@/src/app/admi
 import { OrderStatus } from '@/src/app/(shared)/types/order';
 import { formatCurrency, formatDate } from '@/src/app/(shared)/utils/formatters';
 
-// 导入配置，而不是直接导出
-import { pageConfig } from './components/metadata';
-
-// 注意：页面配置现在从metadata.js导入
-// 这里不需要导出配置，因为Next.js会查找metadata.js文件
+// 注意：这里已有明确的配置导出，不需要再从metadata导入
 
 // 定义仪表盘数据类型
 interface DashboardStats {

@@ -9,12 +9,10 @@ export const adminMetadata = {
   keywords: "管理, 后台, 电商, 仪表盘",
 };
 
-// 页面配置 - 使用具体的值而不是对象引用
-export const pageConfig = {
-  // 强制动态渲染
-  dynamic: 'force-dynamic',
-  // 禁用缓存
-  fetchCache: 'force-no-store',
-  // 禁用重验证时间 - 使用数字0而不是字符串
-  revalidate: 0
-}; 
+// 直接导出配置值而不是对象
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+// 禁用缓存
+export const fetchCache = 'force-no-store';
+// 禁用重验证时间
+export const revalidate = 0; 
