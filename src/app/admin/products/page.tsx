@@ -1,14 +1,14 @@
 'use client'
 
+// 强制动态渲染设置
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Product, ProductImage } from '@/src/app/(shared)/types/product';
 import { formatCurrency, formatDate } from '@/src/app/(shared)/utils/formatters';
-
-// 使用明确的数值，而不是对象
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
 
 // 扩展产品类型以包含管理端需要的额外字段
 interface AdminProduct extends Product {

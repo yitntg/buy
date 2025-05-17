@@ -15,6 +15,6 @@ export const pageConfig = {
   dynamic: 'force-dynamic',
   // 禁用缓存
   fetchCache: 'force-no-store',
-  // 禁用重验证时间
+  // 禁用重验证时间 - 使用数字0而不是字符串
   revalidate: 0
 }; 

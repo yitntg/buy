@@ -1,12 +1,13 @@
 'use client'
 
+// 强制动态渲染设置
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Product } from '@/src/app/(shared)/types/product'
-
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
-export const revalidate = 0
 
 export default function CreateProductPage() {
   const router = useRouter()

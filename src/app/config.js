@@ -17,8 +17,8 @@ export const adminPageConfig = {
   dynamic: 'force-dynamic',
   // 禁用缓存
   fetchCache: 'force-no-store',
-  // 禁用重验证 - 修改为字符串"0"以避免被解析为对象
-  revalidate: "0"
+  // 禁用重验证 - 使用数字0而不是字符串
+  revalidate: 0
 };
 
 // API路由配置
