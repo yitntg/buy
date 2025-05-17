@@ -1,96 +1,144 @@
-// 预构建脚本 - 在构建之前运行
-const fs = require('fs');
-const path = require('path');
-const childProcess = require('child_process');
+#!/usr/bin/env node
 
-console.log('开始执行预构建脚本...');
+/**
+ * 预构建脚本
+ * 在Next.js构建前自动执行的脚本，用于解决页面配置问题
+ */
 
-// 确保critters被安装
-try {
-  console.log('检查critters是否已安装...');
-  require.resolve('critters');
-  console.log('critters已安装');
-} catch (e) {
-  console.log('安装critters...');
-  childProcess.execSync('npm install critters', { stdio: 'inherit' });
-}
+import fs from 'fs';
+import path from 'path';
+import * as glob from 'glob';
+import { fileURLToPath } from 'url';
 
-// 创建临时的配置文件来覆盖某些属性
-console.log('创建临时构建配置...');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// 如果不存在node_modules/.cache目录，则创建
-const cacheDir = path.join(process.cwd(), 'node_modules', '.cache');
-if (!fs.existsSync(cacheDir)) {
-  fs.mkdirSync(cacheDir, { recursive: true });
-}
+// 项目根目录
+const rootDir = path.resolve(__dirname);
 
-// 确保src/app/admin目录中的所有页面都具有强制动态渲染配置
-console.log('检查admin页面的动态渲染配置...');
+console.log('🔄 开始运行预构建脚本...');
 
-const adminDir = path.join(process.cwd(), 'src', 'app', 'admin');
-if (fs.existsSync(adminDir)) {
-  function addDynamicExportToFiles(dirPath) {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+// 修复admin目录下所有页面的revalidate配置
+function fixAdminPagesRevalidate() {
+  console.log('\n📄 检查管理员页面revalidate配置...');
+  
+  // 查找所有管理员页面
+  const adminPages = glob.sync('src/app/admin/**/page.{js,jsx,ts,tsx}', { cwd: rootDir });
+  
+  if (adminPages.length === 0) {
+    console.log('❓ 没有找到管理员页面');
+    return;
+  }
+  
+  console.log(`🔍 找到 ${adminPages.length} 个管理员页面`);
+  
+  let fixedCount = 0;
+  
+  // 处理每个页面
+  for (const pagePath of adminPages) {
+    const fullPath = path.join(rootDir, pagePath);
+    let content = fs.readFileSync(fullPath, 'utf8');
+    let modified = false;
     
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name);
-      
-      if (entry.isDirectory()) {
-        addDynamicExportToFiles(fullPath);
-      } else if (entry.name === 'page.tsx' || entry.name === 'page.js') {
-        console.log(`处理文件：${fullPath}`);
-        
-        let content = fs.readFileSync(fullPath, 'utf8');
-        
-        // 检查文件是否已经有'use client'指令
-        if (!content.includes("'use client'")) {
-          content = "'use client';\n\n" + content;
-          console.log(`已添加'use client'指令到：${fullPath}`);
-        }
-        
-        // 确保文件有dynamic导出和其他必要的导出
-        const dynamicExports = [
-          "export const dynamic = 'force-dynamic';",
-          "export const fetchCache = 'force-no-store';",
-          "export const revalidate = 0;"
-        ];
-        
-        let missingExports = [];
-        for (const exp of dynamicExports) {
-          if (!content.includes(exp)) {
-            missingExports.push(exp);
-          }
-        }
-        
-        if (missingExports.length > 0) {
-          // 在'use client'后添加缺少的导出
-          const exportBlock = missingExports.join('\n');
-          if (content.includes("'use client';")) {
-            content = content.replace("'use client';", `'use client';\n\n// 强制动态渲染\n${exportBlock}`);
-          } else {
-            content = `${exportBlock}\n\n${content}`;
-          }
-          
-          console.log(`已添加动态渲染导出到：${fullPath}`);
-        }
-        
-        // 确保该文件导入revalidate-config.js
-        if (!content.includes("import '../revalidate-config.js'") && !content.includes("import '../../revalidate-config.js'") && !content.includes("import './revalidate-config.js'")) {
-          // 计算相对路径
-          let relativePath = path.relative(path.dirname(fullPath), adminDir).replace(/\\/g, '/');
-          if (!relativePath) relativePath = '.';
-          
-          // 在'use client'后添加导入
-          content = content.replace("'use client';", `'use client';\n\n// 导入动态配置\nimport '${relativePath}/revalidate-config.js';`);
-          console.log(`已添加revalidate-config.js导入到：${fullPath}`);
-        }
-        
-        fs.writeFileSync(fullPath, content);
+    // 检查页面是否已经有revalidate=0导出
+    if (!content.includes('export const revalidate = 0')) {
+      // 如果是客户端组件（有'use client'声明），在它后面添加
+      if (content.includes("'use client'") || content.includes('"use client"')) {
+        content = content.replace(
+          /(['"]use client['"];?\s*)/,
+          "$1\n// 禁用缓存，确保页面实时更新\nexport const dynamic = 'force-dynamic';\nexport const fetchCache = 'force-no-store';\nexport const revalidate = 0;\n\n"
+        );
+        modified = true;
+      } else {
+        // 否则添加到文件顶部
+        content = `// 禁用缓存，确保页面实时更新\nexport const dynamic = 'force-dynamic';\nexport const fetchCache = 'force-no-store';\nexport const revalidate = 0;\n\n${content}`;
+        modified = true;
       }
+    }
+    
+    // 替换可能导致问题的revalidate配置
+    const patterns = [
+      // 匹配 export const revalidate = adminPageConfig.revalidate
+      { 
+        pattern: /export\s+const\s+revalidate\s*=\s*adminPageConfig(?:\.revalidate)?/g,
+        replacement: 'export const revalidate = 0'
+      },
+      // 匹配 revalidate: adminPageConfig.revalidate
+      {
+        pattern: /revalidate\s*:\s*adminPageConfig(?:\.revalidate)?/g,
+        replacement: 'revalidate: 0'
+      },
+      // 匹配 export const revalidate = {object}
+      {
+        pattern: /export\s+const\s+revalidate\s*=\s*\{[^}]*\}/g,
+        replacement: 'export const revalidate = 0'
+      },
+      // 匹配引号包裹的revalidate值
+      {
+        pattern: /export\s+const\s+revalidate\s*=\s*["']0["']/g,
+        replacement: 'export const revalidate = 0'
+      }
+    ];
+    
+    for (const { pattern, replacement } of patterns) {
+      if (pattern.test(content)) {
+        content = content.replace(pattern, replacement);
+        modified = true;
+      }
+    }
+    
+    if (modified) {
+      fs.writeFileSync(fullPath, content, 'utf8');
+      console.log(`✅ 已修复: ${pagePath}`);
+      fixedCount++;
     }
   }
   
-  addDynamicExportToFiles(adminDir);
+  console.log(`\n🎉 完成修复 ${fixedCount} 个管理员页面的revalidate配置`);
 }
 
-console.log('预构建脚本执行完成'); 
+// 修复Next.js配置文件
+function fixNextConfig() {
+  console.log('\n📄 检查Next.js配置...');
+  const configPath = path.join(rootDir, 'next.config.js');
+  
+  if (!fs.existsSync(configPath)) {
+    console.log('❓ 未找到next.config.js');
+    return;
+  }
+  
+  let content = fs.readFileSync(configPath, 'utf8');
+  const hasExperimentalConfig = content.includes('experimental:');
+  
+  // 添加experimental配置以允许ESM导入并禁用类型检查
+  if (!hasExperimentalConfig) {
+    // 查找module.exports或export default语句
+    const match = content.match(/(module\.exports\s*=\s*\{|export\s+default\s*\{)/);
+    
+    if (match) {
+      // 在配置对象中添加experimental属性
+      content = content.replace(
+        match[0],
+        `${match[0]}\n  // 配置实验性功能\n  experimental: {\n    // 允许导入外部包的ESM模块\n    esmExternals: true,\n    // 禁用静态生成时的严格检查\n    isrFlushToDisk: false\n  },\n`
+      );
+      
+      fs.writeFileSync(configPath, content, 'utf8');
+      console.log('✅ 已更新next.config.js添加experimental配置');
+    }
+  }
+}
+
+// 执行所有修复
+async function runAllFixes() {
+  try {
+    fixAdminPagesRevalidate();
+    fixNextConfig();
+    
+    console.log('\n✨ 预构建处理完成 ✨');
+  } catch (error) {
+    console.error('❌ 预构建过程中发生错误:', error);
+    process.exit(1);
+  }
+}
+
+runAllFixes(); 
