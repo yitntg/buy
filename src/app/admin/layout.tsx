@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// 强制动态渲染 - 这些配置会应用到所有管理页面
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import AdminHeader from './components/AdminHeader';
 import LoadingFallback from '../(shared)/components/loading/PageLoading';
 import { API_PATHS } from '@/src/app/api/config';
-import { dynamic, fetchCache, revalidate } from './global-config';
-
-// 页面配置 - 使用从全局配置导入的值
-export { dynamic, fetchCache, revalidate };
 
 // 管理员布局组件
 export default function AdminLayout({
@@ -19,11 +20,11 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
   
   // 检查用户是否是管理员
-  useEffect(() => {
+  React.useEffect(() => {
     const checkAuth = async () => {
       try {
         // 模拟验证逻辑

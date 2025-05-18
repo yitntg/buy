@@ -3,17 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/src/app/(shared)/contexts/ThemeContext';
-import { ProductCard } from '@/src/app/(customer)/components/ProductCard';
-import { Product } from '@/src/app/(shared)/types/product';
-import { formatCurrency } from '@/src/app/(shared)/utils/formatters';
-import Link from 'next/link';
-import Image from 'next/image';
-import { API_PATHS } from '@/src/app/api/config';
-
-// 首页配置
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+import { ProductCard } from '@/src/app/(customer)/frontend/components/ProductCard';
+import { Product } from '@/src/app/shared/types/product';
+import { formatCurrency } from '@/src/app/shared/utils/formatters';
+import CustomerLayout from '../components/CustomerLayout';
 
 export default function HomePage() {
   const { theme } = useTheme();
@@ -28,7 +21,7 @@ export default function HomePage() {
         setIsLoading(true);
         
         // 获取产品数据
-        const response = await fetch(API_PATHS.CUSTOMER.PRODUCTS_HOME);
+        const response = await fetch('/api/customer/products/home');
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -124,7 +117,7 @@ export default function HomePage() {
   };
 
   return (
-    <>
+    <CustomerLayout>
       {/* 英雄区域 */}
       {theme.showHeroSection && (
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-8 mb-12 shadow-lg">
@@ -180,6 +173,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-    </>
+    </CustomerLayout>
   );
 }

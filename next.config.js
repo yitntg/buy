@@ -22,7 +22,9 @@ const nextConfig = {
     // 禁用静态生成，解决revalidate问题
     runtime: 'nodejs',
     // 设置数据缓存模式
-    fetchCache: false
+    fetchCache: false,
+    // 确保管理页面不会被静态生成
+    isrMemoryCacheSize: 0
   },
   // 设置输出模式
   output: 'standalone',
@@ -30,6 +32,9 @@ const nextConfig = {
   env: {
     // 可以在此处添加环境变量
     API_URL: process.env.API_URL || 'http://localhost:3001',
+    // 确保禁用静态生成
+    NEXT_DISABLE_STATIC_GENERATION: 'true',
+    NEXT_PUBLIC_DISABLE_ISR: 'true'
   },
   // 禁用 revalidate 的检查，避免错误
   onDemandEntries: {
@@ -109,11 +114,8 @@ const nextConfig = {
       '@/src': path.join(__dirname, 'src'),
       '@/customer': path.join(__dirname, 'src/customer'),
       '@/admin': path.join(__dirname, 'src/admin'),
-      '@/shared': path.join(__dirname, 'src/shared'),
-      // 为缺失的rc-util模块提供别名 - 使用ESM兼容的路径
-      'rc-util/es/Dom/canUseDom': path.join(__dirname, 'polyfills/canUseDom.js'),
-      'rc-util/es/React/isFragment': path.join(__dirname, 'polyfills/isFragment.js'),
-      'rc-util/es/Children/toArray': path.join(__dirname, 'polyfills/toArray.js')
+      '@/shared': path.join(__dirname, 'src/shared')
+      // 已使用patch-package修复rc-util，不再需要polyfills
     };
     
     // 禁用严格ESM检查
