@@ -22,26 +22,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
     </div>
   );
-}
-
-// 客户端组件 - 处理主内容区域的响应式布局
-'use client'
-import { useState } from 'react';
-
-function AdminMainContent({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // 从全局状态获取侧边栏状态
-  // 这里假设我们有一个侧边栏状态管理逻辑
-  // 实际实现可能需要通过context provider或其他状态管理方式
-
-  return (
-    <main
-      className={`flex-1 transition-all duration-300 ease-in-out ${
-        sidebarOpen ? 'ml-[250px]' : 'ml-0'
-      }`}
-    >
-      <div className="px-4 py-6 sm:px-6 lg:px-8">{children}</div>
-    </main>
-  );
 } 
