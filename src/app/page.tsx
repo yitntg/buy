@@ -1,11 +1,13 @@
-import { redirect } from 'next/navigation'
-
-// 页面配置 - 直接导出配置值
+// 主要的根页面
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
-// 将根路径重定向到客户端首页
-export default function HomePage() {
-  redirect('/');
+export default function RootPage() {
+  return (
+    <div>
+      <h1>Main Root Page (app/page.tsx)</h1>
+      <p>This is the primary page for the / path.</p>
+    </div>
+  );
 } 
