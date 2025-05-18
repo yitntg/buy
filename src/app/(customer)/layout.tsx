@@ -1,9 +1,11 @@
-import { Suspense } from 'react';
-import Header from '../(shared)/components/Header';
-import Footer from '../(shared)/components/Footer';
-import LoadingFallback from '../(shared)/components/loading/PageLoading';
+'use client'
 
-// 客户端路由布局
+import { Suspense } from 'react';
+import Header from '@/src/app/(shared)/components/Header';
+import Footer from '@/src/app/(shared)/components/Footer';
+import LoadingFallback from '@/src/app/(shared)/components/loading/PageLoading';
+
+// 客户端布局组件
 export default function CustomerLayout({
   children,
 }: {

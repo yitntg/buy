@@ -1,19 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import DashboardStats from '@/src/app/admin/components/DashboardStats'
-import RecentOrdersList from '@/src/app/admin/components/RecentOrdersList'
-import QuickActions from '@/src/app/admin/components/QuickActions'
-import SalesChart from '@/src/app/admin/components/SalesChart'
-import PopularProducts from '@/src/app/admin/components/PopularProducts'
 import ErrorAlert from '@/src/app/(shared)/components/ErrorAlert'
-import AdminLayout from '@/src/app/admin/components/AdminLayout'
-import { dynamic, fetchCache, revalidate } from '@/src/app/admin/global-config'
-
-// 使用全局配置
-export { dynamic, fetchCache, revalidate }
 
 // 仪表盘页面
 export default function AdminDashboardPage() {

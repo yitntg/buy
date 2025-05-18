@@ -3,8 +3,42 @@
 import { ReactNode, useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import AdminNavigation from './AdminNavigation'
-import { BreadcrumbNav } from '@/src/app/(shared)/components/RouterMapping'
-import adminRoutes from '@/admin/routes'
+import adminRoutes, { AdminRoute } from '../routes'
+
+// 面包屑导航组件
+const BreadcrumbNav = ({ path, routes }: { path: string, routes: AdminRoute[] }) => {
+  // 查找当前路径的所有父路径
+  const findBreadcrumbs = (routes: AdminRoute[], path: string, breadcrumbs: AdminRoute[] = []): AdminRoute[] => {
+    for (const route of routes) {
+      if (route.path === path) {
+        return [...breadcrumbs, route]
+      }
+      
+      if (route.children) {
+        const newBreadcrumbs = [...breadcrumbs, route]
+        const result = findBreadcrumbs(route.children, path, newBreadcrumbs)
+        if (result.length) return result
+      }
+    }
+    
+    return []
+  }
+  
+  const breadcrumbs = findBreadcrumbs(routes, path)
+  
+  return (
+    <div className="flex text-sm text-gray-500 mt-1">
+      {breadcrumbs.map((crumb, index) => (
+        <div key={crumb.path} className="flex items-center">
+          {index > 0 && <span className="mx-2">/</span>}
+          <span className={index === breadcrumbs.length - 1 ? 'text-gray-700' : ''}>
+            {crumb.name}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -21,7 +55,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   
   // 根据当前路径设置页面标题
   useEffect(() => {
-    const findRouteTitle = (routes: typeof adminRoutes): string => {
+    const findRouteTitle = (routes: AdminRoute[]): string => {
       for (const route of routes) {
         if (route.path === pathname) {
           return route.name

@@ -9,47 +9,33 @@ const __dirname = path.dirname(__filename);
 
 const nextConfig = {
   reactStrictMode: true,
-  // 禁用图像优化以避免可能的构建问题
-  images: {
-    unoptimized: true,
-  },
-  // 禁用SSG/ISR，强制所有页面使用动态渲染
+  
+  // 输出模式配置
+  output: 'standalone',
+  
+  // 实验性功能（仅保留稳定的功能）
   experimental: {
-    // 启用外部目录支持
-    externalDir: true,
     // 启用ESM支持
     esmExternals: true,
-    // 禁用静态生成，解决revalidate问题
-    runtime: 'nodejs',
-    // 设置数据缓存模式
-    fetchCache: false,
-    // 确保管理页面不会被静态生成
-    isrMemoryCacheSize: 0
   },
-  // 设置输出模式
-  output: 'standalone',
+  
   // 环境变量配置
   env: {
-    // 可以在此处添加环境变量
     API_URL: process.env.API_URL || 'http://localhost:3001',
-    // 确保禁用静态生成
-    NEXT_DISABLE_STATIC_GENERATION: 'true',
-    NEXT_PUBLIC_DISABLE_ISR: 'true'
   },
-  // 禁用 revalidate 的检查，避免错误
-  onDemandEntries: {
-    // 设置页面生存期较短以快速重新生成
-    maxInactiveAge: 10,
-  },
+  
+  // 编译时校验配置
   typescript: {
-    // 忽略类型错误，确保构建成功
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, // 忽略类型错误，确保构建成功
   },
+  
   eslint: {
-    // 忽略ESLint错误，确保构建成功
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // 忽略ESLint错误，确保构建成功
   },
+  
+  // 图片配置
   images: {
+    unoptimized: true, // 禁用图像优化以避免可能的构建问题
     domains: [
       'picsum.photos', 
       'pzjhupjfojvlbthnsgqt.supabase.co', 
@@ -76,23 +62,15 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  // 基本配置
+  
+  // 文件扩展名配置
   pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
-  // 应用特定配置
+  
+  // 路径配置
   distDir: '.next',
   trailingSlash: false,
-  skipTrailingSlashRedirect: false,
   
-  // 添加rewrites配置
-  async rewrites() {
-    return {
-      beforeFiles: [],
-      afterFiles: [],
-      fallback: [],
-    };
-  },
-  
-  // 自定义favicon位置
+  // 自定义HTTP头
   async headers() {
     return [
       {
@@ -104,49 +82,6 @@ const nextConfig = {
           },
         ],
       },
-    ];
-  },
-  
-  // 添加webpack配置以支持路径别名
-  webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@/src': path.join(__dirname, 'src'),
-      '@/customer': path.join(__dirname, 'src/customer'),
-      '@/admin': path.join(__dirname, 'src/admin'),
-      '@/shared': path.join(__dirname, 'src/shared')
-      // 已使用patch-package修复rc-util，不再需要polyfills
-    };
-    
-    // 禁用严格ESM检查
-    config.module = {
-      ...config.module,
-      strictExportPresence: false,
-    };
-    
-    // 排除备份文件夹
-    config.watchOptions = {
-      ...config.watchOptions,
-      ignored: ['**/backup/**', '**/backup_pages/**', '**/backup2/**', '**/node_modules/**']
-    };
-    
-    return config;
-  },
-  
-  // 自定义构建过程，为特定路径禁用静态生成
-  unstable_excludeFiles: [
-    'src/app/admin/**/*.tsx',  // 排除所有管理员页面
-  ],
-  
-  // 禁止特定页面的静态生成，强制使用服务器渲染
-  generateBuildId: async () => {
-    // 确保每次构建都有一个唯一的ID
-    return `build-${Date.now()}`;
-  },
-  
-  // 为特定页面配置动态渲染
-  async headers() {
-    return [
       {
         // 对所有管理员页面应用动态渲染头
         source: '/admin/:path*',
@@ -164,9 +99,41 @@ const nextConfig = {
     ];
   },
   
-  // 手动指定哪些页面应该动态渲染
-  exportPathMap: undefined,
-  // 允许开发模式下的额外导出
+  // 路由重写配置
+  async rewrites() {
+    return {
+      beforeFiles: [],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
+  
+  // Webpack配置
+  webpack: (config, { isServer }) => {
+    // 路径别名
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@/src': path.join(__dirname, 'src'),
+      '@/customer': path.join(__dirname, 'src/customer'),
+      '@/admin': path.join(__dirname, 'src/admin'),
+      '@/shared': path.join(__dirname, 'src/shared')
+    };
+    
+    // 排除备份文件夹
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/backup/**', '**/backup_pages/**', '**/backup2/**', '**/node_modules/**']
+    };
+    
+    return config;
+  },
+  
+  // 构建ID
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
+  
+  // 禁用powered by header
   poweredByHeader: false,
 };
 

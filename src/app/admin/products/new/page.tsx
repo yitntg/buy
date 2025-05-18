@@ -1,10 +1,11 @@
 'use client'
 
 // 导入全局配置
-import { dynamic, fetchCache, revalidate } from '@/src/app/admin/global-config'
+import { dynamic, fetchCache } from '@/src/app/admin/global-config'
 
-// 导出全局配置
-export { dynamic, fetchCache, revalidate }
+// 不在客户端组件中导出服务器端配置
+// export { dynamic, fetchCache }
+// export const revalidate = 0;
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'

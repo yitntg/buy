@@ -10,10 +10,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { API_PATHS } from '@/src/app/api/config';
 
-// 首页配置
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+// 客户端组件不应导出服务器端配置
+// export const dynamic = 'force-dynamic';
+// export const fetchCache = 'force-no-store';
+// export const revalidate = 0;
 
 export default function HomePage() {
   const { theme } = useTheme();

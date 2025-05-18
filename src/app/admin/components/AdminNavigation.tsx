@@ -2,18 +2,34 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRoutes } from '@/src/app/(shared)/hooks/useRoutes'
-import adminRoutes from '@/admin/routes'
+import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown, LogOut, Settings, User } from 'lucide-react'
+import adminRoutes, { AdminRoute } from '../routes'
 
 /**
  * 管理员端导航组件
  * 包含左侧菜单和顶部导航栏
  */
 export default function AdminNavigation() {
-  const { isActiveRoute, navItems } = useRoutes(adminRoutes)
+  const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  
+  // 判断路由是否激活
+  const isActiveRoute = (path: string): boolean => {
+    // 精确匹配
+    if (pathname === path) {
+      return true
+    }
+    
+    // 子路由匹配
+    if (pathname?.startsWith(path) && path !== '/') {
+      const nextChar = pathname.charAt(path.length)
+      return nextChar === '' || nextChar === '/'
+    }
+    
+    return false
+  }
   
   // 菜单图标映射
   const getIcon = (iconName?: string) => {
@@ -103,7 +119,7 @@ export default function AdminNavigation() {
       >
         <nav className="p-4 h-full overflow-y-auto">
           <ul className="space-y-1">
-            {navItems.map(item => (
+            {adminRoutes.map((item: AdminRoute) => (
               <li key={item.path}>
                 <Link
                   href={item.path}
@@ -122,7 +138,7 @@ export default function AdminNavigation() {
                 {/* 子菜单 */}
                 {sidebarOpen && item.children && item.children.length > 0 && (
                   <ul className="ml-9 mt-1 space-y-1 border-l border-gray-200 pl-2">
-                    {item.children.map(child => (
+                    {item.children.map((child: AdminRoute) => (
                       <li key={child.path}>
                         <Link
                           href={child.path}

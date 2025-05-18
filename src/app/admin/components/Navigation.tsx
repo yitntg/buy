@@ -1,3 +1,8 @@
+/**
+ * 【已废弃】请使用 AdminNavigation.tsx 替代
+ * 此文件保留仅作参考，新功能请在 AdminNavigation.tsx 中实现
+ */
+
 'use client'
 
 import { ReactNode } from 'react';
