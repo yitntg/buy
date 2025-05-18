@@ -52,16 +52,16 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           {/* 品牌Logo */}
-          <Link href="/customer" className="text-2xl font-bold text-blue-600 flex items-center">
+          <Link href="/" className="text-2xl font-bold text-blue-600 flex items-center">
             <span>ShopHub</span>
           </Link>
           
           {/* 导航菜单 - 桌面端 */}
           <nav className="hidden md:flex space-x-8">
             <Link 
-              href="/customer" 
+              href="/" 
               className={`hover:text-blue-600 transition-colors ${
-                pathname === '/customer' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                pathname === '/' ? 'text-blue-600 font-medium' : 'text-gray-700'
               }`}
             >
               首页
@@ -171,7 +171,7 @@ export default function Header() {
         }`}>
           <div className="p-4">
             <div className="flex justify-between items-center mb-8">
-              <Link href="/customer" className="text-2xl font-bold text-blue-600" onClick={closeMenu}>
+              <Link href="/" className="text-2xl font-bold text-blue-600" onClick={closeMenu}>
                 ShopHub
               </Link>
               <button 
@@ -185,9 +185,9 @@ export default function Header() {
             
             <nav className="flex flex-col space-y-4">
               <Link 
-                href="/customer" 
+                href="/" 
                 className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/customer' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  pathname === '/' ? 'text-blue-600 font-medium' : 'text-gray-700'
                 }`}
                 onClick={closeMenu}
               >
