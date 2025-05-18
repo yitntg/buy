@@ -9,11 +9,8 @@ import { formatCurrency } from '@/src/app/(shared)/utils/formatters';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API_PATHS } from '@/src/app/api/config';
-
-// 客户端组件不应导出服务器端配置
-// export const dynamic = 'force-dynamic';
-// export const fetchCache = 'force-no-store';
-// export const revalidate = 0;
+import ErrorAlert from '@/src/app/(shared)/components/ErrorAlert';
+import { Suspense } from 'react';
 
 export default function HomePage() {
   const { theme } = useTheme();
@@ -61,7 +58,7 @@ export default function HomePage() {
     }
 
     if (error && featuredProducts.length === 0) {
-      return <div className="text-center py-12 text-red-500">{error}</div>;
+      return <ErrorAlert title="加载错误" message={error} />;
     }
 
     return (
@@ -80,18 +77,24 @@ export default function HomePage() {
     }
 
     if (error && newArrivals.length === 0) {
-      return <div className="text-center py-8 text-red-500">{error}</div>;
+      return <ErrorAlert title="加载错误" message={error} />;
     }
 
     return (
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
         {newArrivals.map(product => (
           <div key={product.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4">
-            <img
-              src={product.primary_image || (product.images && product.images.length > 0 ? product.images[0].image_url : 'https://via.placeholder.com/300')}
-              alt={product.name}
-              className="w-full h-40 object-cover object-center rounded-md mb-3"
-            />
+            <div className="relative w-full h-40 mb-3">
+              <Image
+                src={product.primary_image || (product.images && product.images.length > 0 ? product.images[0].image_url : 'https://via.placeholder.com/300')}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 50vw, 33vw"
+                className="object-cover object-center rounded-md"
+                priority={false}
+                quality={85}
+              />
+            </div>
             <h3 className="font-medium text-gray-900 truncate">{product.name}</h3>
             <p className="text-blue-600 font-bold mt-1">{formatCurrency(product.price)}</p>
           </div>
@@ -137,11 +140,17 @@ export default function HomePage() {
               </button>
             </div>
             <div className="md:w-1/2 md:pl-10">
-              <img 
-                src="https://via.placeholder.com/600x400" 
-                alt="精选商品" 
-                className="rounded-lg shadow-md" 
-              />
+              <div className="relative w-full h-64 md:h-80">
+                <Image 
+                  src="https://via.placeholder.com/600x400" 
+                  alt="精选商品" 
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="rounded-lg shadow-md object-cover" 
+                  priority
+                  quality={90}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -150,7 +159,9 @@ export default function HomePage() {
       {/* 特色产品 */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">精选推荐</h2>
-        {renderFeaturedProducts()}
+        <Suspense fallback={<div className="text-center py-12">加载中...</div>}>
+          {renderFeaturedProducts()}
+        </Suspense>
       </section>
       
       {/* 促销横幅 */}
@@ -159,7 +170,9 @@ export default function HomePage() {
       {/* 新品上市 */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">新品上市</h2>
-        {renderNewArrivals()}
+        <Suspense fallback={<div className="text-center py-8">加载中...</div>}>
+          {renderNewArrivals()}
+        </Suspense>
       </section>
       
       {/* 分类快捷入口 */}

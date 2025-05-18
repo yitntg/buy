@@ -2,65 +2,59 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useContext } from 'react';
+import { AdminContext } from '../contexts/AdminContext';
+
+// 定义导航项目类型
+interface NavItem {
+  title: string;
+  path: string;
+  icon: string;
+}
+
+// 左侧导航栏项目
+const navItems: NavItem[] = [
+  { title: '仪表盘', path: '/admin/dashboard', icon: '📊' },
+  { title: '订单管理', path: '/admin/orders', icon: '📦' },
+  { title: '商品管理', path: '/admin/products', icon: '🛍️' },
+  { title: '用户管理', path: '/admin/users', icon: '👥' },
+  { title: '分类管理', path: '/admin/categories', icon: '🏷️' },
+  { title: '系统设置', path: '/admin/settings', icon: '⚙️' },
+];
 
 // 管理员侧边栏组件
 export default function AdminSidebar() {
   const pathname = usePathname();
-  
-  // 侧边栏链接配置
-  const sidebarLinks = [
-    { href: '/admin', label: '仪表盘', icon: '📊' },
-    { href: '/admin/products', label: '产品管理', icon: '📦' },
-    { href: '/admin/orders', label: '订单管理', icon: '📋' },
-    { href: '/admin/customers', label: '客户管理', icon: '👥' },
-    { href: '/admin/categories', label: '分类管理', icon: '🗂️' },
-    { href: '/admin/settings', label: '系统设置', icon: '⚙️' },
-  ];
+  const { sidebarOpen } = useContext(AdminContext);
   
   return (
-    <div className="bg-gray-800 text-white w-64 min-h-screen flex-shrink-0">
-      <div className="p-4">
-        <Link href="/admin" className="flex items-center space-x-2">
-          <span className="text-2xl font-bold">ShopHub</span>
-          <span className="text-xs bg-blue-600 px-2 py-1 rounded">管理</span>
-        </Link>
-      </div>
-      
-      <nav className="mt-8">
-        <ul className="space-y-2">
-          {sidebarLinks.map((link) => {
-            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
-            
+    <aside
+      className={`fixed left-0 top-16 h-full bg-white shadow-md transform transition-transform duration-300 ease-in-out z-20 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}
+      style={{ width: '250px' }}
+    >
+      <nav className="mt-5 px-2">
+        <div className="space-y-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
             return (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className={`flex items-center px-4 py-3 text-sm ${
-                    isActive 
-                      ? 'bg-gray-700 text-blue-400 border-l-4 border-blue-400' 
-                      : 'hover:bg-gray-700'
-                  }`}
-                >
-                  <span className="mr-3">{link.icon}</span>
-                  <span>{link.label}</span>
-                </Link>
-              </li>
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`group flex items-center px-2 py-3 text-sm font-medium rounded-md ${
+                  isActive
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-700 hover:text-blue-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="mr-3 text-xl">{item.icon}</span>
+                {item.title}
+              </Link>
             );
           })}
-        </ul>
-      </nav>
-      
-      <div className="absolute bottom-0 w-64 bg-gray-900 p-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
-            A
-          </div>
-          <div>
-            <p className="text-sm font-medium">管理员</p>
-            <p className="text-xs text-gray-400">admin@shophub.com</p>
-          </div>
         </div>
-      </div>
-    </div>
+      </nav>
+    </aside>
   );
 } 

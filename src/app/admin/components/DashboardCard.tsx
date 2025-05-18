@@ -1,217 +1,106 @@
+'use client'
+
 import { ReactNode } from 'react';
 
-interface DashboardCardProps {
+// 趋势数据类型
+interface TrendData {
+  value: number;
+  isPositive: boolean;
+}
+
+// 卡片基础属性
+interface CardProps {
   title: string;
-  value: string | number;
+  value: number | string;
+  icon: ReactNode;
+  trend?: TrendData;
   description?: string;
-  icon?: ReactNode;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'gray';
   isLoading?: boolean;
 }
 
-export function DashboardCard({
-  title,
-  value,
-  description,
-  icon,
-  trend,
-  color = 'blue',
-  isLoading = false
-}: DashboardCardProps) {
-  // 颜色映射
-  const colorMap = {
-    blue: {
-      bg: 'bg-blue-50',
-      text: 'text-blue-600',
-      iconBg: 'bg-blue-100',
-      iconText: 'text-blue-600',
-      borderColor: 'border-blue-200'
-    },
-    green: {
-      bg: 'bg-green-50',
-      text: 'text-green-600',
-      iconBg: 'bg-green-100',
-      iconText: 'text-green-600',
-      borderColor: 'border-green-200'
-    },
-    yellow: {
-      bg: 'bg-yellow-50',
-      text: 'text-yellow-600',
-      iconBg: 'bg-yellow-100',
-      iconText: 'text-yellow-600',
-      borderColor: 'border-yellow-200'
-    },
-    red: {
-      bg: 'bg-red-50',
-      text: 'text-red-600',
-      iconBg: 'bg-red-100',
-      iconText: 'text-red-600',
-      borderColor: 'border-red-200'
-    },
-    purple: {
-      bg: 'bg-purple-50',
-      text: 'text-purple-600',
-      iconBg: 'bg-purple-100',
-      iconText: 'text-purple-600',
-      borderColor: 'border-purple-200'
-    },
-    gray: {
-      bg: 'bg-gray-50',
-      text: 'text-gray-600',
-      iconBg: 'bg-gray-100',
-      iconText: 'text-gray-600',
-      borderColor: 'border-gray-200'
-    }
-  };
-  
-  const colors = colorMap[color];
-  
-  // 加载中状态
-  if (isLoading) {
-    return (
-      <div className={`rounded-lg border ${colors.borderColor} p-6 ${colors.bg}`}>
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-          <div className="h-8 bg-gray-200 rounded w-3/4 mb-3"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-        </div>
-      </div>
-    );
-  }
-  
+// 基础卡片组件
+const Card = ({ title, value, icon, trend, description, isLoading }: CardProps) => {
   return (
-    <div className={`rounded-lg border ${colors.borderColor} p-6 ${colors.bg}`}>
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-          <div className="mt-2 flex items-baseline">
-            <p className={`text-2xl font-semibold ${colors.text}`}>{value}</p>
-            
-            {trend && (
-              <p className={`ml-2 text-sm font-medium ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
-              </p>
-            )}
-          </div>
-          
-          {description && (
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
-          )}
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      {isLoading ? (
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
         </div>
-        
-        {icon && (
-          <div className={`${colors.iconBg} p-3 rounded-full`}>
-            <div className={colors.iconText}>
-              {icon}
-            </div>
+      ) : (
+        <>
+          <div className="flex justify-between items-start">
+            <h3 className="text-gray-500 text-sm font-medium mb-1">{title}</h3>
+            <div className="text-gray-400">{icon}</div>
           </div>
-        )}
-      </div>
+          <p className="text-3xl font-bold">{value}</p>
+          {trend && (
+            <div className={`text-sm flex items-center mt-2 ${trend.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+              <span>
+                {trend.isPositive ? '↑' : '↓'} {trend.value}%
+              </span>
+              {description && <span className="ml-1">{description}</span>}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
-}
+};
 
-// 预定义卡片变体
-export function OrdersCard({ 
-  value, 
-  trend, 
-  description,
-  isLoading = false 
-}: Omit<DashboardCardProps, 'title' | 'icon' | 'color'>) {
-  const orderIcon = (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-    </svg>
-  );
-  
+// 订单卡片
+export const OrdersCard = ({ value, trend, description, isLoading }: Omit<CardProps, 'title' | 'icon'>) => {
   return (
-    <DashboardCard
-      title="订单总数"
+    <Card
+      title="订单数"
       value={value}
-      description={description}
-      icon={orderIcon}
+      icon={<span className="text-xl">📦</span>}
       trend={trend}
-      color="blue"
+      description={description}
       isLoading={isLoading}
     />
   );
-}
+};
 
-export function RevenueCard({ 
-  value, 
-  trend, 
-  description,
-  isLoading = false 
-}: Omit<DashboardCardProps, 'title' | 'icon' | 'color'>) {
-  const revenueIcon = (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-  
+// 营收卡片
+export const RevenueCard = ({ value, trend, description, isLoading }: Omit<CardProps, 'title' | 'icon'>) => {
   return (
-    <DashboardCard
-      title="收入"
+    <Card
+      title="总营收"
       value={value}
-      description={description}
-      icon={revenueIcon}
+      icon={<span className="text-xl">💰</span>}
       trend={trend}
-      color="green"
+      description={description}
       isLoading={isLoading}
     />
   );
-}
+};
 
-export function UsersCard({ 
-  value, 
-  trend, 
-  description,
-  isLoading = false 
-}: Omit<DashboardCardProps, 'title' | 'icon' | 'color'>) {
-  const usersIcon = (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-    </svg>
-  );
-  
+// 用户卡片
+export const UsersCard = ({ value, trend, description, isLoading }: Omit<CardProps, 'title' | 'icon'>) => {
   return (
-    <DashboardCard
+    <Card
       title="用户数"
       value={value}
-      description={description}
-      icon={usersIcon}
+      icon={<span className="text-xl">👥</span>}
       trend={trend}
-      color="purple"
+      description={description}
       isLoading={isLoading}
     />
   );
-}
+};
 
-export function ProductsCard({ 
-  value, 
-  trend, 
-  description,
-  isLoading = false 
-}: Omit<DashboardCardProps, 'title' | 'icon' | 'color'>) {
-  const productsIcon = (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-    </svg>
-  );
-  
+// 商品卡片
+export const ProductsCard = ({ value, trend, description, isLoading }: Omit<CardProps, 'title' | 'icon'>) => {
   return (
-    <DashboardCard
-      title="产品数"
+    <Card
+      title="商品数"
       value={value}
-      description={description}
-      icon={productsIcon}
+      icon={<span className="text-xl">🛍️</span>}
       trend={trend}
-      color="yellow"
+      description={description}
       isLoading={isLoading}
     />
   );
-}
+};

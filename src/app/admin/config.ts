@@ -1,10 +1,29 @@
-// 管理员区域的服务器配置
+// 管理员部分的服务器配置
 
-// 强制动态渲染所有管理员页面
+/**
+ * 动态渲染配置
+ * 'auto' - 根据请求决定是否为动态渲染
+ * 'force-dynamic' - 始终使用动态渲染
+ * 'force-static' - 始终使用静态渲染
+ * 'error' - 如果需要动态渲染，则抛出错误
+ */
 export const dynamic = 'force-dynamic';
 
-// 禁用数据缓存
-export const fetchCache = 'force-no-store';
+/**
+ * 缓存配置
+ * 'auto' - 根据使用情况自动决定缓存策略
+ * 'default-cache' - 默认缓存
+ * 'only-cache' - 仅允许使用缓存，不允许重新验证
+ * 'force-cache' - 强制使用缓存
+ * 'force-no-store' - 不使用缓存
+ * 'default-no-store' - 默认不使用缓存
+ * 'only-no-store' - 强制不使用缓存
+ */
+export const fetchCache = 'default-no-store';
 
-// 禁用自动重新验证
-export const revalidate = 0; 
+/**
+ * 重新验证配置
+ * 可以设置为一个数字（秒数）来指定重新验证的间隔
+ * 'tag' - 使用标签进行重新验证
+ */
+export const revalidate = 0; // 禁用缓存，每次请求都获取最新数据 

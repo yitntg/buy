@@ -1,9 +1,11 @@
-'use client'
-
 import { Suspense } from 'react';
 import Header from '@/src/app/(shared)/components/Header';
 import Footer from '@/src/app/(shared)/components/Footer';
 import LoadingFallback from '@/src/app/(shared)/components/loading/PageLoading';
+import { dynamic, fetchCache, revalidate } from './config';
+
+// 导出服务器配置
+export { dynamic, fetchCache, revalidate };
 
 // 客户端布局组件
 export default function CustomerLayout({

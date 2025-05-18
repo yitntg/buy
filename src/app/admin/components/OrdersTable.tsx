@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Order, OrderStatus } from '@/src/app/(shared)/types/order';
 import { formatCurrency, formatDate } from '@/src/app/(shared)/utils/formatters';
+import { OrderStatusBadge } from './OrderStatusBadge';
+import { OrderFilters } from './OrderFilters';
+import { OrderActions } from './OrderActions';
 
 // 组件属性接口
 interface OrdersTableProps {
@@ -9,6 +12,7 @@ interface OrdersTableProps {
   onUpdateStatus: (orderId: string, status: OrderStatus) => void;
   onBulkUpdateStatus: (orderIds: string[], status: OrderStatus) => void;
   isLoading?: boolean;
+  onRefresh?: () => void;
 }
 
 export function OrdersTable({
@@ -16,7 +20,8 @@ export function OrdersTable({
   onViewDetails,
   onUpdateStatus,
   onBulkUpdateStatus,
-  isLoading = false
+  isLoading = false,
+  onRefresh
 }: OrdersTableProps) {
   // 状态
   const [sortField, setSortField] = useState<keyof Order>('created_at');
@@ -25,16 +30,6 @@ export function OrdersTable({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [filteredOrders, setFilteredOrders] = useState<Order[]>(orders);
-  
-  // 状态选项
-  const statusOptions = [
-    { value: 'all', label: '全部订单' },
-    { value: OrderStatus.PENDING, label: '待付款' },
-    { value: OrderStatus.PAID, label: '待发货' },
-    { value: OrderStatus.SHIPPED, label: '已发货' },
-    { value: OrderStatus.DELIVERED, label: '已完成' },
-    { value: OrderStatus.CANCELLED, label: '已取消' }
-  ];
   
   // 更新筛选和排序后的订单列表
   useEffect(() => {
@@ -122,24 +117,6 @@ export function OrdersTable({
     return sortDirection === 'asc' ? '↑' : '↓';
   };
   
-  // 获取状态标签样式
-  const getStatusBadgeClass = (status: OrderStatus): string => {
-    switch (status) {
-      case OrderStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800';
-      case OrderStatus.PAID:
-        return 'bg-blue-100 text-blue-800';
-      case OrderStatus.SHIPPED:
-        return 'bg-indigo-100 text-indigo-800';
-      case OrderStatus.DELIVERED:
-        return 'bg-green-100 text-green-800';
-      case OrderStatus.CANCELLED:
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-  
   // 加载中显示骨架屏
   if (isLoading) {
     return (
@@ -159,65 +136,34 @@ export function OrdersTable({
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
       <div className="p-4 border-b flex flex-wrap justify-between items-center gap-4">
-        <div className="flex items-center space-x-2">
-          <input
-            type="text"
-            placeholder="搜索订单号或客户名称..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as OrderStatus | 'all')}
-            className="px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {statusOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <span className="text-sm text-gray-500">
-            显示 {filteredOrders.length} / {orders.length} 个订单
-          </span>
-        </div>
+        {/* 使用筛选组件 */}
+        <OrderFilters 
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          totalCount={orders.length}
+          filteredCount={filteredOrders.length}
+        />
         
-        {/* 批量操作按钮 */}
-        {selectedOrders.length > 0 && (
-          <div className="flex flex-wrap items-center space-x-2">
-            <button 
-              onClick={() => handleBulkStatusUpdate(OrderStatus.SHIPPED)}
-              className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
-            >
-              批量发货
-            </button>
-            <button 
-              onClick={() => handleBulkStatusUpdate(OrderStatus.DELIVERED)}
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              标记完成
-            </button>
-            <button 
-              onClick={() => handleBulkStatusUpdate(OrderStatus.CANCELLED)}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              取消订单
-            </button>
-          </div>
-        )}
+        {/* 使用操作组件 */}
+        <OrderActions 
+          selectedOrders={selectedOrders}
+          onUpdateBulkStatus={handleBulkStatusUpdate}
+          onRefresh={onRefresh}
+        />
       </div>
       
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
+          <thead>
+            <tr className="bg-gray-50">
               <th className="w-12 px-4 py-3">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
                   onChange={toggleSelectAll}
-                  className="rounded"
+                  className="rounded text-blue-600 focus:ring-blue-500"
                 />
               </th>
               <th 
@@ -230,7 +176,7 @@ export function OrdersTable({
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('created_at')}
               >
-                日期 {getSortIcon('created_at')}
+                下单时间 {getSortIcon('created_at')}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 客户
@@ -239,7 +185,7 @@ export function OrdersTable({
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('total')}
               >
-                总金额 {getSortIcon('total')}
+                金额 {getSortIcon('total')}
               </th>
               <th 
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -255,93 +201,49 @@ export function OrdersTable({
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-4 text-center text-sm text-gray-500">
-                  没有找到订单
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                  没有找到符合条件的订单
                 </td>
               </tr>
             ) : (
               filteredOrders.map(order => (
                 <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <input 
-                      type="checkbox" 
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
                       checked={selectedOrders.includes(order.id)}
                       onChange={() => toggleSelectOrder(order.id)}
-                      className="rounded"
+                      className="rounded text-blue-600 focus:ring-blue-500"
                     />
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
                     {order.id}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-gray-500">
                     {formatDate(order.created_at)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {order.user?.name || '匿名用户'}
-                    </div>
-                    {order.user?.email && (
-                      <div className="text-xs text-gray-500">{order.user.email}</div>
-                    )}
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {order.user?.name || '未知客户'}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="text-sm font-medium text-blue-600">{formatCurrency(order.total)}</div>
-                    <div className="text-xs text-gray-500">{order.items.length} 件商品</div>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    {formatCurrency(order.total)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(order.status)}`}>
-                      {order.status}
-                    </span>
+                  <td className="px-4 py-3 text-sm">
+                    <OrderStatusBadge status={order.status} />
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
-                      <button 
-                        onClick={() => onViewDetails(order.id)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        详情
-                      </button>
-                      
-                      {order.status === OrderStatus.PENDING && (
-                        <button 
-                          onClick={() => onUpdateStatus(order.id, OrderStatus.PAID)}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          标记付款
-                        </button>
-                      )}
-                      
-                      {order.status === OrderStatus.PAID && (
-                        <button 
-                          onClick={() => onUpdateStatus(order.id, OrderStatus.SHIPPED)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          发货
-                        </button>
-                      )}
-                      
-                      {order.status === OrderStatus.SHIPPED && (
-                        <button 
-                          onClick={() => onUpdateStatus(order.id, OrderStatus.DELIVERED)}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          标记完成
-                        </button>
-                      )}
-                      
-                      {(order.status === OrderStatus.PENDING || order.status === OrderStatus.PAID) && (
-                        <button 
-                          onClick={() => {
-                            if (window.confirm(`确认取消订单 ${order.id} 吗?`)) {
-                              onUpdateStatus(order.id, OrderStatus.CANCELLED);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          取消
-                        </button>
-                      )}
-                    </div>
+                  <td className="px-4 py-3 text-sm text-right space-x-2">
+                    <button
+                      onClick={() => onViewDetails(order.id)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      查看
+                    </button>
+                    <button
+                      onClick={() => onUpdateStatus(order.id, order.status === OrderStatus.DELIVERED ? OrderStatus.SHIPPED : OrderStatus.DELIVERED)}
+                      className="text-green-600 hover:text-green-800 ml-2"
+                    >
+                      {order.status === OrderStatus.DELIVERED ? '标为已发货' : '标为已完成'}
+                    </button>
                   </td>
                 </tr>
               ))

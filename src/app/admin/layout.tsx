@@ -1,11 +1,12 @@
-'use client'
+// 此文件应采用服务器组件模式
+// 移除'use client'标记
 
 import AdminLayout from './components/AdminLayout';
+import { AdminProvider } from './contexts/AdminContext';
+import { dynamic, fetchCache, revalidate } from './config';
 
 // 导出服务器配置
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+export { dynamic, fetchCache, revalidate };
 
 // 管理员区域根布局组件
 export default function AdminRootLayout({
@@ -14,8 +15,10 @@ export default function AdminRootLayout({
   children: React.ReactNode
 }) {
   return (
-    <AdminLayout>
-      {children}
-    </AdminLayout>
+    <AdminProvider>
+      <AdminLayout>
+        {children}
+      </AdminLayout>
+    </AdminProvider>
   );
 } 
