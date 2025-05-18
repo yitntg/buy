@@ -11,7 +11,7 @@ const nextConfig = {
   reactStrictMode: true,
   
   // 输出模式配置
-  output: 'standalone',
+  // output: 'standalone',
   
   // 实验性功能（仅保留稳定的功能）
   experimental: {
