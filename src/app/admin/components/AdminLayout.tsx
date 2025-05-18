@@ -10,7 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-gray-100">
       {/* 顶部导航栏 */}
       <AdminHeader />
-
+      
       <div className="flex pt-16">
         {/* 侧边导航栏 */}
         <AdminSidebar />
@@ -19,7 +19,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <AdminMainContent>
           {children}
         </AdminMainContent>
-      </div>
+        </div>
     </div>
   );
 } 

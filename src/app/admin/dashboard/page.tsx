@@ -152,7 +152,7 @@ export default function AdminDashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">仪表盘</h1>
-        
+      
         <div className="bg-white rounded-lg shadow-sm p-1">
           <button
             onClick={() => setTimeRange('day')}
@@ -369,7 +369,7 @@ export default function AdminDashboardPage() {
           ) : (
             <div className="p-6 text-center text-gray-500">
               暂无商品数据
-            </div>
+          </div>
           )}
         </div>
       </div>

@@ -3,11 +3,10 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
-export default function RootPage() {
+export default function HomePage() {
   return (
     <div>
-      <h1>Main Root Page (app/page.tsx)</h1>
-      <p>This is the primary page for the / path.</p>
+      <h1>欢迎来到首页</h1>
     </div>
   );
 } 
