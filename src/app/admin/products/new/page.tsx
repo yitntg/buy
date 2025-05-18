@@ -1,11 +1,9 @@
 'use client'
 
-// 导入全局配置
-import { dynamic, fetchCache } from '@/src/app/admin/global-config'
-
-// 不在客户端组件中导出服务器端配置
-// export { dynamic, fetchCache }
-// export const revalidate = 0;
+// 直接导出服务器配置
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -19,7 +17,8 @@ export default function CreateProductPage() {
     price: 0,
     description: '',
     inventory: 0,
-    category: 1,
+    category: '电子产品',
+    category_id: '1'
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -120,10 +119,10 @@ export default function CreateProductPage() {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
-            <option value={1}>电子产品</option>
-            <option value={2}>家居日用</option>
-            <option value={3}>服饰鞋包</option>
-            <option value={4}>美妆个护</option>
+            <option value="电子产品">电子产品</option>
+            <option value="家居日用">家居日用</option>
+            <option value="服饰鞋包">服饰鞋包</option>
+            <option value="美妆个护">美妆个护</option>
           </select>
         </div>
         

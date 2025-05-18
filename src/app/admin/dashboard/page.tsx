@@ -1,5 +1,10 @@
 'use client'
 
+// 直接导出服务器配置
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import ErrorAlert from '@/src/app/(shared)/components/ErrorAlert'
