@@ -67,30 +67,30 @@ export default function Header() {
               首页
             </Link>
             <Link 
-                            href="/customer/products"               className={`hover:text-blue-600 transition-colors ${                pathname === '/customer/products' || pathname.startsWith('/customer/product/')                   ? 'text-blue-600 font-medium'                   : 'text-gray-700'              }`}
+                            href="/products"               className={`hover:text-blue-600 transition-colors ${                pathname === '/products' || pathname.startsWith('/product/')                   ? 'text-blue-600 font-medium'                   : 'text-gray-700'              }`}
             >
               全部商品
             </Link>
             <Link 
-              href="/customer/categories" 
+              href="/categories" 
               className={`hover:text-blue-600 transition-colors ${
-                pathname.startsWith('/customer/category/') || pathname === '/customer/categories' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                pathname.startsWith('/category/') || pathname === '/categories' ? 'text-blue-600 font-medium' : 'text-gray-700'
               }`}
             >
               商品分类
             </Link>
             <Link 
-              href="/customer/about" 
+              href="/about" 
               className={`hover:text-blue-600 transition-colors ${
-                pathname === '/customer/about' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                pathname === '/about' ? 'text-blue-600 font-medium' : 'text-gray-700'
               }`}
             >
               关于我们
             </Link>
             <Link 
-              href="/customer/contact" 
+              href="/contact" 
               className={`hover:text-blue-600 transition-colors ${
-                pathname === '/customer/contact' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                pathname === '/contact' ? 'text-blue-600 font-medium' : 'text-gray-700'
               }`}
             >
               联系我们
@@ -109,7 +109,7 @@ export default function Header() {
             
             {/* 收藏夹 */}
             <Link 
-              href="/customer/favorites" 
+              href="/favorites" 
               className="p-2 text-gray-700 hover:text-blue-600 transition-colors relative"
               aria-label="收藏夹"
             >
@@ -118,7 +118,7 @@ export default function Header() {
             
             {/* 购物车 */}
             <Link 
-              href="/customer/cart" 
+              href="/cart" 
               className="p-2 text-gray-700 hover:text-blue-600 transition-colors relative"
               aria-label="购物车"
             >
@@ -135,7 +135,7 @@ export default function Header() {
               <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
             ) : user ? (
               <Link 
-                href="/customer/account" 
+                href="/account" 
                 className="p-1 rounded-full border-2 border-blue-200 hover:border-blue-400 transition-colors"
               >
                 <img 
@@ -146,7 +146,7 @@ export default function Header() {
               </Link>
             ) : (
               <Link 
-                href="/customer/login"
+                href="/login"
                 className="p-2 text-gray-700 hover:text-blue-600 transition-colors"
                 aria-label="登录"
               >
@@ -194,33 +194,33 @@ export default function Header() {
                 首页
               </Link>
               <Link 
-                                href="/customer/products"                 className={`text-lg py-2 border-b border-gray-100 ${                  pathname === '/customer/products' ? 'text-blue-600 font-medium' : 'text-gray-700'                }`}
+                                href="/products"                 className={`text-lg py-2 border-b border-gray-100 ${                  pathname === '/products' ? 'text-blue-600 font-medium' : 'text-gray-700'                }`}
                 onClick={closeMenu}
               >
                 全部商品
               </Link>
               <Link 
-                href="/customer/categories" 
+                href="/categories" 
                 className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/customer/categories' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  pathname === '/categories' ? 'text-blue-600 font-medium' : 'text-gray-700'
                 }`}
                 onClick={closeMenu}
               >
                 商品分类
               </Link>
               <Link 
-                href="/customer/about" 
+                href="/about" 
                 className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/customer/about' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  pathname === '/about' ? 'text-blue-600 font-medium' : 'text-gray-700'
                 }`}
                 onClick={closeMenu}
               >
                 关于我们
               </Link>
               <Link 
-                href="/customer/contact" 
+                href="/contact" 
                 className={`text-lg py-2 border-b border-gray-100 ${
-                  pathname === '/customer/contact' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  pathname === '/contact' ? 'text-blue-600 font-medium' : 'text-gray-700'
                 }`}
                 onClick={closeMenu}
               >
@@ -229,14 +229,14 @@ export default function Header() {
               {!user && (
                 <>
                   <Link 
-                    href="/customer/login" 
+                    href="/login" 
                     className="text-lg py-2 text-blue-600"
                     onClick={closeMenu}
                   >
                     登录
                   </Link>
                   <Link 
-                    href="/customer/register" 
+                    href="/register" 
                     className="text-lg py-2 text-blue-600"
                     onClick={closeMenu}
                   >
@@ -262,21 +262,21 @@ export default function Header() {
                 
                 <nav className="space-y-2">
                   <Link 
-                    href="/customer/account" 
+                    href="/account" 
                     className="flex items-center space-x-2 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-100"
                     onClick={closeMenu}
                   >
                     <span>我的账户</span>
                   </Link>
                   <Link 
-                    href="/customer/account/orders" 
+                    href="/account/orders" 
                     className="flex items-center space-x-2 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-100"
                     onClick={closeMenu}
                   >
                     <span>我的订单</span>
                   </Link>
                   <Link 
-                    href="/customer/favorites" 
+                    href="/favorites" 
                     className="flex items-center space-x-2 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-100"
                     onClick={closeMenu}
                   >
