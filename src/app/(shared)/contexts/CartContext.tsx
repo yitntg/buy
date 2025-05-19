@@ -1,114 +1,91 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { CartItem, Product } from '@/src/app/(shared)/types/product'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-// 定义购物车上下文类型
-interface CartContextType {
-  items: CartItem[]
-  addItem: (product: Product | Partial<CartItem> & { id: string | number, name: string, price: number }, quantity?: number) => void
-  updateQuantity: (id: string, quantity: number) => void
-  removeItem: (id: string) => void
-  clearCart: () => void
-  totalItems: number
-  totalPrice: number
-  isInCart: (id: string) => boolean
+interface CartItem {
+  id: string
+  name: string
+  price: number
+  image: string
+  quantity: number
 }
 
-// 创建上下文
+interface CartContextType {
+  items: CartItem[]
+  addToCart: (item: Omit<CartItem, 'quantity'>) => void
+  removeFromCart: (id: string) => void
+  updateQuantity: (id: string, quantity: number) => void
+  clearCart: () => void
+  total: number
+}
+
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-// 购物车提供者组件
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
-  
-  // 首次加载时从本地存储加载购物车
+  const [total, setTotal] = useState(0)
+
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('cart')
-      if (savedCart) {
-        setItems(JSON.parse(savedCart))
-      }
-    } catch (error) {
-      console.error('加载购物车失败:', error)
+    // 从本地存储加载购物车数据
+    const storedCart = localStorage.getItem('cart')
+    if (storedCart) {
+      setItems(JSON.parse(storedCart))
     }
   }, [])
-  
-  // 当购物车变更时保存到本地存储
+
   useEffect(() => {
+    // 计算总价
+    const newTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    setTotal(newTotal)
+    // 保存到本地存储
     localStorage.setItem('cart', JSON.stringify(items))
   }, [items])
-  
-  // 添加商品到购物车
-  const addItem = (product: Product | Partial<CartItem> & { id: string | number, name: string, price: number }, quantity: number = 1) => {
-    setItems(prevItems => {
-      // 检查商品是否已存在于购物车
-      const existingItemIndex = prevItems.findIndex(item => item.id === product.id.toString())
-      
-      if (existingItemIndex >= 0) {
-        // 更新已有商品数量
-        const updatedItems = [...prevItems]
-        updatedItems[existingItemIndex].quantity += quantity
-        return updatedItems
-      } else {
-        // 添加新商品
-        return [...prevItems, {
-          id: product.id.toString(),
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          images: product.images,
-          quantity: ('quantity' in product) ? (product.quantity || 1) + quantity : quantity
-        }]
+
+  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+    setItems(currentItems => {
+      const existingItem = currentItems.find(i => i.id === item.id)
+      if (existingItem) {
+        return currentItems.map(i =>
+          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        )
       }
+      return [...currentItems, { ...item, quantity: 1 }]
     })
   }
-  
-  // 更新商品数量
+
+  const removeFromCart = (id: string) => {
+    setItems(currentItems => currentItems.filter(item => item.id !== id))
+  }
+
   const updateQuantity = (id: string, quantity: number) => {
-    setItems(prevItems => prevItems.map(item => 
-      item.id === id ? { ...item, quantity } : item
-    ))
+    if (quantity < 1) return
+    setItems(currentItems =>
+      currentItems.map(item =>
+        item.id === id ? { ...item, quantity } : item
+      )
+    )
   }
-  
-  // 移除商品
-  const removeItem = (id: string) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id))
-  }
-  
-  // 清空购物车
+
   const clearCart = () => {
     setItems([])
   }
-  
-  // 计算商品总数
-  const totalItems = items.reduce((total, item) => total + item.quantity, 0)
-  
-  // 计算总价
-  const totalPrice = items.reduce((total, item) => total + (item.price * item.quantity), 0)
-  
-  // 检查商品是否在购物车中
-  const isInCart = (id: string) => {
-    return items.some(item => item.id === id)
-  }
-  
+
   return (
-    <CartContext.Provider value={{
-      items,
-      addItem,
-      updateQuantity,
-      removeItem,
-      clearCart,
-      totalItems,
-      totalPrice,
-      isInCart
-    }}>
+    <CartContext.Provider
+      value={{
+        items,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        total,
+      }}
+    >
       {children}
     </CartContext.Provider>
   )
 }
 
-// 购物车Hook
 export function useCart() {
   const context = useContext(CartContext)
   if (context === undefined) {

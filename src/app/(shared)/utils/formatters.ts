@@ -208,4 +208,63 @@ export function formatDateTime(dateString: string | Date): string {
     second: '2-digit',
     hour12: false
   }).format(date);
+}
+
+/**
+ * 格式化货币
+ * @param amount 金额
+ * @param currency 货币符号，默认为 ¥
+ * @returns 格式化后的货币字符串
+ */
+export const formatCurrency = (amount: number, currency: string = '¥'): string => {
+  return `${currency}${amount.toFixed(2)}`
+}
+
+/**
+ * 格式化日期
+ * @param date 日期字符串或Date对象
+ * @param format 格式化模板，默认为 YYYY-MM-DD
+ * @returns 格式化后的日期字符串
+ */
+export const formatDate = (date: string | Date, format: string = 'YYYY-MM-DD'): string => {
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
+
+  return format
+    .replace('YYYY', String(year))
+    .replace('MM', month)
+    .replace('DD', day)
+    .replace('HH', hours)
+    .replace('mm', minutes)
+    .replace('ss', seconds)
+}
+
+export function formatPrice(price: number): string {
+  return new Intl.NumberFormat('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(price)
+}
+
+export function formatPhoneNumber(phone: string): string {
+  return phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1 $2 $3')
+}
+
+export function formatNumber(num: number): string {
+  return new Intl.NumberFormat('zh-CN').format(num)
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
 } 

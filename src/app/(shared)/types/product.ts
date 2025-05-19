@@ -7,22 +7,24 @@ import { BaseEntity } from './base';
 
 // 产品图片类型
 export interface ProductImage {
-  id: string;
-  product_id: string;
+  id: number | string;
+  product_id: number | string;
   image_url: string;
-  sort_order?: number;
-  is_primary?: boolean;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // 产品类型
 export interface Product extends BaseEntity {
+  id: number | string;
   name: string;
   description: string;
   price: number;
   original_price?: number;
   category_id?: string;
   category?: string;
-  sku?: string;
+  sku: string;
   inventory: number;
   rating?: number;
   reviews?: number;
@@ -33,6 +35,12 @@ export interface Product extends BaseEntity {
   meta_title?: string;
   meta_description?: string;
   tags?: string[];
+  brand?: string;
+  model?: string;
+  free_shipping?: boolean;
+  returnable?: boolean;
+  warranty?: boolean;
+  status: 'active' | 'draft' | 'out-of-stock';
 }
 
 // 收藏夹中的产品类型

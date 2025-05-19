@@ -6,7 +6,7 @@
  * 这里的配置用于组件内部的导航和面包屑
  */
 
-import { RouteConfig } from '@/src/app/(shared)/types/route'
+import { RouteConfig } from '@/app/(shared)/types/route'
 
 // 用户端路由配置
 export const customerRoutes: RouteConfig[] = [
@@ -29,7 +29,7 @@ export const customerRoutes: RouteConfig[] = [
     public: true,
   },
   {
-    path: '/product/:id',
+    path: '/products/[id]',
     component: 'ProductDetailPage',
     exact: true,
     name: '商品详情',
@@ -37,7 +37,7 @@ export const customerRoutes: RouteConfig[] = [
     public: true,
   },
   {
-    path: '/category/:id',
+    path: '/categories/[id]',
     component: 'CategoryDetailPage',
     exact: true,
     name: '分类详情',
