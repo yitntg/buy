@@ -35,7 +35,7 @@ export default function OrdersPage() {
         user_id: order.user_id,
         user: order.user ? {
           id: order.user.id,
-          name: order.user.name,
+          name: order.user.name || `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || order.user.email,
           email: order.user.email
         } : null,
         status: order.status,
