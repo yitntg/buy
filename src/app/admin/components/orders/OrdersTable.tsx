@@ -1,3 +1,5 @@
+'use client'
+
 import { formatCurrency, formatDate } from '@/app/(shared)/utils/formatters'
 import { Order, OrderStatus } from '@/app/(shared)/types/order'
 
