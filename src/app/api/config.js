@@ -2,7 +2,7 @@
 // 确保所有API路由是动态的，不会在构建时静态生成
 
 // 导入API路由重验证时间配置
-import { apiRevalidate } from '../config';
+import { apiRevalidate } from '@/app/(shared)/config/config';
 
 // 直接导出配置值
 export const revalidate = apiRevalidate;

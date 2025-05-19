@@ -1,7 +1,7 @@
 import { Inter } from 'next/font/google'
 import { Suspense } from 'react'
 import { Metadata } from 'next'
-import ClientProviders from '@/src/app/(shared)/components/ClientProviders'
+import ClientProviders from '@/app/(shared)/components/ui/ClientProviders'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
