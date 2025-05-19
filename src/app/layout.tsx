@@ -1,7 +1,9 @@
 import { Inter } from 'next/font/google'
 import { Suspense } from 'react'
 import { Metadata } from 'next'
-import ClientProviders from '@/components/infra/ClientProviders'
+import ClientProviders from '@/app/(shared)/components/infra/ClientProviders'
+import Header from '@/app/(shared)/components/layout/Header'
+import Footer from '@/app/(shared)/components/layout/Footer'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -32,11 +34,13 @@ export default function RootLayout({
     <html lang="zh">
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <ClientProviders>
+          <Header />
           <main className="pt-20 pb-40 flex-grow">
             <Suspense fallback={<LoadingFallback />}>
               {children}
             </Suspense>
           </main>
+          <Footer />
         </ClientProviders>
       </body>
     </html>
