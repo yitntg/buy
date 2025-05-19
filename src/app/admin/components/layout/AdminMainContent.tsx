@@ -1,7 +1,7 @@
 'use client'
 
 import { useContext } from 'react';
-import { AdminContext } from '../contexts/AdminContext';
+import { AdminContext } from '../../contexts/AdminContext';
 
 // 管理主内容区域的客户端组件
 export function AdminMainContent({ children }: { children: React.ReactNode }) {

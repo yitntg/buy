@@ -1,4 +1,7 @@
-import { OrderStatus } from '@/src/app/(shared)/types/order';
+import { OrderStatus } from '@/app/(shared)/types/order';
+import { orderService } from './orderService'
+import { productService } from './productService'
+import { userService } from './userService'
 
 // 定义仪表盘数据类型
 export interface DashboardStats {
@@ -153,5 +156,74 @@ export async function getDashboardStats(timeRange: TimeRange = 'week'): Promise<
   } catch (error) {
     console.error('获取仪表盘数据失败:', error);
     throw new Error('获取仪表盘数据失败');
+  }
+}
+
+export const dashboardService = {
+  // 获取仪表盘统计数据
+  async getStats() {
+    const [orderStats, userStats, products] = await Promise.all([
+      orderService.getOrderStats(),
+      userService.getUserStats(),
+      productService.getProducts()
+    ])
+    
+    return {
+      sales: {
+        total: orderStats.totalSales,
+        orders: orderStats.totalOrders,
+        pending: orderStats.pendingOrders,
+        paid: orderStats.paidOrders,
+        shipped: orderStats.shippedOrders,
+        delivered: orderStats.deliveredOrders,
+        cancelled: orderStats.cancelledOrders
+      },
+      users: {
+        total: userStats.totalUsers,
+        active: userStats.activeUsers,
+        inactive: userStats.inactiveUsers,
+        admin: userStats.adminUsers,
+        regular: userStats.regularUsers
+      },
+      products: {
+        total: products.length,
+        active: products.filter(p => p.status === 'active').length,
+        draft: products.filter(p => p.status === 'draft').length,
+        outOfStock: products.filter(p => p.status === 'out-of-stock').length
+      }
+    }
+  },
+  
+  // 获取销售趋势数据
+  async getSalesTrend() {
+    // 模拟最近7天的销售数据
+    const today = new Date()
+    const data = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      return {
+        date: date.toISOString().split('T')[0],
+        sales: Math.floor(Math.random() * 10000) / 100,
+        orders: Math.floor(Math.random() * 20)
+      }
+    }).reverse()
+    
+    return data
+  },
+  
+  // 获取热门商品
+  async getPopularProducts() {
+    const products = await productService.getProducts()
+    return products
+      .sort((a, b) => Math.random() - 0.5) // 随机排序
+      .slice(0, 5) // 取前5个
+  },
+  
+  // 获取最近订单
+  async getRecentOrders() {
+    const orders = await orderService.getOrders()
+    return orders
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5) // 取最近5个
   }
 } 

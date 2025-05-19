@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { formatCurrency } from '@/src/app/(shared)/utils/formatters'
-import { OrderStatus } from '@/src/app/(shared)/types/order'
+import { formatCurrency } from '@/app/(shared)/utils/formatters'
+import { OrderStatus } from '@/app/(shared)/types/order'
 import { OrderStatusBadge } from './OrderStatusBadge'
 
 // 订单类型定义

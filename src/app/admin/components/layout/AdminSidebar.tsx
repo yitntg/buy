@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useContext } from 'react';
-import { AdminContext } from '../contexts/AdminContext';
+import { AdminContext } from '../../contexts/AdminContext';
 
 // 定义导航项目类型
 interface NavItem {

@@ -1,15 +1,11 @@
 'use client'
 
-// 直接导出服务器配置
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
-
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminMainContent } from '../../../components/layout/AdminMainContent'
 
 interface Product {
+  id: string;
   name: string;
   price: number;
   stock: number;
@@ -19,18 +15,30 @@ interface Product {
   description: string;
 }
 
-export default function ProductNewPage() {
+export default function ProductEditPage({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const [product, setProduct] = useState<Product | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [product, setProduct] = useState<Product>({
-    name: '',
-    price: 0,
-    stock: 0,
-    category: '',
-    status: 'inactive',
-    image: '',
-    description: ''
-  })
+  
+  useEffect(() => {
+    // 模拟数据加载
+    const timer = setTimeout(() => {
+      setProduct({
+        id: params.id,
+        name: '商品1',
+        price: 99.99,
+        stock: 100,
+        category: '分类1',
+        status: 'active',
+        image: '/images/product1.jpg',
+        description: '这是一个示例商品描述'
+      })
+      setIsLoading(false)
+    }, 1000)
+    
+    return () => clearTimeout(timer)
+  }, [params.id])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,11 +55,32 @@ export default function ProductNewPage() {
     }
   }
   
+  if (isLoading) {
+    return (
+      <AdminMainContent>
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </AdminMainContent>
+    )
+  }
+  
+  if (!product) {
+    return (
+      <AdminMainContent>
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-gray-900">商品不存在</h2>
+        </div>
+      </AdminMainContent>
+    )
+  }
+  
   return (
     <AdminMainContent>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900">新增商品</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">编辑商品</h1>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">

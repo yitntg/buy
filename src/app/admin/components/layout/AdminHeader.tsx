@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useContext } from 'react';
-import { AdminContext } from '../contexts/AdminContext';
+import { AdminContext } from '../../contexts/AdminContext';
 
 // 管理员顶部导航组件
 export default function AdminHeader() {
