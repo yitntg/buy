@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useAuth } from '../../../../(shared)/contexts/AuthContext'
-import { formatPrice } from '../../../../(shared)/utils/formatters'
+import { useAuth } from '@/app/(shared)/contexts/AuthContext'
+import { formatDate, formatPrice } from '@/app/(shared)/utils/formatters'
 
 interface Order {
   id: string

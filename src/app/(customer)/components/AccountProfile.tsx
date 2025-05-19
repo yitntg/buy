@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useAuth } from '../../../../(shared)/contexts/AuthContext'
+import { useAuth } from '@/app/(shared)/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import UserAvatar from '../components/UserAvatar'
 import AccountSidebar from '../components/AccountSidebar'

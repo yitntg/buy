@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useCart } from '../../../../(shared)/contexts/CartContext'
-import { formatPrice } from '../../../../(shared)/utils/formatters'
+import { useCart } from '@/app/(shared)/contexts/CartContext'
+import { formatPrice } from '@/app/(shared)/utils/formatters'
 
 interface Product {
   id: string
