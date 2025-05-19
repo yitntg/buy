@@ -1,15 +1,10 @@
 'use client'
 
-// 直接导出服务器配置
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import OrdersTable from '../components/orders/OrdersTable';
 import AdminMainContent from '../components/layout/AdminMainContent';
-import { Order, OrderStatus } from '@/src/app/(shared)/types/order';
+import { Order, OrderStatus } from '@/app/(shared)/types/order';
 
 /**
  * 订单管理页面
@@ -34,7 +29,10 @@ export default function OrdersPage() {
         throw new Error('获取订单列表失败');
       }
       const data = await response.json();
-      setOrders(data);
+      setOrders(data.map((order: any) => ({
+        ...order,
+        status: order.status as OrderStatus
+      })));
     } catch (error) {
       console.error('获取订单列表失败:', error);
     } finally {
@@ -48,7 +46,7 @@ export default function OrdersPage() {
   };
   
   // 更新订单状态
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     try {
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: 'PATCH',

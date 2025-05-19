@@ -7,9 +7,12 @@ import { Order, OrderStatus } from '@/app/(shared)/types/order'
 
 interface OrdersTableProps {
   orders: Order[]
+  onViewDetails: (orderId: string) => void
+  onStatusChange: (orderId: string, newStatus: OrderStatus) => Promise<void>
+  onBulkUpdateStatus: (orderIds: string[], status: OrderStatus) => Promise<void>
 }
 
-export default function OrdersTable({ orders }: OrdersTableProps) {
+export default function OrdersTable({ orders, onViewDetails, onStatusChange, onBulkUpdateStatus }: OrdersTableProps) {
   const router = useRouter()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 

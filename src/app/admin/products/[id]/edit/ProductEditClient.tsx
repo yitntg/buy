@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AdminMainContent } from '../../../components/layout/AdminMainContent'
+import AdminMainContent from '../../../components/layout/AdminMainContent'
 
 interface Product {
   id: string;
