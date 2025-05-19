@@ -1,7 +1,3 @@
-'use client'
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { formatCurrency, formatDate } from '@/app/(shared)/utils/formatters'
 import { Order, OrderStatus } from '@/app/(shared)/types/order'
 
@@ -13,9 +9,6 @@ interface OrdersTableProps {
 }
 
 export default function OrdersTable({ orders, onViewDetails, onStatusChange, onBulkUpdateStatus }: OrdersTableProps) {
-  const router = useRouter()
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
       case OrderStatus.PENDING:
@@ -100,7 +93,7 @@ export default function OrdersTable({ orders, onViewDetails, onStatusChange, onB
                     </td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                       <button
-                        onClick={() => router.push(`/admin/orders/${order.id}`)}
+                        onClick={() => onViewDetails(order.id)}
                         className="text-primary hover:text-primary-dark"
                       >
                         查看详情
