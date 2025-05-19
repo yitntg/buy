@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 
 // 符合Next.js约定的全局404页面
