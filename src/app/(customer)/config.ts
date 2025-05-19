@@ -7,7 +7,7 @@
  * 'force-static' - 始终使用静态渲染
  * 'error' - 如果需要动态渲染，则抛出错误
  */
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-static';
 
 /**
  * 缓存配置
@@ -19,10 +19,10 @@ export const dynamic = 'force-dynamic';
  * 'default-no-store' - 默认不使用缓存
  * 'only-no-store' - 强制不使用缓存
  */
-export const fetchCache = 'force-no-store';
+export const fetchCache = 'force-cache';
 
 /**
  * 重新验证配置
  * 可以设置为一个数字（秒数）来指定重新验证的间隔
  */
-export const revalidate = 0; // 禁用缓存 
+export const revalidate = 3600; // 1小时 
