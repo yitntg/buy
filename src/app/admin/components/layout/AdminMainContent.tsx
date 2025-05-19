@@ -1,19 +1,27 @@
 'use client'
 
-import { useContext } from 'react';
-import { AdminContext } from '../../contexts/AdminContext';
+import { ReactNode } from 'react'
 
-// 管理主内容区域的客户端组件
-export function AdminMainContent({ children }: { children: React.ReactNode }) {
-  const { sidebarOpen } = useContext(AdminContext);
+interface AdminMainContentProps {
+  children: ReactNode
+  title: string
+  description?: string
+}
 
+export default function AdminMainContent({ children, title, description }: AdminMainContentProps) {
   return (
-    <main
-      className={`flex-1 transition-all duration-300 ease-in-out ${
-        sidebarOpen ? 'ml-[250px]' : 'ml-0'
-      }`}
-    >
-      <div className="px-4 py-6 sm:px-6 lg:px-8">{children}</div>
-    </main>
-  );
+    <div className="py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+        <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
+        {description && (
+          <p className="mt-1 text-sm text-gray-500">{description}</p>
+        )}
+      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+        <div className="py-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
 } 
