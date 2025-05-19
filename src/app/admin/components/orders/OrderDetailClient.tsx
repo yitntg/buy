@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AdminMainContent } from '../layout/AdminMainContent'
+import AdminMainContent from '../layout/AdminMainContent'
 import { formatCurrency, formatDate } from '@/app/(shared)/utils/formatters'
 import { Order, OrderStatus } from '@/app/(shared)/types/order'
 import { Product } from '@/app/(shared)/types/product'

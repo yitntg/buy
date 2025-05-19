@@ -9,7 +9,7 @@ interface OrdersTableProps {
   orders: Order[]
 }
 
-export function OrdersTable({ orders }: OrdersTableProps) {
+export default function OrdersTable({ orders }: OrdersTableProps) {
   const router = useRouter()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
