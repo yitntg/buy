@@ -20,11 +20,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@/src/*": ["./src/*"],
-      "@/customer/*": ["./src/app/(customer)/*"],
-      "@/admin/*": ["./src/app/admin/*"],
-      "@/shared/*": ["./src/app/(shared)/*"]
+      "@/*": ["./src/*"],
+      "@/app/*": ["./src/app/*"],
+      "@/components/*": ["./src/app/(shared)/components/*"],
+      "@/config/*": ["./src/app/(shared)/config/*"]
     }
   },
   "include": [
