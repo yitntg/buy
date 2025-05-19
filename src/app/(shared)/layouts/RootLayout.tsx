@@ -6,10 +6,10 @@ import { CartProvider } from '@/src/app/(shared)/contexts/CartContext'
 import { AuthProvider } from '@/src/app/(shared)/contexts/AuthContext'
 import { ThemeProvider } from '@/src/app/(shared)/contexts/ThemeContext'
 import { FavoritesProvider } from '@/src/app/(shared)/contexts/FavoritesContext'
-import Header from '@/src/app/(shared)/layouts/components/Header'
-import Footer from '@/src/app/(shared)/layouts/components/Footer'
+import Header from '@/src/app/(shared)/components/Header'
+import Footer from '@/src/app/(shared)/components/Footer'
 import { Suspense } from 'react'
-import ErrorBoundary from './components/ErrorBoundary'
+import ErrorBoundary from './ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 

@@ -1,6 +1,4 @@
 import { Suspense } from 'react';
-import Header from '@/src/app/(shared)/components/Header';
-import Footer from '@/src/app/(shared)/components/Footer';
 import LoadingFallback from '@/src/app/(shared)/components/loading/PageLoading';
 import { CustomerProvider } from './contexts/CustomerContext';
 import { dynamic, fetchCache, revalidate } from './config';
@@ -16,13 +14,11 @@ export default function CustomerLayout({
 }) {
   return (
     <CustomerProvider>
-      <Header />
-      <main className="pt-20 pb-40 flex-grow">
+      <main className="flex-grow">
         <Suspense fallback={<LoadingFallback />}>
           {children}
         </Suspense>
       </main>
-      <Footer />
     </CustomerProvider>
   );
 } 
