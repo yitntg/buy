@@ -5,9 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/app/(shared)/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import UserAvatar from '../components/UserAvatar'
-import AccountSidebar from '../components/AccountSidebar'
-import AvatarUploader from '../components/AvatarUploader'
+import UserAvatar from './UserAvatar'
+import AccountSidebar from './AccountSidebar'
+import AvatarUploader from './AvatarUploader'
 
 export default function AccountProfile() {
   const { user, logout, updateProfile, isLoading } = useAuth()
