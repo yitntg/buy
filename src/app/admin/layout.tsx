@@ -1,7 +1,7 @@
 // 此文件应采用服务器组件模式
 // 移除'use client'标记
 
-import AdminLayout from './components/AdminLayout';
+import AdminLayout from './components/layout/AdminLayout';
 import { AdminProvider } from './contexts/AdminContext';
 import { dynamic, fetchCache, revalidate } from './config';
 

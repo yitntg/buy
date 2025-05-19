@@ -1,4 +1,6 @@
-import OrderDetailClient from '../../../../components/OrderDetailClient'
+'use client'
+
+import OrderDetailClient from '../../components/OrderDetailClient'
 
 interface OrderPageProps {
   params: {
